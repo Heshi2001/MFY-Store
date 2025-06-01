@@ -1,0 +1,27 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <h3>Search Results for "{{ query }}"</h3>
+  <div class="row">
+    {% if results %}
+      {% for product in results %}
+        <div class="col-md-4">
+          <div class="product-item">
+            <a href="#"><img src="{{ product.image.url }}" alt="{{ product.title }}"></a>
+            <div class="down-content">
+              <a href="#"><h4>{{ product.title }}</h4></a>
+              <h6>${{ product.price }}</h6>
+              <p>{{ product.description|truncatewords:12 }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-md-12">
+        <p>No matching products found.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

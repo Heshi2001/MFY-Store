@@ -1,0 +1,73 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MFY - FAQ</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/fontawesome.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/wishlist.css' %}">
+</head>
+<body>
+
+<!-- Header -->
+<header class="">
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
+          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" />
+          <h2 class="mb-0">MADE FOR<em> YOU</em></h2>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+<div class="wishlist-container">
+    <h2>Your Wishlist</h2>
+
+    {% if wishlist_items %}
+        <div class="wishlist-grid">
+            {% for item in wishlist_items %}
+                <div class="wishlist-card">
+                    <div class="wishlist-image-wrapper">
+                        <img src="{{ item.product.variants.first.image.url }}" alt="{{ item.product.name }}">
+                    </div>
+                    <div class="wishlist-details">
+                        <h4>{{ item.product.name }}</h4>
+                        <p class="wishlist-price">${{ item.product.price }}</p>
+                        <div class="wishlist-actions">
+                            <a href="{% url 'product_detail' item.product.id %}" class="btn btn-view">View</a>
+                            <form method="POST" action="{% url 'remove_from_wishlist' item.product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-remove">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-msg">Your wishlist is empty.</p>
+    {% endif %}
+</div>
+<!-- Footer -->
+ <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="inner-content">
+            <p>Copyright &copy; 2025 MFY.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

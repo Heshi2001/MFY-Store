@@ -1,0 +1,123 @@
+.wishlist-btn {
+    background-color: #fff;
+    color: #e60023;
+    border: 1px solid #e60023;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.3s ease;
+}
+
+.wishlist-btn:hover {
+    background-color: #e60023;
+    color: white;
+}
+
+.wishlist-container {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.wishlist-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.wishlist-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.wishlist-card:hover {
+    transform: translateY(-5px);
+}
+
+.wishlist-image-wrapper {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f9f9f9;
+}
+
+.wishlist-image-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.wishlist-details {
+    padding: 20px;
+    text-align: center;
+}
+
+.wishlist-details h4 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #222;
+}
+
+.wishlist-price {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.wishlist-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.btn-view {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #0056b3;
+}
+
+.btn-remove {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-remove:hover {
+    background-color: #b52a38;
+}
+
+.empty-msg {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #777;
+    margin-top: 20px;
+}

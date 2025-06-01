@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MFY - FAQ</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/fontawesome.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/faq.css' %}">
+</head>
+<body>
+
+<!-- Header -->
+<header class="">
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
+          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" />
+          <h2 class="mb-0">MADE FOR<em> YOU</em></h2>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+<!-- Page Heading -->
+<div class="page-heading header-text">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="text-content">
+          <h4>frequently asked questions</h4>
+          <h2>Have a Question?</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+<section class="faq-section py-5">
+  <div class="container">
+    <div class="accordion" id="faqAccordion">
+
+      <!-- FAQ Item 1 -->
+      <div class="card">
+        <div class="card-header" id="faq1">
+          <h5 class="mb-0">
+            <button class="btn btn-link" data-toggle="collapse" data-target="#collapse1" aria-expanded="true">
+              What is Made For You (MFY)?
+            </button>
+          </h5>
+        </div>
+        <div id="collapse1" class="collapse show" data-parent="#faqAccordion">
+          <div class="card-body">
+            MFY is a fashion brand offering customized clothing crafted uniquely for you.
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Item 2 -->
+      <div class="card">
+        <div class="card-header" id="faq2">
+          <h5 class="mb-0">
+            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse2">
+              How can I place an order?
+            </button>
+          </h5>
+        </div>
+        <div id="collapse2" class="collapse" data-parent="#faqAccordion">
+          <div class="card-body">
+            Browse our products, select size, color, and add to cart. Proceed to checkout and fill your shipping details.
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Item 3 -->
+      <div class="card">
+        <div class="card-header" id="faq3">
+          <h5 class="mb-0">
+            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse3">
+              What payment methods do you accept?
+            </button>
+          </h5>
+        </div>
+        <div id="collapse3" class="collapse" data-parent="#faqAccordion">
+          <div class="card-body">
+            We accept UPI, debit/credit cards, net banking, and cash on delivery (in select areas).
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Item 4 -->
+      <div class="card">
+        <div class="card-header" id="faq4">
+          <h5 class="mb-0">
+            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse4">
+              Do you offer customization?
+            </button>
+          </h5>
+        </div>
+        <div id="collapse4" class="collapse" data-parent="#faqAccordion">
+          <div class="card-body">
+            Yes! You can request size, fit, color, and even embroidery personalization on select products.
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Item 5 -->
+      <div class="card">
+        <div class="card-header" id="faq5">
+          <h5 class="mb-0">
+            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse5">
+              What’s your return and exchange policy?
+            </button>
+          </h5>
+        </div>
+        <div id="collapse5" class="collapse" data-parent="#faqAccordion">
+          <div class="card-body">
+            Returns and exchanges are accepted within 7 days of delivery for unused items. Custom orders may not be eligible.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Go to Home Button -->
+<div class="text-center mb-5">
+  <a href="{% url 'index' %}" class="btn btn-primary go-home-btn">
+    <i class="fa fa-home mr-2"></i> Go to Home
+  </a>
+</div>
+
+<!-- Footer -->
+ <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="inner-content">
+            <p>Copyright &copy; 2025 MFY.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Python
+*.pyc
+__pycache__/
+*.log
+
+# Virtual Environment
+env/
+venv/
+
+# Django specific
+db.sqlite3
+*.sqlite3
+
+# Static and media
+staticfiles/
+media/
+
+# Environment variables
+.env
+
+# VS Code and system files
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Migrations (optional to ignore pyc inside migrations)
+**/migrations/*.pyc
+**/migrations/__pycache__/

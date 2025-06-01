@@ -1,0 +1,143 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="" />
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet" />
+
+  <title>MFY - All Products</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" />
+
+  <link rel="stylesheet" href="{% static 'store/css/fontawesome.css' %}" />
+  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}" />
+  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}" />
+</head>
+<body>
+
+<!-- Header -->
+<header class="">
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
+      <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" />
+      <h2 class="mb-0">MADE FOR<em> YOU</em></h2>
+    </a>
+    <!-- NavBar Toggler -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+      aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <!-- NavBar Items -->
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
+        <li class="nav-item active"><a class="nav-link" href="{% url 'products' %}">Our Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+</header>
+
+<!-- Page Content -->
+<div class="page-heading products-heading header-text">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="text-content">
+          <h4>new arrivals @</h4>
+          <h2>MFY</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="products">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="filters">
+          <ul>
+            <li class="active" data-filter="*">All Products</li>
+            <li data-filter=".des">Dress</li>
+            <li data-filter=".dev">Accessories</li>
+            <li data-filter=".gra">Grosery</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <div class="filters-content">
+          <div class="row grid">
+            {% for product in products %}
+            <div class="col-lg-4 col-md-4 all {{ product.category|lower }}">
+  <div class="product-item">
+    <a href="{% url 'product_detail' product.id %}">
+     <img src="{{ product.first_image.image.url }}" alt="{{ product.name }}" class="product-card-image">
+    </a>
+    <div class="down-content">
+      <a href="{% url 'product_detail' product.id %}"><h4>{{ product.name }}</h4></a>
+      <h6>${{ product.price }}</h6>
+      <p>{{ product.description }}</p>
+      <ul class="stars">
+        {% for i in "12345"|slice:":product.rating|default:0" %}
+          <li><i class="fa fa-star"></i></li>
+        {% endfor %}
+      </ul>
+
+      <form action="{% url 'add_to_cart' product.id %}" method="POST" class="variant-form" id="variant-form-{{ product.id }}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary btn-block mt-2" style="background-color:#ff5e00; border:none;">
+          <i class="fa fa-cart-plus"></i> Add to Cart
+          </button>
+       </form>
+      </div>
+    </div>
+  </div>
+ {% endfor %}              
+ </div>
+</div>
+</div>
+                    
+      <div class="col-md-12">
+        <ul class="pages">
+          <li><a href="#">1</a></li>
+          <li class="active"><a href="#">2</a></li>
+          <li><a href="#">3</a></li>
+          <li><a href="#">4</a></li>
+          <li><a href="#"><i class="fa fa-angle-double-right"></i></a></li>
+        </ul>
+      </div>
+    
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="inner-content">
+          <p>Copyright &copy; 2025 MFY.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Scripts -->
+<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'store/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'store/js/custom.js' %}"></script>
+<script src="{% static 'store/js/owl.js' %}"></script>
+<script src="{% static 'store/js/slick.js' %}"></script>
+<script src="{% static 'store/js/isotope.js' %}"></script>
+<script src="{% static 'store/js/accordions.js' %}"></script>
+
+</body>
+</html>

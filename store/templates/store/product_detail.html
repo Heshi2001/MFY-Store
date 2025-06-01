@@ -1,0 +1,217 @@
+{% load static %}
+{% load reviews %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MFY - Product Detail</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/fontawesome.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/product_detail.css' %}">
+  <link rel="stylesheet" href="{% static 'store/css/wishlist.css' %}">
+</head>
+<body>
+
+<header class="">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
+        <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" />
+        <h2 class="mb-0">MADE FOR<em> YOU</em></h2>
+      </a>
+    </div>
+  </nav>
+</header>
+
+<div class="product-detail-wrapper">
+<div class="product-detail-container">
+  <div class="row">
+    <div class="col-md-6">
+     <div class="carousel-container">
+       {% for img in images %}
+        <img src="{{ img.image.url }}" class="carousel-image {% if forloop.first %}active{% endif %}" alt="Product Image" />
+       {% endfor %}
+       <span class="carousel-nav prev">&#10094;</span>
+       <span class="carousel-nav next">&#10095;</span>
+     </div>
+   </div>
+
+    <div class="col-md-6 product-info">
+      <h2 class="product-name">{{ product.name }}</h2>
+      <p class="product-description">{{ product.description }}</p>
+      <p><strong>Material:</strong> {{ product.material }}</p>
+         {% if product.offer_price %}
+        <p class="price">
+         <span class="original-price">₹{{ product.price }}</span>
+         <span class="offer-price">₹{{ product.offer_price }}</span>
+        </p>
+       {% else %}
+        <p class="price-only">₹{{ product.price }}</p>
+       {% endif %}
+       
+       <form class="variant-form" method="POST" action="{% url 'add_to_cart' product.id %}" >
+        {% csrf_token %}
+
+        <label for="size">Size:</label>
+        <select name="size" id="size" class="dropdown" required>
+          {% for size in sizes %}
+            <option value="{{ size }}">{{ size }}</option>
+          {% endfor %}
+        </select>
+
+        <label>Color:</label>
+        <div class="color-options">
+          {% for color in colors %}
+            <label class="color-label">
+              <input type="radio" name="color" value="{{ color }}" class="color-radio" required>
+              <span class="color-box" data-color="{{ color }}"></span>
+            </label>
+          {% endfor %}
+        </div>
+        
+        <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+      </form>
+
+       {% if user.is_authenticated %}
+        {% if product.id in wishlist_product_ids %}
+             <p>This product is in your wishlist ❤️</p>
+          {% else %}
+             <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
+               {% csrf_token %}
+               <button type="submit" class="wishlist-btn">
+                <i class="fas fa-heart"></i> Add to Wishlist
+               </button>
+             </form>
+          {% endif %}
+        {% else %}
+            <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to add to wishlist or cart.</p>
+        {% endif %} 
+
+ <div class="reviews mt-4">
+  <h4>Customer Reviews</h4>
+  {% for review in review_list %}
+    <div class="single-review">
+      <strong>{{ review.user.username }}</strong>
+       <div class="review-rating">
+        {% for i in "12345" %}
+         {% with forloop.counter as star %}
+          {% if star <= review.rating %}
+          ⭐
+          {% else %}
+          ☆
+          {% endif %}
+         {% endwith %}
+       {% endfor %}
+      </div>
+      <p>{{ review.comment }}</p>
+    </div>
+  {% empty %}
+    <p>No reviews yet.</p>
+  {% endfor %}
+
+  <hr>    
+  <div class="review-form">
+  <h5>Leave a Review</h5>
+  {% if user.is_authenticated %}
+     <form method="POST" action="{% url 'submit_review' product.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit Review</button>
+      </form>
+    {% else %}
+      <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a review.</p>
+    {% endif %}
+  </div>
+</div>
+ 
+  <div class="recommendations">
+    <h4>You May Also Like</h4>
+    <div class="rec-products">
+      {% for item in recommended_products %}
+        <div class="rec-product">
+          <a href="{% url 'product_detail' item.id %}">
+            <img src="{{ item.variants.first.image.url }}" alt="{{ item.name }}">
+            <p>{{ item.name }}</p>
+            <p>₹{{ item.offer_price|default:item.price }}</p>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+ </div>
+</div>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="inner-content">
+          <p>Copyright &copy; 2025 MFY.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script id="product-variants-data" type="application/json">
+  {{ variant_map|safe }}
+</script>
+<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const images = document.querySelectorAll('.carousel-image');
+  let currentIndex = 0;
+
+  function showImage(index) {
+    images.forEach((img, i) => {
+      img.classList.remove('active');
+    });
+    images[index].classList.add('active');
+  }
+
+  showImage(currentIndex);
+
+  document.querySelector('.carousel-nav.next').addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % images.length;
+    showImage(currentIndex);
+  });
+
+  document.querySelector('.carousel-nav.prev').addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + images.length) % images.length;
+    showImage(currentIndex);
+  });
+
+  const sizeSelect = document.getElementById("size");
+  const colorRadios = document.querySelectorAll(".color-radio");
+  const variantData = JSON.parse(document.getElementById("product-variants-data").textContent);
+
+  function updateImageByVariant() {
+    const selectedSize = sizeSelect?.value;
+    const selectedColor = document.querySelector(".color-radio:checked")?.value;
+
+    if (!selectedSize || !selectedColor) return;
+
+    const matched = variantData.find(v => v.size === selectedSize && v.color === selectedColor);
+    if (matched) {
+      images.forEach((img, index) => {
+        if (img.src.includes(matched.image_url)) {
+          currentIndex = index;
+          showImage(currentIndex);
+        }
+      });
+    }
+  }
+
+  if (sizeSelect) sizeSelect.addEventListener("change", updateImageByVariant);
+  colorRadios.forEach(radio => {
+    radio.addEventListener("change", updateImageByVariant);
+  });
+});
+</script>
+
+</body>
+</html>
