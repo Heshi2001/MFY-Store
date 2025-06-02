@@ -1,0 +1,57 @@
+.page-heading {
+  padding-bottom: 30px;  /* Reduce bottom padding */
+}
+
+.faq-section {
+  padding-top: 20px !important; /* Reduce top padding */
+}
+.card-header button {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #333;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+.card-body {
+  font-size: 0.95rem;
+  background-color: #f8f9fa;
+  color: #444;
+}
+
+.card {
+  margin-bottom: 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.accordion .card-header {
+  background-color: #fff;
+}
+
+.btn-link:hover {
+  text-decoration: none;
+  color: #dc3545;
+}
+
+.go-home-btn {
+  background-color: #ff6f61;
+  border-color: #ff6f61;
+  padding: 10px 25px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 30px;
+  transition: all 0.3s ease-in-out;
+}
+
+.go-home-btn:hover {
+  background-color: #e85c50;
+  border-color: #e85c50;
+  color: #fff;
+  text-decoration: none;
+}
