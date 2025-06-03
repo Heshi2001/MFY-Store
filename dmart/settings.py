@@ -17,6 +17,8 @@ from decouple import config
 import dj_database_url
 import os
 
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='your-default-secret-key')
@@ -71,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'dmart.wsgi.application'
+
 
 DATABASES = {
     'default': dj_database_url.config(conn_max_age=600)
