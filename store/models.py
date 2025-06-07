@@ -43,7 +43,6 @@ class ProductVariant(models.Model):
     size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True, blank=True)
     age_group = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.PositiveIntegerField(blank=True, null=True)
-    image = models.ImageField(upload_to='product_variants/')
 
     def __str__(self):
         return f"{self.product.name} - {self.color.name if self.color else ''} {self.size.name if self.size else ''}"
