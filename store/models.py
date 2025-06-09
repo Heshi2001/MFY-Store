@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from cloudinary.models import CloudinaryField
 from django.utils import timezone
 
 class Category(models.Model):
@@ -49,7 +50,7 @@ class ProductVariant(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='product_images/')
+    image = CloudinaryField('image')
 
     def __str__(self):
         return f"Image for {self.product.name}"
@@ -94,8 +95,7 @@ class TeamMember(models.Model):
     name = models.CharField(max_length=100)
     role = models.CharField(max_length=100)
     description = models.TextField()
-    image = models.ImageField(upload_to='team/')
-
+    image = CloudinaryField('image')
     def __str__(self):
         return self.name
 
@@ -111,7 +111,7 @@ class Service(models.Model):
 
 class Client(models.Model):
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='clients/')
+    image = CloudinaryField('image')
     website = models.URLField(blank=True)
 
     def __str__(self):
