@@ -35,12 +35,13 @@ def product_detail(request, product_id):
 
     sizes = sorted(set(variant.size for variant in variants), key=lambda s: s.name)
     colors = sorted(set(variant.color for variant in variants), key=lambda c: c.name)
+    first_image_url = images.first().image.url if images.exists() else ""
 
     variant_map = [
         {
             "color": variant.color.name if variant.size else "",
             "size": variant.size.name if variant.color else "",
-            "image_url": variant.image.url
+            "image_url": first_image_url
         }
         for variant in variants
     ]
