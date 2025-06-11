@@ -283,48 +283,62 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // === Variants ===
-  const sizeSelect = document.getElementById("size");
-  const colorBoxes = document.querySelectorAll(".color-box");
-  const variantData = JSON.parse(document.getElementById("product-variants-data").textContent);
-  let selectedColor = null;
+const colorBoxes = document.querySelectorAll(".color-box");
+const variantData = JSON.parse(document.getElementById("product-variants-data").textContent);
+let selectedColor = null;
+let selectedSize = null;
 
-  function highlightSelectedColorBox(selectedBox) {
-    colorBoxes.forEach(box => box.classList.remove('selected'));
-    selectedBox.classList.add('selected');
-  }
+function highlightSelectedColorBox(selectedBox) {
+  colorBoxes.forEach(box => box.classList.remove('selected'));
+  selectedBox.classList.add('selected');
+}
 
-  function updateImageByVariant() {
-    const selectedSize = sizeSelect?.value;
-    if (!selectedColor || !selectedSize) return;
+function updateImageByVariant() {
+  if (!selectedColor || !selectedSize) return;
 
-    const matched = variantData.find(v => v.size === selectedSize && v.color === selectedColor);
-    if (matched) {
-      mainImage.src = matched.image_url;
-      carouselImages.forEach((img, i) => {
-        if (img.src.includes(matched.image_url)) {
-          currentIndex = i;
-          showCarouselImage(i);
-        }
-      });
-    }
-  }
+  const matched = variantData.find(v =>
+    v.size === selectedSize && String(v.color) === String(selectedColor)
+  );
 
-  colorBoxes.forEach(box => {
-    box.addEventListener("click", () => {
-      selectedColor = box.dataset.colorId;
-      highlightSelectedColorBox(box);
-      updateImageByVariant();
+  if (matched && matched.image_url) {
+    mainImage.src = matched.image_url;
+    carouselImages.forEach((img, i) => {
+      if (img.src.includes(matched.image_url)) {
+        currentIndex = i;
+        showCarouselImage(i);
+      }
     });
+  }
+}
+
+// Color selection
+colorBoxes.forEach(box => {
+  box.addEventListener("click", () => {
+    selectedColor = box.dataset.colorId;
+    highlightSelectedColorBox(box);
+    updateImageByVariant();
   });
-
-  if (sizeSelect) {
-    sizeSelect.addEventListener("change", updateImageByVariant);
-  }
-
-  if (colorBoxes.length > 0) {
-    colorBoxes[0].click();  // Auto-select first color
-  }
 });
+
+// Size selection from radio buttons
+document.querySelectorAll('.size-radio').forEach(radio => {
+  radio.addEventListener('change', function () {
+    selectedSize = this.value;
+    updateImageByVariant();
+  });
+});
+
+// Initialize selected size if already checked
+const checkedSize = document.querySelector('.size-radio:checked');
+if (checkedSize) {
+  selectedSize = checkedSize.value;
+}
+
+// Auto-select first color
+if (colorBoxes.length > 0) {
+  colorBoxes[0].click();
+}
+ }); 
 </script>
 </body>
 </html>
