@@ -23,7 +23,8 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('store.urls')),
-    path('reviews/', include('reviews.urls')), 
+    path('reviews/', include('reviews.urls')),
+    path('ratings/', include('star_ratings.urls', namespace='ratings')), 
     path('accounts/', include('django.contrib.auth.urls')),
 ]
 # Serve static and media files in development

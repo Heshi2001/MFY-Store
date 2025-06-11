@@ -32,15 +32,21 @@ def product_detail(request, product_id):
     variants = product.variants.all()
     images = product.images.all()
     reviews = Review.objects.filter(product=product).order_by('-id')
+    sizes = sorted(
+    {variant.size for variant in variants if variant.size is not None},
+    key=lambda s: s.name
+    )
+    colors = sorted(
+    {variant.color for variant in variants if variant.color is not None},
+    key=lambda c: c.name
+    )
 
-    sizes = sorted(set(variant.size for variant in variants), key=lambda s: s.name)
-    colors = sorted(set(variant.color for variant in variants), key=lambda c: c.name)
     first_image_url = images.first().image.url if images.exists() else ""
 
     variant_map = [
         {
-            "color": variant.color.name if variant.size else "",
-            "size": variant.size.name if variant.color else "",
+            "color": variant.color.name if variant.color else "",
+            "size": variant.size.name if variant.size else "",
             "image_url": first_image_url
         }
         for variant in variants

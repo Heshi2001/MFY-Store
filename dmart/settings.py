@@ -36,7 +36,7 @@ INSTALLED_APPS = [
 
     'store',
     'reviews',
-
+    'star_ratings',
     'cloudinary',
     'cloudinary_storage',
 ]

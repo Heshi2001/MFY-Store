@@ -39,7 +39,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 
 @admin.register(Color)
 class ColorAdmin(admin.ModelAdmin):
-    list_display = ['name', 'hex_code']
+    list_display = ['name', 'hex_code', 'image']
     search_fields = ['name']
 
 @admin.register(Size)

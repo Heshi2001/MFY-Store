@@ -25,7 +25,8 @@ class Product(models.Model):
 class Color(models.Model):
     name = models.CharField(max_length=30)
     hex_code = models.CharField(max_length=7)
-
+    image = CloudinaryField('image', blank=True, null=True) 
+    
     def __str__(self):
         return self.name
 
@@ -40,13 +41,19 @@ class Size(models.Model):
 
 class ProductVariant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
+    color = models.ForeignKey(Color, on_delete=models.CASCADE, null=True, blank=True)
     size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True, blank=True)
     age_group = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.color.name if self.color else ''} {self.size.name if self.size else ''}"
+        parts = [self.product.name]
+        if self.color:
+            parts.append(self.color.name)
+        if self.size:
+            parts.append(self.size.name)
+        return " - ".join(parts)
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')

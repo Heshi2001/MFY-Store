@@ -1,5 +1,6 @@
 {% load static %}
 {% load reviews %}
+{% load ratings %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,10 +13,11 @@
   <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
   <link rel="stylesheet" href="{% static 'store/css/product_detail.css' %}">
   <link rel="stylesheet" href="{% static 'store/css/wishlist.css' %}">
+  <link rel="stylesheet" href="{% static 'star-ratings/css/star-ratings.css' %}">
 </head>
 <body>
 
-<header class="">
+<header>
   <nav class="navbar navbar-expand-lg">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
@@ -27,121 +29,202 @@
 </header>
 
 <div class="product-detail-wrapper">
-<div class="product-detail-container">
-  <div class="row">
-    <div class="col-md-6">
-     <div class="carousel-container">
-       {% for img in images %}
+  <div class="product-detail-container">
+    <div class="row">
+     <div class="product-image-wrapper">
+     <!-- Mobile Carousel -->
+     <div class="carousel-container d-block d-md-none">
+      {% for img in images %}
         <img src="{{ img.image.url }}" class="carousel-image {% if forloop.first %}active{% endif %}" alt="Product Image" />
-       {% endfor %}
-       <span class="carousel-nav prev">&#10094;</span>
-       <span class="carousel-nav next">&#10095;</span>
+      {% endfor %}
+      <span class="carousel-nav prev">&#10094;</span>
+      <span class="carousel-nav next">&#10095;</span>
      </div>
-   </div>
 
-    <div class="col-md-6 product-info">
-      <h2 class="product-name">{{ product.name }}</h2>
-      <p class="product-description">{{ product.description }}</p>
-      <p><strong>Material:</strong> {{ product.material }}</p>
-         {% if product.offer_price %}
-        <p class="price">
-         <span class="original-price">₹{{ product.price }}</span>
-         <span class="offer-price">₹{{ product.offer_price }}</span>
-        </p>
-       {% else %}
-        <p class="price-only">₹{{ product.price }}</p>
-       {% endif %}
-       
-       <form class="variant-form" method="POST" action="{% url 'add_to_cart' product.id %}" >
-        {% csrf_token %}
-
-        <label for="size">Size:</label>
-        <select name="size" id="size" class="dropdown" required>
-          {% for size in sizes %}
-            <option value="{{ size }}">{{ size }}</option>
-          {% endfor %}
-        </select>
-
-        <label>Color:</label>
-        <div class="color-options">
-          {% for color in colors %}
-            <label class="color-label">
-              <input type="radio" name="color" value="{{ color }}" class="color-radio" required>
-              <span class="color-box" data-color="{{ color }}"></span>
-            </label>
-          {% endfor %}
-        </div>
-        
-        <button type="submit" class="add-to-cart-btn">Add to Cart</button>
-      </form>
-
-       {% if user.is_authenticated %}
-        {% if product.id in wishlist_product_ids %}
-             <p>This product is in your wishlist ❤️</p>
-          {% else %}
-             <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
-               {% csrf_token %}
-               <button type="submit" class="wishlist-btn">
-                <i class="fas fa-heart"></i> Add to Wishlist
-               </button>
-             </form>
-          {% endif %}
-        {% else %}
-            <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to add to wishlist or cart.</p>
-        {% endif %} 
-
- <div class="reviews mt-4">
-  <h4>Customer Reviews</h4>
-  {% for review in review_list %}
-    <div class="single-review">
-      <strong>{{ review.user.username }}</strong>
-       <div class="review-rating">
-        {% for i in "12345" %}
-         {% with forloop.counter as star %}
-          {% if star <= review.rating %}
-          ⭐
-          {% else %}
-          ☆
-          {% endif %}
-         {% endwith %}
-       {% endfor %}
-      </div>
-      <p>{{ review.comment }}</p>
-    </div>
-  {% empty %}
-    <p>No reviews yet.</p>
-  {% endfor %}
-
-  <hr>    
-  <div class="review-form">
-  <h5>Leave a Review</h5>
-  {% if user.is_authenticated %}
-     <form method="POST" action="{% url 'submit_review' product.id %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit Review</button>
-      </form>
-    {% else %}
-      <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a review.</p>
-    {% endif %}
-  </div>
-</div>
- 
-  <div class="recommendations">
-    <h4>You May Also Like</h4>
-    <div class="rec-products">
-      {% for item in recommended_products %}
-        <div class="rec-product">
-          <a href="{% url 'product_detail' item.id %}">
-            <img src="{{ item.variants.first.image.url }}" alt="{{ item.name }}">
-            <p>{{ item.name }}</p>
-            <p>₹{{ item.offer_price|default:item.price }}</p>
-          </a>
-        </div>
+  <!-- Desktop Thumbnails -->
+  <div class="d-none d-md-flex desktop-gallery">
+    <div class="thumbnail-column">
+      {% for img in images %}
+        <img src="{{ img.image.url }}" class="thumb-img" alt="Thumbnail" />
       {% endfor %}
     </div>
+    <div class="main-image-column">
+      <img id="main-product-image" src="{{ images.0.image.url }}" alt="Main Product Image" />
+    </div>
   </div>
- </div>
+</div>
+ <!-- Desktop-only Rating and Review Section below image -->
+        <div class="mt-4 d-none d-md-block">
+          <!-- Rating -->
+          <div class="product-rating">
+            <h5>Rate This Product:</h5>
+            {% ratings product %}
+          </div>
+
+          <!-- Reviews -->
+          <div class="reviews mt-4">
+            <h4>Customer Reviews</h4>
+            {% for review in review_list %}
+              <div class="single-review">
+                <strong>{{ review.user.username }}</strong>
+                <div class="review-rating">
+                  {% for i in "12345" %}
+                    {% with forloop.counter as star %}
+                      {% if star <= review.rating %}
+                        ⭐
+                      {% else %}
+                        ☆
+                      {% endif %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+                <p>{{ review.comment }}</p>
+              </div>
+            {% empty %}
+              <p>No reviews yet.</p>
+            {% endfor %}
+
+            {% if user.is_authenticated %}
+              <div class="review-form mt-3">
+                <h5>Leave a Comment</h5>
+                <form method="POST" action="{% url 'submit_review' product.id %}">
+                  {% csrf_token %}
+                  <label for="comment">Comment:</label>
+                  <textarea name="comment" required></textarea>
+                  <button type="submit">Submit Review</button>
+                </form>
+              </div>
+            {% else %}
+              <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a comment.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 product-info">
+        <h2 class="product-name">{{ product.name }}</h2>
+        <p class="product-description">{{ product.description }}</p>
+        {% if product.offer_price %}
+          <p class="price">
+            <span class="original-price">₹{{ product.price }}</span>
+            <span class="offer-price">₹{{ product.offer_price }}</span>
+          </p>
+        {% else %}
+          <p class="price-only">₹{{ product.price }}</p>
+        {% endif %}
+
+        <p><strong>Material:</strong> {{ product.material }}</p>
+
+        <form class="variant-form" method="POST" action="{% url 'add_to_cart' product.id %}">
+          {% csrf_token %}
+            <label>Size:</label>
+            <div class="size-options">
+              {% for size in sizes %}
+                <label class="size-label">
+                  <input type="radio" name="size" value="{{ size }}" class="size-radio" required>
+                  <span class="size-box">{{ size }}</span>
+                </label>
+              {% endfor %}
+            </div>
+
+          <label>Color:</label>
+          <div class="color-options">
+           {% for color in colors %}
+            <label class="color-label">
+              <input type="radio" name="color" value="{{ color.id }}" class="color-radio" required>
+               <!-- Color thumbnail -->
+               {% if color.image %}
+                 <img src="{{ color.image.url }}" alt="{{ color.name }}" class="color-thumbnail">
+               {% else %}
+                 <div class="color-thumbnail placeholder">N/A</div>
+               {% endif %}
+
+               <!-- Clickable color swatch -->
+               <span class="color-box" data-color-id="{{ color.id }}" data-color="{{ color.hex_code }}"></span>
+
+               <!-- Color name -->
+               <div class="color-name">{{ color.name }}</div>
+           </label>
+         {% endfor %}
+      </div>
+        <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+        </form>
+
+        {% if user.is_authenticated %}
+          {% if product.id in wishlist_product_ids %}
+            <p>This product is in your wishlist ❤️</p>
+          {% else %}
+            <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
+              {% csrf_token %}
+              <button type="submit" class="wishlist-btn">
+                <i class="fas fa-heart"></i> Add to Wishlist
+              </button>
+            </form>
+          {% endif %}
+        {% else %}
+          <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to add to wishlist or cart.</p>
+        {% endif %}
+
+        <!-- Mobile-only Rating and Review Section -->
+        <div class="product-rating mt-4 d-block d-md-none">
+          <h5>Rate This Product:</h5>
+          {% ratings product %}
+        </div>
+
+        <div class="reviews mt-4 d-block d-md-none">
+          <h4>Customer Reviews</h4>
+          {% for review in review_list %}
+            <div class="single-review">
+              <strong>{{ review.user.username }}</strong>
+              <div class="review-rating">
+                {% for i in "12345" %}
+                  {% with forloop.counter as star %}
+                    {% if star <= review.rating %}
+                      ⭐
+                    {% else %}
+                      ☆
+                    {% endif %}
+                  {% endwith %}
+                {% endfor %}
+              </div>
+              <p>{{ review.comment }}</p>
+            </div>
+          {% empty %}
+            <p>No reviews yet.</p>
+          {% endfor %}
+
+          {% if user.is_authenticated %}
+            <div class="review-form mt-3">
+              <h5>Leave a Comment</h5>
+              <form method="POST" action="{% url 'submit_review' product.id %}">
+                {% csrf_token %}
+                <label for="comment">Comment:</label>
+                <textarea name="comment" required></textarea>
+                <button type="submit">Submit Review</button>
+              </form>
+            </div>
+          {% else %}
+            <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a comment.</p>
+          {% endif %}
+        </div>
+
+        <div class="recommendations mt-4">
+          <h4>You May Also Like</h4>
+          <div class="rec-products">
+            {% for item in recommended_products %}
+              <div class="rec-product">
+                <a href="{% url 'product_detail' item.id %}">
+                  <img src="{{ item.variants.first.image.url }}" alt="{{ item.name }}">
+                  <p>{{ item.name }}</p>
+                  <p>₹{{ item.offer_price|default:item.price }}</p>
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -161,57 +244,87 @@
 </script>
 <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const images = document.querySelectorAll('.carousel-image');
+  // === Carousel (Mobile) ===
+  const carouselImages = document.querySelectorAll('.carousel-image');
   let currentIndex = 0;
 
-  function showImage(index) {
-    images.forEach((img, i) => {
-      img.classList.remove('active');
-    });
-    images[index].classList.add('active');
+  function showCarouselImage(index) {
+    carouselImages.forEach((img, i) => img.classList.remove('active'));
+    carouselImages[index].classList.add('active');
   }
 
-  showImage(currentIndex);
+  if (carouselImages.length > 0) {
+    showCarouselImage(currentIndex);
 
-  document.querySelector('.carousel-nav.next').addEventListener('click', () => {
-    currentIndex = (currentIndex + 1) % images.length;
-    showImage(currentIndex);
+    document.querySelector('.carousel-nav.next')?.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % carouselImages.length;
+      showCarouselImage(currentIndex);
+    });
+
+    document.querySelector('.carousel-nav.prev')?.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
+      showCarouselImage(currentIndex);
+    });
+  }
+
+  // === Thumbnail (Desktop) ===
+  const mainImage = document.getElementById("main-product-image");
+  const thumbnails = document.querySelectorAll(".thumb-img");
+
+  thumbnails.forEach((thumb) => {
+    thumb.addEventListener("click", function () {
+      mainImage.src = this.src;
+      thumbnails.forEach(t => t.classList.remove('selected'));
+      this.classList.add('selected');
+    });
   });
 
-  document.querySelector('.carousel-nav.prev').addEventListener('click', () => {
-    currentIndex = (currentIndex - 1 + images.length) % images.length;
-    showImage(currentIndex);
-  });
-
+  // === Variants ===
   const sizeSelect = document.getElementById("size");
-  const colorRadios = document.querySelectorAll(".color-radio");
+  const colorBoxes = document.querySelectorAll(".color-box");
   const variantData = JSON.parse(document.getElementById("product-variants-data").textContent);
+  let selectedColor = null;
+
+  function highlightSelectedColorBox(selectedBox) {
+    colorBoxes.forEach(box => box.classList.remove('selected'));
+    selectedBox.classList.add('selected');
+  }
 
   function updateImageByVariant() {
     const selectedSize = sizeSelect?.value;
-    const selectedColor = document.querySelector(".color-radio:checked")?.value;
-
-    if (!selectedSize || !selectedColor) return;
+    if (!selectedColor || !selectedSize) return;
 
     const matched = variantData.find(v => v.size === selectedSize && v.color === selectedColor);
     if (matched) {
-      images.forEach((img, index) => {
+      mainImage.src = matched.image_url;
+      carouselImages.forEach((img, i) => {
         if (img.src.includes(matched.image_url)) {
-          currentIndex = index;
-          showImage(currentIndex);
+          currentIndex = i;
+          showCarouselImage(i);
         }
       });
     }
   }
 
-  if (sizeSelect) sizeSelect.addEventListener("change", updateImageByVariant);
-  colorRadios.forEach(radio => {
-    radio.addEventListener("change", updateImageByVariant);
+  colorBoxes.forEach(box => {
+    box.addEventListener("click", () => {
+      selectedColor = box.dataset.colorId;
+      highlightSelectedColorBox(box);
+      updateImageByVariant();
+    });
   });
+
+  if (sizeSelect) {
+    sizeSelect.addEventListener("change", updateImageByVariant);
+  }
+
+  if (colorBoxes.length > 0) {
+    colorBoxes[0].click();  // Auto-select first color
+  }
 });
 </script>
-
 </body>
 </html>
