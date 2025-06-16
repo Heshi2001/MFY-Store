@@ -1,11 +1,11 @@
- services:
+services:
   - type: web
     name: dmart-web
     env: python
     plan: free
     buildCommand: |
       pip install -r requirements.txt
-      python manage.py collectstatic --noinput
+      python manage.py collectstatic --noinput --clear
     startCommand: gunicorn dmart.wsgi:application
     envVars:
       - key: DEBUG
@@ -27,4 +27,3 @@
       - key: ALLOWED_HOSTS
         value: mfy-store.onrender.com,localhost,127.0.0.1
     staticPublishPath: staticfiles
-
