@@ -44,13 +44,13 @@ def product_detail(request, product_id):
 
     first_image_url = images.first().image.url if images.exists() else ""
 
-    variant_map = json.dumps( [
-        {
-            "color": variant.color.name if variant.color else None,
-            "size": variant.size.name if variant.size else "",
-            "image_url": first_image_url
-        }
-        for variant in variants
+    variant_map = json.dumps([
+    {
+        "color": variant.color.name if variant.color else None,
+        "size": variant.size.name if variant.size else "",
+        "image_url": variant.image.image.url if hasattr(variant, "image") and variant.image else first_image_url
+    }
+    for variant in variants
     ])
 
     image_list = [{"image_url": img.image.url} for img in images]

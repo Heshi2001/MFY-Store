@@ -239,8 +239,9 @@
 </footer>
 
 <script id="product-variants-data" type="application/json">
-  {{ variant_map|safe }}
+  {{ variant_map|default:"[]"|safe }}
 </script>
+
 <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
@@ -283,7 +284,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // === Variants ===
 const colorBoxes = document.querySelectorAll(".color-box");
-const variantData = JSON.parse(document.getElementById("product-variants-data").textContent);
+let variantData = [];
+try {
+  const raw = document.getElementById("product-variants-data")?.textContent;
+  if (raw?.trim()) {
+    variantData = JSON.parse(raw);
+  }
+} catch (e) {
+  console.error("Invalid JSON in variant map:", e);
+}
 let selectedColor = null;
 let selectedSize = null;
 
