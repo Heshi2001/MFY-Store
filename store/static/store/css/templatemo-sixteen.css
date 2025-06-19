@@ -1225,7 +1225,16 @@ footer .inner-content p a {
 	border-bottom: 1px solid #eee;
 	padding: 5px 0;
   }
- 
+ .cart-icon-mobile {
+  display: block;
+  margin-left: auto;
+  margin-right: 10px;
+}
+
+.cart-icon-mobile .cart-icon i {
+  font-size: 22px;
+  color: #000; /* or your theme color */
+}
  .quick-help {
   background-color: #f8f9fa; /* light gray background */
   border: 1px solid #dee2e6;
