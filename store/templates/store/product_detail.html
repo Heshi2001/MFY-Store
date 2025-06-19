@@ -25,6 +25,16 @@
         <h2 class="mb-0">MADE FOR<em> YOU</em></h2>
       </a>
     </div>
+    <div class="d-lg-none cart-icon-mobile">
+         <a href="{% url 'cart' %}" class="cart-icon position-relative">
+           <i class="fa fa-shopping-cart fa-lg"></i>
+           {% if cart_items_count %}
+           <span class="cart-badge position-absolute badge rounded-pill bg-danger">
+             {{ cart_items_count }}
+           </span>
+          {% endif %}
+         </a>
+       </div>
   </nav>
 </header>
 
