@@ -246,6 +246,7 @@ header .navbar {
   text-decoration: none;
   top: 10px;
   bottom: 10px;
+  position: relative;
 }
 
 .cart-icon .fa-shopping-cart {
@@ -266,25 +267,39 @@ header .navbar {
   margin-bottom: 35px;
 }
 
-/* Mobile cart: near menu toggle */
+.cart-dropdown {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	background: white;
+	border: 1px solid #ccc;
+	min-width: 200px;
+	display: none;
+	z-index: 999;
+  }
+.cart-icon:hover .cart-dropdown {
+	display: block;
+  }
+.cart-dropdown ul {
+	list-style: none;
+	padding: 10px;
+	margin: 0;
+  }
 .cart-icon-mobile {
-  margin-left : 400px;
+  display: block;
+  margin-left: auto;
+  margin-right: 10px;
 }
 
-/* Adjust for mobile view */
-@media (max-width: 991.98px) {
-  .cart-icon-desktop {
-    display: none !important;
-  }
+.cart-icon-mobile .cart-icon i {
+  font-size: 22px;
+  color: #000; /* or your theme color */
 }
-
-/* Adjust for desktop view */
-@media (min-width: 992px) {
-  .cart-icon-mobile {
-    display: none !important;
-  }
+ .quick-help {
+  background-color: #f8f9fa; /* light gray background */
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
 }
-
 .navbar .navbar-brand {
 	float: 	left;
 	margin-top: -12px;
@@ -351,6 +366,15 @@ header .navbar {
 	line-height: 26px;
 	font-family: 'FontAwesome';
 }
+.navbar-brand img {
+	height: 40px;
+	margin-right: 10px;
+  }
+.navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .logo-container img {
 	width: 60px;            /* Adjust width as needed */
 	height: 60px;           /* Adjust height as needed */
@@ -360,19 +384,7 @@ header .navbar {
 	border: 2px solid #ccc; 
 	font-weight:bolder;/* Optional: add a border */
   }
-@media (max-width: 767.98px) {
-  /* Shrink logo */
-  .logo-container img {
-    width: 40px;
-    height: 40px;
-  }
-/* Shrink brand name "MADE FOR YOU" */
-  .navbar .navbar-brand h2 {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-}
+ 
 /* Banner Style */
 .banner {
 	position: relative;
@@ -1207,60 +1219,36 @@ footer .inner-content p a {
 		bottom: 0;
 	}
 }
-.navbar-brand img {
-	height: 40px;
-	margin-right: 10px;
-  }
-.navbar .container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-  .cart-icon {
-	position: relative;
-  }
-  .cart-dropdown {
-	position: absolute;
-	top: 100%;
-	right: 0;
-	background: white;
-	border: 1px solid #ccc;
-	min-width: 200px;
-	display: none;
-	z-index: 999;
-  }
-  .cart-icon:hover .cart-dropdown {
-	display: block;
-  }
-  .cart-dropdown ul {
-	list-style: none;
-	padding: 10px;
-	margin: 0;
-  }
-  .cart-dropdown ul li {
-	border-bottom: 1px solid #eee;
-	padding: 5px 0;
-  }
- .cart-icon-mobile {
-  display: block;
-  margin-left: auto;
-  margin-right: 10px;
-}
-
-.cart-icon-mobile .cart-icon i {
-  font-size: 22px;
-  color: #000; /* or your theme color */
-}
- .quick-help {
-  background-color: #f8f9fa; /* light gray background */
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-}
-
 /* Add spacing under the contact form on mobile */
 @media (max-width: 767.98px) {
   .contact-form {
     margin-bottom: 30px;
+  }
+}
+ @media (max-width: 767.98px) {
+  /* Shrink logo */
+  .logo-container img {
+    width: 40px;
+    height: 40px;
+  }
+/* Shrink brand name "MADE FOR YOU" */
+  .navbar .navbar-brand h2 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+/* Adjust for mobile view */
+@media (max-width: 991.98px) {
+  .cart-icon-desktop {
+    display: none !important;
+  }
+}
+
+/* Adjust for desktop view */
+@media (min-width: 992px) {
+  .cart-icon-mobile {
+    display: none !important;
   }
 }
 
