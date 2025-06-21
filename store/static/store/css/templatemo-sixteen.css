@@ -360,8 +360,19 @@ header .navbar {
 	border: 2px solid #ccc; 
 	font-weight:bolder;/* Optional: add a border */
   }
-
-
+@media (max-width: 767.98px) {
+  /* Shrink logo */
+  .logo-container img {
+    width: 40px;
+    height: 40px;
+  }
+/* Shrink brand name "MADE FOR YOU" */
+  .navbar .navbar-brand h2 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
 /* Banner Style */
 .banner {
 	position: relative;
