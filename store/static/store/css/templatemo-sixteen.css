@@ -291,12 +291,14 @@ header .navbar {
   top: 15px;
   right: 60px;
   z-index: 1050;
-  margin-left : 400px;
 }
 
 .cart-icon-mobile .cart-icon i {
+  color: #000 !important;;
+  text-decoration: none; /* or your theme color */
+}
+.cart-icon-mobile .cart-icon i {
   font-size: 22px;
-  color: #000; /* or your theme color */
 }
  .quick-help {
   background-color: #f8f9fa; /* light gray background */
