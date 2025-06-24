@@ -293,7 +293,7 @@ header .navbar {
 
 .cart-icon-mobile .cart-icon i {
   font-size: 22px;
-  color: #000; /* or your theme color */
+  color: white; /* or your theme color */
 }
 .quick-help {
   background-color: #f8f9fa; /* light gray background */
