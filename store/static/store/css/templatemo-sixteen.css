@@ -287,20 +287,15 @@ header .navbar {
   }
 .cart-icon-mobile {
   display: block;
-  position: absolute;
-  top: 15px;
-  right: 60px;
-  z-index: 1050;
+  margin-left: auto;
+  margin-right: 10px;
 }
 
 .cart-icon-mobile .cart-icon i {
-  color: #000 !important;;
-  text-decoration: none; /* or your theme color */
-}
-.cart-icon-mobile .cart-icon i {
   font-size: 22px;
+  color: #000; /* or your theme color */
 }
- .quick-help {
+.quick-help {
   background-color: #f8f9fa; /* light gray background */
   border: 1px solid #dee2e6;
   border-radius: 8px;
