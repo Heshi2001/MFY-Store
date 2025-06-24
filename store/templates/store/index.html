@@ -94,10 +94,6 @@
   <div class="banner header-text">
     <div class="owl-banner owl-carousel">
       <div class="banner-item-01">
-        <form method="GET" action="{% url 'search_results' %}" class="banner-search-form">
-          <input type="text" name="query" placeholder="Search products" class="banner-search-input">
-          <button type="submit" class="banner-search-button">Search</button>
-        </form> 
         <div class="text-content">        
           <h4>Best Offer</h4>
           <h2>New Arrivals On Sale</h2>
@@ -117,8 +113,16 @@
       </div>
     </div>
   </div>
+  
+<!-- Search Bar BELOW Banner -->
+<div class="container search-bar-container py-4">
+  <form method="GET" action="{% url 'search_results' %}" class="search-bar-form d-flex justify-content-center">
+    <input type="text" name="query" placeholder="Search products" class="search-bar-input form-control me-2" />
+    <button type="submit" class="search-bar-button btn btn-dark">Search</button>
+  </form>
+</div>                                                                 
 
-  <!-- Latest Products -->
+ <!-- Latest Products -->
   <div class="latest-products">
     <div class="container">
       <div class="row">

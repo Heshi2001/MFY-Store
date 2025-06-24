@@ -22,7 +22,19 @@ body {
   padding: 0 20px;
 }
 
+/* Hide mobile carousel on desktop */
+@media (min-width: 768px) {
+  .carousel-container {
+    display: none !important;
+  }
+}
 
+/* Hide desktop gallery on mobile */
+@media (max-width: 767px) {
+  .desktop-gallery {
+    display: none !important;
+  }
+}
 /* Carousel styles */
 .carousel-container {
   max-width: 500px;
@@ -75,7 +87,40 @@ body {
 .carousel-nav.next {
   right: 10px;
 }
+/* Thumbnail style */
+.thumbnail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+}
 
+.thumb-img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.thumb-img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.thumb-img:hover,
+.thumb-img.selected {
+  border-color: #e91e63;
+}
+
+.main-image-column img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+}
 /* Product image fallback */
 .product-info {
   max-width: 500px;
@@ -147,34 +192,102 @@ body {
   width: 150px;
 }
 
-/* Color options */
-.color-options {
+.size-options {
   display: flex;
   gap: 10px;
-  margin: 10px 0;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.color-label {
-  display: inline-block;
+.size-label {
   position: relative;
-}
-
-.color-box {
-  width: 20px;
-  height: 20px;
-  border: 1px solid #000;
-  border-radius: 50%;
-  display: inline-block;
   cursor: pointer;
-  transition: border 0.3s;
 }
 
-.color-label input[type="radio"] {
+.size-radio {
   display: none;
 }
 
-.color-label input[type="radio"]:checked + .color-box {
-  border: 2px solid #f33f3f;
+.size-box {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  font-weight: bold;
+  text-align: center;
+  min-width: 40px;
+  transition: 0.2s ease;
+}
+
+.size-radio:checked + .size-box {
+  border-color: #f33f3f;
+  background-color: #f33f3f;
+  color: #fff;
+}
+
+/* Color options */
+.color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.color-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  max-width: 100px;
+}
+
+.color-radio {
+  display: none;
+}
+
+.color-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 5px;
+}
+
+.color-thumbnail.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #eee;
+  font-size: 12px;
+  color: #666;
+}
+
+.color-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--box-color);
+  border: 2px solid #888;
+  margin-top: 6px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.color-box.selected {
+  outline: 2px solid #000;
+  box-shadow: 0 0 0 3px #ccc;
+}
+
+/* Style when selected */
+.color-radio:checked + .color-thumbnail + .color-box {
+  border-color: #000;
+  box-shadow: 0 0 0 2px #0003;
+}
+
+.color-name {
+  font-size: 13px;
+  margin-top: 4px;
 }
 
 /* Buttons */
@@ -251,13 +364,6 @@ body {
 }
 
 /* Review box */
-.reviews {
-  padding: 20px;
-  margin-top: 30px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 10px;
-}
 
 .reviews h5 {
   font-size: 22px;
@@ -309,14 +415,6 @@ input[type="submit"]:hover {
   margin: 5px 0;
 }
 
-.reviews textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
 .reviews button {
   background-color: #FF6C00;
   color: white;
@@ -330,3 +428,4 @@ input[type="submit"]:hover {
 .reviews button:hover {
   background-color: #e85d00;
 }
+ 
