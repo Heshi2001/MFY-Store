@@ -291,6 +291,7 @@ header .navbar {
   top: 15px;
   right: 60px;
   z-index: 1050;
+  margin-left : 400px;
 }
 
 .cart-icon-mobile .cart-icon i {
