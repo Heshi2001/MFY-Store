@@ -287,8 +287,10 @@ header .navbar {
   }
 .cart-icon-mobile {
   display: block;
-  margin-left: auto;
-  margin-right: 10px;
+  position: absolute;
+  top: 15px;
+  right: 60px;
+  z-index: 1050;
 }
 
 .cart-icon-mobile .cart-icon i {
