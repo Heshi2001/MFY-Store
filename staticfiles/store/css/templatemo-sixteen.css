@@ -291,7 +291,7 @@ header .navbar {
 .cart-icon-mobile {
   display: block;
   margin-left: auto;
-  margin-right: 100px;
+  margin-right: 80px;
 }
 
 .cart-icon-mobile .cart-icon i {
@@ -368,7 +368,7 @@ header .navbar {
 	outline: none;
 	border-radius: 0px;
 	position: absolute;
-	right: 30px;
+	right: 8px !important;
 	top: 20px;
 }
 .navbar .navbar-toggler-icon:after {
@@ -1315,7 +1315,7 @@ footer .inner-content p a {
   .cart-icon-mobile {
     position: absolute;
     top: 20px;
-	right: 20px;
+	right: 5px !important;
   }
   .navbar-toggler {
     margin-right: 10px;
@@ -1324,7 +1324,7 @@ footer .inner-content p a {
 .cart-icon-mobile a.login-icon {
   position: absolute;
   top: 10px!important;
-  right: 60px;
+  right: 50px;
 }
 }
 
