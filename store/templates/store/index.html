@@ -43,7 +43,7 @@
           <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
           <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
         </a>
-
+        
         <div class="d-lg-none cart-icon-mobile">
          <a href="{% url 'cart' %}" class="cart-icon position-relative">
            <i class="fa fa-shopping-cart fa-lg"></i>
@@ -52,6 +52,10 @@
              {{ cart_items_count }}
            </span>
           {% endif %}
+          </a>
+        <!-- Mobile Login Icon -->
+         <a href="{% url 'login' %}" class="login-icon text-white ml-2">
+           <i class="fa fa-user fa-lg"></i>
          </a>
        </div>
 
@@ -84,6 +88,10 @@
             {{ cart_items_count }}
           </span>
           {% endif %}
+        </a>
+        <!-- Desktop Login Icon -->
+        <a href="{% url 'login' %}" class="login-icon text-white ml-3">
+          <i class="fa fa-user fa-lg"></i>
         </a>
        </div>
       </div>

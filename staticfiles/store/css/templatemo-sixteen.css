@@ -247,7 +247,11 @@ header .navbar {
   bottom: 10px;
   position: relative;
 }
-
+.cart-icon-desktop a.login-icon
+{
+	top: 11px !important;
+	left: 50px !important;
+}
 .cart-icon .fa-shopping-cart {
   font-size: 1.6rem;
 }
@@ -293,6 +297,17 @@ header .navbar {
 .cart-icon-mobile .cart-icon i {
   font-size: 22px;
   color: white; /* or your theme color */
+}
+/* LOGIN ICON - Desktop and Mobile */
+.login-icon {
+  color: white;
+  text-decoration: none;
+  position: relative;
+  margin-left: 20px;
+}
+
+.login-icon i {
+  font-size: 1.6rem;
 }
 .quick-help {
   background-color: #f8f9fa; /* light gray background */
@@ -1300,12 +1315,17 @@ footer .inner-content p a {
   .cart-icon-mobile {
     position: absolute;
     top: 20px;
-	 right: 20px;
+	right: 20px;
   }
   .navbar-toggler {
     margin-right: 10px;
     margin-top: 4px;
   }
+.cart-icon-mobile a.login-icon {
+  position: absolute;
+  top: 10px!important;
+  right: 60px;
+}
 }
 
 @media (max-width: 576px) {
