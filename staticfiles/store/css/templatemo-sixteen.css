@@ -125,7 +125,7 @@ a.filled-button:hover {
 
 #preloader {
   overflow: hidden;
-  background: #006A4E;
+  background: white;
   left: 0;
   right: 0;
   top: 0;
@@ -373,16 +373,39 @@ header .navbar {
   justify-content: space-between;
   align-items: center;
 }
-.logo-container img {
-	width: 60px;            /* Adjust width as needed */
-	height: 60px;           /* Adjust height as needed */
-	border-radius: 50%;  /* Makes it round */
-	object-fit: cover;      /* Ensures the image scales properly inside the circle */
-	background-color: #ffffff; /* Optional: background color if the image has transparency */
-	border: 2px solid #ccc; 
-	font-weight:bolder;/* Optional: add a border */
-  }
- 
+/* Stack logo image above text */
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Style the logo image */
+.logo-img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #ffffff;
+  border: 2px solid #ccc;
+  margin-bottom: 4px; /* space between image and text */
+}
+
+/* Style the text below the logo */
+.navbar .navbar-brand .text-logo {
+  color: #fff;
+  text-transform: uppercase;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.navbar .navbar-brand .text-logo em {
+  font-style: normal;
+  color: #006A4E;
+}
+
 /* Banner Style */
 .banner {
 	position: relative;
@@ -402,10 +425,10 @@ header .navbar {
 
 /* New search bar container below banner */
 .search-bar-container {
-  background-color:#f9f9f9;
   border-radius: 8px;
   padding: 20px 10px;
-  margin-top: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
@@ -1184,8 +1207,6 @@ footer .inner-content p a {
 		position: absolute;
 		left: 30px;
 		top: 32px;
-	}
-	.navbar .navbar-brand {
 		width: auto;
 	}
 	.navbar:after {
@@ -1245,28 +1266,49 @@ footer .inner-content p a {
   /* Shrink logo */
   .logo-container img {
     width: 40px;
-    height: 40px;
+    height: 35px;
+	margin-bottom: 0px;
   }
 /* Shrink brand name "MADE FOR YOU" */
   .navbar .navbar-brand h2 {
-    font-size: 16px;
+    font-size: 13px;
+	margin: 0;
     font-weight: 600;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+    text-align: left;
   }
-}
-/* Adjust for mobile view */
-@media (max-width: 991.98px) {
-  .cart-icon-desktop {
-    display: none !important;
+  .navbar .navbar-brand {
+    margin-left: 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+	justify-content: center;
+	height: 50px;
+    overflow: hidden;
+	position: static !important;
   }
-}
 
-/* Adjust for desktop view */
-@media (min-width: 992px) {
-  .cart-icon-mobile {
-    display: none !important;
+  /* Prevent collapse pushing brand down */
+  .navbar .container {
+    padding: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
   }
-}
+
+  .cart-icon-mobile {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+  .navbar-toggler {
+    margin-right: 10px;
+    margin-top: 4px;
+  }
+ }
+
 @media (max-width: 576px) {
   .search-bar-form {
     flex-direction: row;
@@ -1280,7 +1322,7 @@ footer .inner-content p a {
   }
   .search-bar-button {
     width: 40px;                 /* square icon button */
-    height: 30px;
+    height: 33px;
     padding: 0;
     font-size: 16px;
 	display: flex;
