@@ -17,7 +17,7 @@
   <link href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
 
   <!-- Additional CSS Files -->
-  <link rel="stylesheet" href="{% static 'store/css/fontawesome.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
   <link rel="stylesheet" href="{% static 'store/css/owl.css' %}">
 </head>
@@ -118,7 +118,9 @@
 <div class="container search-bar-container py-4">
   <form method="GET" action="{% url 'search_results' %}" class="search-bar-form d-flex justify-content-center">
     <input type="text" name="query" placeholder="Search products" class="search-bar-input form-control me-2" />
-    <button type="submit" class="search-bar-button btn btn-dark">Search</button>
+    <button type="submit" class="search-bar-button btn btn-dark">
+      <i class="fas fa-search"></i>
+    </button>
   </form>
 </div>                                                                 
 
