@@ -101,7 +101,7 @@
  <!-- Desktop-only Rating and Review Section below image -->
         <div class="mt-4 d-none d-md-block">
           <!-- Rating -->
-          <div class="product-rating">
+          <div class="product-rating mt-4">
             <h5>Rate This Product:</h5>
             {% ratings product %}
           </div>
@@ -128,7 +128,7 @@
             {% empty %}
               <p>No reviews yet.</p>
             {% endfor %}
-            {% if user.is_authenticated %}
+
               <div class="review-form mt-3">
                 <h5>Leave a Comment</h5>
                 <form method="POST" action="{% url 'submit_review' product.id %}">
@@ -138,9 +138,6 @@
                   <button type="submit">Submit Review</button>
                 </form>
               </div>
-               {% else %}
-                <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a comment.</p>
-               {% endif %}
           </div>
         </div>
       </div>
@@ -194,7 +191,6 @@
         <button type="submit" class="add-to-cart-btn">Add to Cart</button>
         </form>
         
-        {% if user.is_authenticated %}
           {% if product.id in wishlist_product_ids %}
             <p>This product is in your wishlist ❤️</p>
           {% else %}
@@ -205,9 +201,6 @@
               </button>
             </form>
           {% endif %}
-         {% else %}
-          <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to add to wishlist or cart.</p>
-        {% endif %}
 
         <!-- Mobile-only Rating and Review Section -->
         <div class="product-rating mt-4 d-block d-md-none">
@@ -237,7 +230,6 @@
             <p>No reviews yet.</p>
           {% endfor %}
 
-          {% if user.is_authenticated %}
             <div class="review-form mt-3">
               <h5>Leave a Comment</h5>
               <form method="POST" action="{% url 'submit_review' product.id %}">
@@ -247,9 +239,6 @@
                 <button type="submit">Submit Review</button>
               </form>
             </div>
-              {% else %}
-               <p><a href="{% url 'login' %}?next={{ request.path }}">Login</a> to leave a comment.</p>
-              {% endif %}
             </div>
 
         <div class="recommendations mt-4">

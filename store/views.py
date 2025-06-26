@@ -3,6 +3,7 @@ from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImag
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.mail import send_mail
+from django.views.decorators.csrf import csrf_exempt
 from .forms import ContactForm, ReviewForm
 import json
 
@@ -34,32 +35,27 @@ def product_detail(request, product_id):
     images = product.images.all()
     reviews = Review.objects.filter(product=product).order_by('-id')
     sizes = sorted(
-    {variant.size for variant in variants if variant.size is not None},
-    key=lambda s: s.name
+        {variant.size for variant in variants if variant.size is not None},
+        key=lambda s: s.name
     )
     colors = sorted(
-    {variant.color for variant in variants if variant.color is not None},
-    key=lambda c: c.name
+        {variant.color for variant in variants if variant.color is not None},
+        key=lambda c: c.name
     )
-
     first_image_url = images.first().image.url if images.exists() else ""
-
     variant_map = json.dumps([
-    {
-        "color": variant.color.name if variant.color else None,
-        "size": variant.size.name if variant.size else "",
-        "image_url": variant.image.image.url if hasattr(variant, "image") and variant.image else first_image_url
-    }
-    for variant in variants
+        {
+            "color": variant.color.name if variant.color else None,
+            "size": variant.size.name if variant.size else "",
+            "image_url": variant.image.image.url if hasattr(variant, "image") and variant.image else first_image_url
+        }
+        for variant in variants
     ])
 
-    image_list = [{"image_url": img.image.url} for img in images]
-
-    wishlist_product_ids = []
-    if request.user.is_authenticated:
-        wishlist_product_ids = list(
-            Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
-        )
+    wishlist_product_ids = list(
+        Wishlist.objects.filter(user=request.user if request.user.is_authenticated else None)
+        .values_list('product_id', flat=True)
+    )
 
     recommended_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
 
@@ -77,24 +73,23 @@ def product_detail(request, product_id):
     }
     return render(request, 'store/product_detail.html', context)
 
-@login_required(login_url='login')
+
 def add_to_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    Wishlist.objects.get_or_create(user=request.user, product=product)
+    Wishlist.objects.get_or_create(user=request.user if request.user.is_authenticated else None, product=product)
     return redirect('wishlist')
 
-@login_required(login_url='login')
 def remove_from_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    Wishlist.objects.filter(user=request.user, product=product).delete()
+    Wishlist.objects.filter(user=request.user if request.user.is_authenticated else None, product=product).delete()
     return redirect('wishlist')
 
-@login_required
 def wishlist_view(request):
-    wishlist_items = Wishlist.objects.filter(user=request.user)
+    user = request.user if request.user.is_authenticated else None
+    wishlist_items = Wishlist.objects.filter(user=user)
     return render(request, 'store/wishlist.html', {'wishlist_items': wishlist_items})
 
-@login_required(login_url='login')
+@csrf_exempt  # Remove this in production if not needed
 def submit_review(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
@@ -103,7 +98,7 @@ def submit_review(request, product_id):
         if form.is_valid():
             review = form.save(commit=False)
             review.product = product
-            review.user = request.user
+            review.user = request.user if request.user.is_authenticated else None
             review.save()
             return redirect('product_detail', product_id=product.id)
 

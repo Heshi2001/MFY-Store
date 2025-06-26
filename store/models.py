@@ -63,15 +63,19 @@ class ProductImage(models.Model):
         return f"Image for {self.product.name}"
 
 class Wishlist(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('user', 'product')  # Prevent duplicates
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'product'], name='unique_user_product_wishlist')
+        ]
 
     def __str__(self):
-        return f"{self.user.username} - {self.product.name}"
-    
+        if self.user:
+            return f"{self.user.username} - {self.product.name}"
+        return f"Anonymous - {self.product.name}"
+
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -135,9 +139,12 @@ class Contact(models.Model):
 
 class Review(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='reviews')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     rating = models.IntegerField(default=5)
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return f"{self.user.username} - {self.product.name}"
+        if self.user:
+            return f"{self.user.username} - {self.product.name}"
+        return f"Anonymous - {self.product.name}"

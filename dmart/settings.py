@@ -133,6 +133,9 @@ if DEBUG:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ✅ Allow anonymous ratings
+STAR_RATINGS_ANONYMOUS = True
+
 # ✅ Cloudinary uploader configuration (for manual use like cloudinary.uploader.upload)
 cloudinary.config(
     cloud_name=config('CLOUDINARY_CLOUD_NAME'),
