@@ -75,10 +75,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'dmart.wsgi.application'
 
 
-DATABASES = {
-    'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=600)
-}
+# ✅ Database configuration: SQLite for local, PostgreSQL with SSL for production
 
+if DEBUG:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            config('DATABASE_URL', default='sqlite:///db.sqlite3')
+        )
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            config('DATABASE_URL') + '?sslmode=require',
+            conn_max_age=600
+        )
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
