@@ -77,18 +77,16 @@ WSGI_APPLICATION = 'dmart.wsgi.application'
 
 # ✅ Database configuration: SQLite for local, PostgreSQL with SSL for production
 
-if DEBUG:
+if config('USE_SQLITE', default=True, cast=bool):
     DATABASES = {
-        'default': dj_database_url.parse(
-            config('DATABASE_URL', default='sqlite:///db.sqlite3')
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
 else:
     DATABASES = {
-        'default': dj_database_url.parse(
-            config('DATABASE_URL') + '?sslmode=require',
-            conn_max_age=600
-        )
+        'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=600, ssl_require=True)
     }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -139,7 +137,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 # Fallback to console email in debug mode
-if DEBUG:
+if DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
