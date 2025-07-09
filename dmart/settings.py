@@ -74,20 +74,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'dmart.wsgi.application'
 
-
-# ✅ Database configuration: SQLite for local, PostgreSQL with SSL for production
-
-if config('USE_SQLITE', default=True, cast=bool):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL'), conn_max_age=600, ssl_require=True)
-    }
+DATABASES = {
+    'default': dj_database_url.parse(
+        config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
