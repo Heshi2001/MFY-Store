@@ -20,7 +20,7 @@ def index(request):
     return render(request, 'store/index.html', {'products': products})
 
 def products_view(request):
-    products = Product.objects.all().order_by('-id')
+    products = Product.objects.prefetch_related('images').order_by('-id')
 
     for product in products:
         product.first_image = product.images.first()  # Used for showing image
@@ -32,26 +32,25 @@ def products_view(request):
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     variants = product.variants.all()
-    images = product.images.all()
+    main_images = product.images.filter(is_main=True)
     reviews = Review.objects.filter(product=product).order_by('-id')
-    sizes = sorted(
-        {variant.size for variant in variants if variant.size is not None},
-        key=lambda s: s.name
-    )
-    colors = sorted(
-        {variant.color for variant in variants if variant.color is not None},
-        key=lambda c: c.name
-    )
-    first_image_url = images.first().image.url if images.exists() else ""
-    variant_map = json.dumps([
-        {
-            "color": variant.color.name if variant.color else None,
-            "size": variant.size.name if variant.size else "",
-            "image_url": variant.image.image.url if hasattr(variant, "image") and variant.image else first_image_url
-        }
-        for variant in variants
-    ])
+    sizes = list(dict.fromkeys(
+        [variant.size for variant in variants if variant.size is not None]
+    ))
+    colors = list(dict.fromkeys(
+        [variant.color for variant in variants if variant.color is not None]
+    ))
 
+    first_image_url =  main_images.first().image.url if main_images.exists() else ""
+   
+    variant_map = json.dumps([
+    {
+        "color": variant.color.id if variant.color else None,
+        "image_url": variant.image.url if variant.image else first_image_url
+    }
+    for variant in variants
+    ])
+   
     wishlist_product_ids = list(
         Wishlist.objects.filter(user=request.user if request.user.is_authenticated else None)
         .values_list('product_id', flat=True)
@@ -65,7 +64,7 @@ def product_detail(request, product_id):
         'sizes': sizes,
         'colors': colors,
         'variant_map': variant_map,
-        'images': images,
+        'images': main_images,
         'wishlist_product_ids': wishlist_product_ids,
         'recommended_products': recommended_products,
         'reviews': reviews,

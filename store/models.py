@@ -21,6 +21,15 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+    def get_main_image_url(self):
+        """Return the main image or fallback or a placeholder."""
+        main_image = self.images.filter(is_main=True).first()
+        if main_image:
+            return main_image.image.url
+        fallback_image = self.images.first()
+        if fallback_image:
+            return fallback_image.image.url
+        return "/static/store/images/placeholder.png"  # Make sure this file exists
 
 class Color(models.Model):
     name = models.CharField(max_length=30)
@@ -45,6 +54,7 @@ class ProductVariant(models.Model):
     size = models.ForeignKey(Size, on_delete=models.CASCADE, null=True, blank=True)
     age_group = models.CharField(max_length=20, blank=True, null=True)
     quantity = models.PositiveIntegerField(blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True)  # Variant-specific image
 
     def __str__(self):
         parts = [self.product.name]
@@ -58,6 +68,7 @@ class ProductVariant(models.Model):
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = CloudinaryField('image')
+    is_main = models.BooleanField(default=False)  # Use this to flag the main image
 
     def __str__(self):
         return f"Image for {self.product.name}"

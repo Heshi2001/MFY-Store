@@ -45,12 +45,12 @@
         <div class="collapse navbar-collapse" id="navbarResponsive">
           <ul class="navbar-nav ml-auto">           
             <li class="nav-item active">
-              <a class="nav-link" href="{% url 'index'%}">Home
-                <span class="sr-only">(current)</span>
-              </a>
+              <a class="nav-link" href="{% url 'index'%}">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'products' %}">Our Products</a>
+              <a class="nav-link" href="{% url 'products' %}">Our Products
+                <span class="sr-only">(current)</span>
+              </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="{% url 'about' %}">About Us</a>
@@ -77,72 +77,42 @@
   <div class="product-detail-container">
     <div class="row">
      <div class="product-image-wrapper">
+
+<!-- Desktop Thumbnails -->
+<div class="row justify-content-center">
+  <!-- Left Column: Image Gallery -->
+  <div class="col-md-4 d-flex">
+    <div class="desktop-gallery d-none d-md-flex">
+      <div class="thumbnail-column">
+        {% if images %}
+         {% for img in images %}
+          <img src="{{ img.image.url }}" class="thumb-img" alt="Thumbnail" />
+         {% endfor %}
+       {% else %}
+         <img src="{{ product.get_main_image_url }}" class="thumb-img" alt="Placeholder" />
+       {% endif %}
+     </div>
+     <div class="main-image-column">
+       <img id="main-product-image"
+         src="{{ images.0.image.url|default:product.get_main_image_url }}"
+         alt="Main Product Image" />
+     </div>
+    </div>
      <!-- Mobile Carousel -->
      <div class="carousel-container d-block d-md-none">
-      {% for img in images %}
-        <img src="{{ img.image.url }}" class="carousel-image {% if forloop.first %}active{% endif %}" alt="Product Image" />
-      {% endfor %}
+      {% if images %}
+        {% for img in images %}
+          <img src="{{ img.image.url }}" class="carousel-image {% if forloop.first %}active{% endif %}" alt="Product Image" />
+        {% endfor %}
+      {% else %}
+        <img src="{{ product.get_main_image_url }}" class="carousel-image active" alt="Placeholder Image" />
+      {% endif %}
       <span class="carousel-nav prev">&#10094;</span>
       <span class="carousel-nav next">&#10095;</span>
-     </div>
-
-  <!-- Desktop Thumbnails -->
-  <div class="d-none d-md-flex desktop-gallery">
-    <div class="thumbnail-column">
-      {% for img in images %}
-        <img src="{{ img.image.url }}" class="thumb-img" alt="Thumbnail" />
-      {% endfor %}
-    </div>
-    <div class="main-image-column">
-      <img id="main-product-image" src="{{ images.0.image.url }}" alt="Main Product Image" />
     </div>
   </div>
-</div>
- <!-- Desktop-only Rating and Review Section below image -->
-        <div class="mt-4 d-none d-md-block">
-          <!-- Rating -->
-          <div class="product-rating mt-4">
-            <h5>Rate This Product:</h5>
-            {% ratings product %}
-          </div>
 
-          <!-- Reviews -->
-          <div class="reviews mt-4">
-            <h4>Customer Reviews</h4>
-            {% for review in review_list %}
-              <div class="single-review">
-                <strong>{{ review.user.username }}</strong>
-                <div class="review-rating">
-                  {% for i in "12345" %}
-                    {% with forloop.counter as star %}
-                      {% if star <= review.rating %}
-                        ⭐
-                      {% else %}
-                        ☆
-                      {% endif %}
-                    {% endwith %}
-                  {% endfor %}
-                </div>
-                <p>{{ review.comment }}</p>
-              </div>
-            {% empty %}
-              <p>No reviews yet.</p>
-            {% endfor %}
-
-              <div class="review-form mt-3">
-                <h5>Leave a Comment</h5>
-                <form method="POST" action="{% url 'submit_review' product.id %}">
-                  {% csrf_token %}
-                  <label for="comment">Comment:</label>
-                  <textarea name="comment" required></textarea>
-                  <button type="submit">Submit Review</button>
-                </form>
-              </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-6 product-info">
+      <div class="col-md-7 offset-md-1 product-info">
         <h2 class="product-name">{{ product.name }}</h2>
         <p class="product-description">{{ product.description }}</p>
         {% if product.offer_price %}
@@ -169,38 +139,88 @@
             </div>
 
           <label>Color:</label>
-          <div class="color-options">
-           {% for color in colors %}
-            <label class="color-label">
-              <input type="radio" name="color" value="{{ color.id }}" class="color-radio" required>
-               <!-- Color thumbnail -->
-               {% if color.image %}
-                 <img src="{{ color.image.url }}" alt="{{ color.name }}" class="color-thumbnail">
-               {% else %}
-                 <div class="color-thumbnail placeholder">N/A</div>
-               {% endif %}
-
-               <!-- Clickable color swatch -->
-               <span class="color-box" data-color-id="{{ color.id }}" data-color="{{ color.hex_code }}"></span>
-
-               <!-- Color name -->
-               <div class="color-name">{{ color.name }}</div>
-           </label>
-         {% endfor %}
+            <div class="color-options">
+              {% for variant in variants %}
+       {% if variant.color %}
+    <label class="color-label">
+      <input type="radio" name="color" value="{{ variant.color.id }}" class="color-radio" required>
+      {% if variant.image %}
+        <img src="{{ variant.image.url }}" alt="{{ variant.color.name }}" class="color-thumbnail">
+      {% else %}
+        <img src="{{ product.get_main_image_url }}" alt="{{ variant.color.name }}" class="color-thumbnail">
+      {% endif %}
+      <span class="color-box"
+            data-color-id="{{ variant.color.id }}"
+            style="--color-value: {{ variant.color.hex_code }};">
+      </span>
+      <div class="color-name">{{ variant.color.name }}</div>
+    </label>
+         {% endif %}
+        {% endfor %}
       </div>
-        <button type="submit" class="add-to-cart-btn">Add to Cart</button>
-        </form>
-        
-          {% if product.id in wishlist_product_ids %}
-            <p>This product is in your wishlist ❤️</p>
-          {% else %}
-            <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
-              {% csrf_token %}
-              <button type="submit" class="wishlist-btn">
-                <i class="fas fa-heart"></i> Add to Wishlist
-              </button>
-            </form>
-          {% endif %}
+
+        <div class="product-buttons">
+          <form method="POST" action="{% url 'add_to_cart' product.id %}">
+            {% csrf_token %}
+            <button type="submit" class="add-to-cart-btn">Add to Cart</button>
+         </form>
+
+         {% if product.id in wishlist_product_ids %}
+           <div class="wishlist-info">
+             <p>This product is in your wishlist ❤️</p>
+           </div>
+         {% else %}
+           <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
+             {% csrf_token %}
+            <button type="submit" class="wishlist-btn">
+              <i class="fas fa-heart"></i> Add to Wishlist
+            </button>
+           </form>
+         {% endif %}
+        </div>
+      </div>
+        <!-- Desktop-only Rating and Review Section below image -->
+        <div class="mt-4 d-none d-md-block rating-review-box">
+          <!-- Rating -->
+          <div class="product-rating mt-4">
+            <h5>Rate This Product:</h5>
+            {% ratings product %}
+          </div>
+
+           <!-- Reviews -->
+          <div class="reviews mt-4">
+            <h4>Customer Reviews</h4>
+            {% for review in review_list %}
+              <div class="single-review">
+                <strong>{{ review.user.username }}</strong>
+                <div class="review-rating">
+                  {% for i in "12345" %}
+                    {% with forloop.counter as star %}
+                      {% if star <= review.rating %}
+                        ⭐
+                      {% else %}
+                        ☆
+                      {% endif %}
+                    {% endwith %}
+                  {% endfor %}
+                </div>
+                <p>{{ review.comment }}</p>
+              </div>
+            {% empty %}
+              <p>No reviews yet.</p>
+            {% endfor %}
+
+             <div class="review-form mt-3">
+                <h5>Leave a Comment</h5>
+                <form method="POST" action="{% url 'submit_review' product.id %}">
+                  {% csrf_token %}
+                  <label for="comment">Comment:</label>
+                  <textarea name="comment" required></textarea>
+                  <button type="submit">Submit Review</button>
+                </form>
+              </div>
+          </div>
+        </div>
 
         <!-- Mobile-only Rating and Review Section -->
         <div class="product-rating mt-4 d-block d-md-none">
@@ -272,6 +292,10 @@
   </div>
 </footer>
 
+<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+
 <script id="product-variants-data" type="application/json">
   {{ variant_map|default:"[]"|safe }}
 </script>
@@ -279,108 +303,98 @@
 <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
 <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // === Carousel (Mobile) ===
-  const carouselImages = document.querySelectorAll('.carousel-image');
-  let currentIndex = 0;
-
-  function showCarouselImage(index) {
-    carouselImages.forEach((img, i) => img.classList.remove('active'));
-    carouselImages[index].classList.add('active');
-  }
-
-  if (carouselImages.length > 0) {
-    showCarouselImage(currentIndex);
-
-    document.querySelector('.carousel-nav.next')?.addEventListener('click', () => {
-      currentIndex = (currentIndex + 1) % carouselImages.length;
-      showCarouselImage(currentIndex);
-    });
-
-    document.querySelector('.carousel-nav.prev')?.addEventListener('click', () => {
-      currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
-      showCarouselImage(currentIndex);
-    });
-  }
-
-  // === Thumbnail (Desktop) ===
   const mainImage = document.getElementById("main-product-image");
+  const carouselImages = document.querySelectorAll(".carousel-image");
   const thumbnails = document.querySelectorAll(".thumb-img");
+  const colorBoxes = document.querySelectorAll(".color-box");
+  const colorThumbnails = document.querySelectorAll(".color-thumbnail");
 
-  thumbnails.forEach((thumb) => {
+  let currentIndex = 0;
+  let selectedColor = null;
+
+  // Parse variant map from hidden JSON script
+  let variantData = [];
+  try {
+    const raw = document.getElementById("product-variants-data")?.textContent;
+    if (raw?.trim()) {
+      variantData = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error("Invalid variant map JSON:", e);
+  }
+
+ function showCarouselImage(index) {
+    carouselImages.forEach((img, i) => {
+      img.classList.toggle("active", i === index);
+    });
+  }
+
+  function updateMainImageByColor(colorId) {
+    const matched = variantData.find(v => String(v.color) === String(colorId));
+    if (matched && matched.image_url) {
+      if (mainImage) {
+        mainImage.src = matched.image_url;
+      }
+
+      // Update carousel image if it exists
+      const matchCarousel = Array.from(carouselImages).find(img => img.src === matched.image_url);
+
+      if (matchCarousel) {
+        carouselImages.forEach(img => img.classList.remove("active"));
+        matchCarousel.classList.add("active");
+        currentIndex = Array.from(carouselImages).indexOf(matchCarousel);
+      } else {
+       if (carouselImages.length > 0) {
+          carouselImages.forEach(img => img.classList.remove("active"));
+          carouselImages[0].src = matched.image_url;
+          carouselImages[0].classList.add("active");
+          currentIndex = 0;
+    }
+   }
+  }
+}
+  function handleColorSelection(box) {
+    document.querySelectorAll(".color-box").forEach(el => el.classList.remove("selected"));
+    box.classList.add("selected");
+    selectedColor = box.dataset.colorId;
+    updateMainImageByColor(selectedColor);
+  }
+
+  // Color click (circle or thumbnail)
+  document.querySelectorAll(".color-label").forEach(label => {
+    label.addEventListener("click", function () {
+      const box = label.querySelector(".color-box");
+      handleColorSelection(box);
+    });
+  });
+
+  // Desktop thumbnails
+  thumbnails.forEach(thumb => {
     thumb.addEventListener("click", function () {
       mainImage.src = this.src;
-      thumbnails.forEach(t => t.classList.remove('selected'));
-      this.classList.add('selected');
+      thumbnails.forEach(t => t.classList.remove("selected"));
+      this.classList.add("selected");
     });
   });
 
-  // === Variants ===
-const colorBoxes = document.querySelectorAll(".color-box");
-let variantData = [];
-try {
-  const raw = document.getElementById("product-variants-data")?.textContent;
-  if (raw?.trim()) {
-    variantData = JSON.parse(raw);
-  }
-} catch (e) {
-  console.error("Invalid JSON in variant map:", e);
-}
-let selectedColor = null;
-let selectedSize = null;
-
-function highlightSelectedColorBox(selectedBox) {
-  colorBoxes.forEach(box => box.classList.remove('selected'));
-  selectedBox.classList.add('selected');
-}
-
-function updateImageByVariant() {
-  if (!selectedColor || !selectedSize) return;
-
-  const matched = variantData.find(v =>
-    v.size === selectedSize && String(v.color) === String(selectedColor)
-  );
-
-  if (matched && matched.image_url) {
-    mainImage.src = matched.image_url;
-    carouselImages.forEach((img, i) => {
-      if (img.src.includes(matched.image_url)) {
-        currentIndex = i;
-        showCarouselImage(i);
-      }
-    });
-  }
-}
-
-// Color selection
-colorBoxes.forEach(box => {
-  box.addEventListener("click", () => {
-    selectedColor = box.dataset.colorId;
-    highlightSelectedColorBox(box);
-    updateImageByVariant();
+  // Mobile carousel navigation
+  document.querySelector(".carousel-nav.next")?.addEventListener("click", () => {
+    console.log("Next clicked");
+    currentIndex = (currentIndex + 1) % carouselImages.length;
+    showCarouselImage(currentIndex);
   });
-});
 
-// Size selection from radio buttons
-document.querySelectorAll('.size-radio').forEach(radio => {
-  radio.addEventListener('change', function () {
-    selectedSize = this.value;
-    updateImageByVariant();
+  document.querySelector(".carousel-nav.prev")?.addEventListener("click", () => {
+    console.log("Next clicked");
+    currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
+    showCarouselImage(currentIndex);
   });
+
+  
 });
-
-// Initialize selected size if already checked
-const checkedSize = document.querySelector('.size-radio:checked');
-if (checkedSize) {
-  selectedSize = checkedSize.value;
-}
-
-// Auto-select first color
-if (colorBoxes.length > 0) {
-  colorBoxes[0].click();
-}
- }); 
 </script>
 </body>
-</html>
+</html> 

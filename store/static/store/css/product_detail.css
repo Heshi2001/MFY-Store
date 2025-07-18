@@ -2,7 +2,7 @@ body {
   padding: 0;
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  background-color:#fff
+  background-color:#fff ;
 }
 
 /* Wrapper to separate from navbar */
@@ -39,21 +39,24 @@ body {
 .carousel-container {
   max-width: 500px;
   width: 100%;
+  height: auto;
   overflow: hidden;
   border-radius: 10px;
   position: relative;
   margin-bottom: 20px;
-  
+  z-index: 2;
 }
 
 .carousel-image {
   display: none;
-  width: 100%;               /* Full width of its container */
-  max-width: 500px;          /* Optional max width */
-  height: 500px;             /* Fixed height */
-  object-fit: cover;         /* Crop and fit image nicely */
+  width: 100%;               
+  max-width: 500px;          
+  height: 500px;             
+  object-fit: cover;         
   border-radius: 10px;
   margin: 0 auto; 
+  z-index: 1;
+  position: relative;
 }
 
 .carousel-image.active {
@@ -62,7 +65,7 @@ body {
 
 .carousel-nav {
   position: absolute;
-  top: 50%;
+  top: 70%;
   transform: translateY(-50%);
   font-size: 15px;
   color: #fff;
@@ -98,15 +101,19 @@ body {
   flex-direction: column;
   gap: 10px;
   max-height: 500px;
+  max-width: 80px;
+  margin-right: 10px;
   overflow-y: auto;
 }
 
 .thumb-img {
-  width: 80px;
+  width: 70px;
   height: 100px;
   object-fit: cover;
   cursor: pointer;
   border: 2px solid transparent;
+  border-radius: 5px;
+  margin-bottom: 8px;
 }
 .thumb-img {
   width: 80px;
@@ -122,10 +129,19 @@ body {
 }
 
 .main-image-column img {
+  max-width: 300px;
   width: 100%;
   max-height: 500px;
   object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
+.desktop-gallery {
+  display: flex;
+  align-items: flex-start;
+  margin-left: auto;
+}
+
 /* Product image fallback */
 .product-info {
   max-width: 500px;
@@ -273,7 +289,7 @@ body {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: var(--box-color);
+  background-color: var(--color-value, #ccc);
   border: 2px solid #888;
   margin-top: 6px;
   transition: border-color 0.3s, box-shadow 0.3s;
@@ -296,35 +312,74 @@ body {
 }
 
 /* Buttons */
+
+.product-buttons {
+  display: flex;
+  gap: 12px; /* Space between buttons */
+  margin-top: 15px;
+  flex-wrap: wrap; /* Wrap on small screens */
+}
+
+.product-buttons form {
+  margin: 0; /* Remove default form spacing */
+}
+
 .add-to-cart-btn {
   padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 15px;
   background-color: #f33f3f;
   border: none;
   color: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.add-to-cart-btn:hover {
-  background-color: #d32f2f;
+  min-width: fit-content; /* ✅ allow natural width */
+  white-space: nowrap;     /* ✅ prevent line break */
+  box-sizing: border-box;
 }
 
 .wishlist-btn {
+  padding: 10px 20px;
+  font-size: 16px;      /* ✅ ensure font size matches */
+  border-radius: 4px;
+  cursor: pointer; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: fit-content;
   background: none;
   border: 2px solid #f33f3f;
   color: #f33f3f;
-  padding: 8px 12px;
-  margin-left: 10px;
-  border-radius: 4px;
-  cursor: pointer; 
+  height: 44px; 
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.add-to-cart-btn:hover {
+  background-color: #d32f2f;
 }
 
 .wishlist-btn:hover {
   background-color: #ffe9e9;
 }
 
-/* Reviews and recommendations */
+.wishlist-info p {
+  margin: 0;
+  color: #f33f3f;
+  font-weight: 500;
+}
+.wishlist-btn i {
+  margin-right: 6px;
+}
+
+
+/*Rating and Reviews */
+.rating-review-box{
+  margin-left: 100px;
+}
+
 .reviews{
   padding: 20px;
   margin-top: 30px;
@@ -336,6 +391,8 @@ body {
   margin-right: auto;
 }
 
+
+/*recommendations*/
 .recommendations {
   margin-top: 30px;
 }
@@ -403,7 +460,7 @@ input[type="submit"] {
 
 .review-form button[type="submit"]:hover,
 input[type="submit"]:hover {
-  background-color: #d22e2e;
+  background-color: black;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
@@ -433,4 +490,6 @@ input[type="submit"]:hover {
 .reviews button:hover {
   background-color: #e85d00;
 }
- 
+.mt-5 {
+  margin-top: 3rem !important;
+}
