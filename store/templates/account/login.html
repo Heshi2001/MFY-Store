@@ -1,0 +1,138 @@
+{% load static %}
+{% load widget_tweaks %}
+{% load socialaccount %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="" />
+  <title>Login | MFY</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap core CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Additional CSS Files -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}" />
+  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}" />
+  <link rel="stylesheet" href="{% static 'store/css/login.css' %}" />
+ </head>
+
+<body>
+  <div class="auth-container">
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="authTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">{% trans "Login" %}</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab">{% trans "Signup" %}</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="otp-tab" data-bs-toggle="tab" data-bs-target="#otp" type="button" role="tab">{% trans "OTP Login" %}</button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body tab-content">
+        <!-- Login Tab -->
+        <div class="tab-pane fade show active" id="login" role="tabpanel">
+          <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+           <div class="mb-3">
+            <label for="{{ form.login.id_for_label }}" class="form-label">{% trans "Email or Username" %}</label>
+            {{ form.login|add_class:"form-control" }}
+            {{ form.login.errors }}
+           </div>
+           <div class="mb-3">
+            <label for="{{ form.password.id_for_label }}" class="form-label">{% trans "Password" %}</label>
+            {{ form.password|add_class:"form-control" }}
+            {{ form.password.errors }}
+           </div>
+            <div class="mb-3 form-check">
+              {{ form.remember }} <label class="form-check-label" for="id_remember">{% trans "Remember me" %}</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-custom">{% trans "Login" %}</button>
+            <p class="text-muted mt-2"><a href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a></p>
+          </form>
+        </div>
+
+   <!-- Signup Tab -->
+<div class="tab-pane fade" id="signup" role="tabpanel">
+  <form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {{ signup_form.non_field_errors }}
+
+    <div class="mb-3">
+      <label for="{{ signup_form.username.id_for_label }}" class="form-label">{% trans "Username" %}</label>
+      {{ signup_form.username|add_class:"form-control" }}
+      {{ signup_form.username.errors }}
+    </div>
+    <div class="mb-3">
+     <label for="{{ signup_form.email.id_for_label }}" class="form-label">{% trans "Email" %}</label>
+     {{ signup_form.email|add_class:"form-control" }}
+     {{ signup_form.email.errors }}
+    </div>
+    <div class="mb-3">
+      <label for="{{ signup_form.password1.id_for_label }}" class="form-label">{% trans "Password" %}</label>
+      {{ signup_form.password1|add_class:"form-control" }}
+      {{ signup_form.password1.errors }}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ signup_form.password2.id_for_label }}" class="form-label">{% trans "Confirm Password" %}</label>
+      {{ signup_form.password2|add_class:"form-control" }}
+      {{ signup_form.password2.errors }}
+    </div>
+
+    <button type="submit" class="btn btn-success btn-custom">{% trans "Create Account" %}</button>
+  </form>
+</div>
+
+        <!-- OTP Login Tab -->
+        <div class="tab-pane fade" id="otp" role="tabpanel">
+          <form method="post" action="{% url 'otp_login' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="id_email" class="form-label">{% trans "Email for OTP" %}</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-warning btn-custom">{% trans "Send OTP" %}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+   
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="inner-content">
+            <p>Copyright &copy; 2025 MFY.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'store/js/custom.js' %}"></script>
+  <script src="{% static 'store/js/owl.js' %}"></script>
+  <script src="{% static 'store/js/slick.js' %}"></script>
+  <script src="{% static 'store/js/isotope.js' %}"></script>
+  <script src="{% static 'store/js/accordions.js' %}"></script>
+</body>
+</html>                             

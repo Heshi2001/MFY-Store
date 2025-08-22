@@ -2,8 +2,9 @@ asgiref==3.8.1
 certifi==2025.4.26
 charset-normalizer==3.4.2
 cloudinary==1.44.0
-dj-database-url==2.3.0
+dj-database-url==3.0.1
 Django==5.2
+django-allauth==65.10.0
 django-braces==1.17.0
 django-cloudinary-storage==0.3.0
 django-model-utils==5.0.0
@@ -13,7 +14,9 @@ gunicorn==23.0.0
 idna==3.10
 packaging==25.0
 pillow==11.2.1
+psycopg2==2.9.10
 psycopg2-binary==2.9.10
+PyJWT==2.10.1
 python-decouple==3.8
 python-dotenv==1.1.0
 requests==2.32.3

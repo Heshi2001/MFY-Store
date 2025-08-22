@@ -33,6 +33,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'django_extensions',
+    'widget_tweaks',
+    'bootstrap4',
+    
+     # Allauth apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
+    # Social providers
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.apple',
 
     'store',
     'reviews',
@@ -43,12 +56,32 @@ INSTALLED_APPS = [
 
 SITE_ID = 1
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Django default
+    'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
+]
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Allow login with either username or email
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+
+# Show these fields on signup
+ACCOUNT_SIGNUP_FIELDS = ["username", "email", "password1", "password2"]
+
+# Other options
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_UNIQUE_EMAIL = True
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Add this just after SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'allauth.account.middleware.AccountMiddleware', 
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -59,7 +92,7 @@ ROOT_URLCONF = 'dmart.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'store/templates'],
+        'DIRS': [os.path.join(BASE_DIR, 'store', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': { 
             'context_processors': [
@@ -105,7 +138,7 @@ USE_TZ = True
 # ✅ Static files
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'store/static'),
+    os.path.join(BASE_DIR, "store/static")
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -125,12 +158,13 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': config('CLOUDINARY_API_SECRET'),
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_BACKEND = config('EMAIL_BACKEND')
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL')
 
 # Fallback to console email in debug mode
 if DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
@@ -147,3 +181,4 @@ cloudinary.config(
     api_key=config('CLOUDINARY_API_KEY'),
     api_secret=config('CLOUDINARY_API_SECRET')
 )
+

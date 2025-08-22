@@ -2,10 +2,21 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.views.decorators.csrf import csrf_exempt
 from .forms import ContactForm, ReviewForm
+from django.contrib.auth.models import User
+from .models import EmailOTP
 import json
+import random
+from datetime import timedelta
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from allauth.account.views import LoginView
+from allauth.account.forms import SignupForm
+
+User = get_user_model()
 
 def index(request):
     query = request.GET.get('q')
@@ -253,3 +264,86 @@ def search_view(request):
 
 def faq(request):
     return render(request, 'store/faq.html')
+
+class CombinedLoginView(LoginView):
+    template_name = "account/login.html"  # your combined template
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Provide an empty signup form so the inputs render
+        ctx["signup_form"] = SignupForm()  # or SignupForm(request=self.request)
+        return ctx
+    
+def send_email_otp(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+
+        # Check if email exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            messages.error(request, "No account found with this email.")
+            return redirect("account_login")
+
+        # Generate OTP
+        otp = str(random.randint(100000, 999999))
+
+        # Save OTP in DB (delete old ones first)
+        EmailOTP.objects.filter(user=user).delete()
+        EmailOTP.objects.create(user=user, otp=otp)
+
+        # Send OTP via email
+        send_mail(
+            subject="Your OTP Code",
+            message=f"Your OTP code is {otp}",
+            from_email="your-email@example.com",
+            recipient_list=[email],
+        )
+
+        # Store user_id in session for verification step
+        request.session["otp_user_id"] = user.id
+
+        messages.success(request, "OTP sent to your email.")
+        return redirect("verify_email_otp")   # ✅ go to OTP verification page
+
+    return redirect("account_login")
+
+def verify_email_otp(request):
+    if request.method == "POST":
+        otp_entered = request.POST.get("otp")
+        user_id = request.session.get("otp_user_id")
+
+        if not user_id:
+            messages.error(request, "Session expired. Please request OTP again.")
+            return redirect("send_email_otp")
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect("send_email_otp")
+
+        try:
+            otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
+        except EmailOTP.DoesNotExist:
+            messages.error(request, "Invalid OTP.")
+            return render(request, "store/verify_otp.html")
+
+        # Check if expired
+        if otp_obj.is_expired():
+            otp_obj.delete()
+            messages.error(request, "OTP expired. Please request again.")
+            return redirect("send_email_otp")
+
+        # ✅ Valid OTP
+        otp_obj.delete()  # remove after use
+        login(request, user)
+        del request.session["otp_user_id"]
+
+        messages.success(request, "OTP verified successfully. You are now logged in.")
+        return redirect("otp_success")
+
+    return render(request, "store/verify_otp.html")
+
+def otp_success(request):
+    return render(request, "store/otp_success.html")

@@ -16,16 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from store.views import CombinedLoginView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('store.urls')),
     path('reviews/', include('reviews.urls')),
     path('ratings/', include('star_ratings.urls', namespace='ratings')), 
-    path('accounts/', include('django.contrib.auth.urls')),
+    path("accounts/login/", CombinedLoginView.as_view(), name="account_login"),
+    path('accounts/', include('allauth.urls')),
+    path('', include('store.urls')),
 ]
 # Serve static and media files in development
 if settings.DEBUG:
