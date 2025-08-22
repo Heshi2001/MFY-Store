@@ -17,7 +17,7 @@ urlpatterns = [
     path('add_to_wishlist/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     path('remove_from_wishlist/<int:product_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
     path('submit_review/<int:product_id>/', views.submit_review, name='submit_review'),
-    path("otp-login/", views.send_email_otp, name="otp_login"),
-    path("verify-email-otp/", views.verify_email_otp, name="verify_email_otp"),
-    path("otp-success/", views.otp_success, name="otp_success"),
+    path('otp-login/', views.send_email_otp, name='otp_login'),
+    path('verify-email-otp/', views.verify_email_otp, name='verify_email_otp'),
+    path('otp-success/', views.otp_success, name='otp_success'),
 ]

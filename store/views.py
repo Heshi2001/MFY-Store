@@ -266,12 +266,12 @@ def faq(request):
     return render(request, 'store/faq.html')
 
 class CombinedLoginView(LoginView):
-    template_name = "account/login.html"  # your combined template
+    template_name = "account/login.html"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        # Provide an empty signup form so the inputs render
-        ctx["signup_form"] = SignupForm()  # or SignupForm(request=self.request)
+        from allauth.account.forms import SignupForm
+        ctx["signup_form"] = SignupForm()
         return ctx
     
 def send_email_otp(request):

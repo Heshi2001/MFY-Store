@@ -25,7 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('reviews/', include('reviews.urls')),
     path('ratings/', include('star_ratings.urls', namespace='ratings')), 
-    path("accounts/login/", CombinedLoginView.as_view(), name="account_login"),
+    path('accounts/login/', CombinedLoginView.as_view(), name='account_login'),
     path('accounts/', include('allauth.urls')),
     path('', include('store.urls')),
 ]
