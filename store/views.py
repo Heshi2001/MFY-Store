@@ -62,10 +62,12 @@ def product_detail(request, product_id):
     for variant in variants
     ])
    
-    wishlist_product_ids = list(
-        Wishlist.objects.filter(user=request.user if request.user.is_authenticated else None)
-        .values_list('product_id', flat=True)
-    )
+    if request.user.is_authenticated:
+        wishlist_product_ids = list(
+        Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+        )
+    else:
+        wishlist_product_ids = []
 
     recommended_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
 
@@ -268,12 +270,15 @@ def faq(request):
 class CombinedLoginView(LoginView):
     template_name = "account/login.html"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from allauth.account.forms import SignupForm
+def get_context_data(self, **kwargs):
+    ctx = super().get_context_data(**kwargs)
+    from allauth.account.forms import SignupForm
+    try:
         ctx["signup_form"] = SignupForm()
-        return ctx
-    
+    except Exception:
+        ctx["signup_form"] = None
+    return ctx
+   
 def send_email_otp(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -293,12 +298,16 @@ def send_email_otp(request):
         EmailOTP.objects.create(user=user, otp=otp)
 
         # Send OTP via email
-        send_mail(
-            subject="Your OTP Code",
-            message=f"Your OTP code is {otp}",
-            from_email="your-email@example.com",
-            recipient_list=[email],
-        )
+        try:
+             send_mail(
+                subject="Your OTP Code",
+                message=f"Your OTP code is {otp}",
+                from_email="your-email@example.com",
+                recipient_list=[email],
+            )
+        except Exception as e:
+            messages.error(request, "Unable to send OTP email. Please try again later.")
+            return redirect("account_login")     
 
         # Store user_id in session for verification step
         request.session["otp_user_id"] = user.id
