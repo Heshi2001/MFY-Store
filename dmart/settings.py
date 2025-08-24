@@ -33,7 +33,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'django_extensions',
     'widget_tweaks',
     'bootstrap4',
     
@@ -53,6 +52,9 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ["django_extensions"]
 
 SITE_ID = 1
 
