@@ -10,7 +10,7 @@ class TwitterOAuth2Account(ProviderAccount):
     def get_profile_url(self):
         username = self.get_username()
         if username:
-            return "https://twitter.com/" + username
+            return "https://x.com/" + username
         return None
 
     def get_avatar_url(self):
@@ -19,7 +19,7 @@ class TwitterOAuth2Account(ProviderAccount):
 
 class TwitterOAuth2Provider(OAuth2Provider):
     id = "twitter_oauth2"
-    name = "Twitter"
+    name = "X"
     account_class = TwitterOAuth2Account
     oauth2_adapter_class = TwitterOAuth2Adapter
     pkce_enabled_default = True

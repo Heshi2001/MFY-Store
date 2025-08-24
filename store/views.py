@@ -270,14 +270,14 @@ def faq(request):
 class CombinedLoginView(LoginView):
     template_name = "account/login.html"
 
-def get_context_data(self, **kwargs):
-    ctx = super().get_context_data(**kwargs)
-    from allauth.account.forms import SignupForm
-    try:
-        ctx["signup_form"] = SignupForm()
-    except Exception:
-        ctx["signup_form"] = None
-    return ctx
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        try:
+            ctx["signup_form"] = SignupForm()
+        except Exception:
+            ctx["signup_form"] = None
+        return ctx
+
    
 def send_email_otp(request):
     if request.method == "POST":
@@ -302,7 +302,7 @@ def send_email_otp(request):
              send_mail(
                 subject="Your OTP Code",
                 message=f"Your OTP code is {otp}",
-                from_email="your-email@example.com",
+                from_email="euliheshicleetus2001@gmail.com",
                 recipient_list=[email],
             )
         except Exception as e:

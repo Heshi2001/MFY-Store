@@ -73,7 +73,7 @@ ACCOUNT_SIGNUP_FIELDS = ["username", "email", "password1", "password2"]
 # Other options
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 ACCOUNT_UNIQUE_EMAIL = True
-
+ACCOUNT_USERNAME_REQUIRED = True  # since username is part of signup
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
