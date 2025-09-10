@@ -36,17 +36,25 @@ def index(request):
 
 @login_required
 def account_dashboard(request):
-    profile = UserProfile.objects.get_or_create(user=request.user)[0]
-    addresses = Address.objects.filter(user=request.user)
-    orders = Order.objects.filter(user=request.user)
-    wishlist = Wishlist.objects.filter(user=request.user)
+    # Ensure user has a profile
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
 
-    return render(request, "account/dashboard.html", {
+    # Fetch related data
+    addresses = Address.objects.filter(user=request.user)
+    orders = Order.objects.filter(user=request.user).order_by("-created_at")
+    wishlist = Wishlist.objects.filter(user=request.user)
+    user_coupons = Coupon.objects.filter(users=request.user, is_active=True)
+
+    context = {
         "profile": profile,
         "addresses": addresses,
         "orders": orders,
         "wishlist": wishlist,
-    })
+        "user_coupons": user_coupons,
+    }
+
+    return render(request, "account/dashboard.html", context)
+
 
 @login_required
 def account_settings(request):
@@ -401,13 +409,13 @@ def verify_email_otp(request):
 
         if not user_id:
             messages.error(request, "Session expired. Please request OTP again.")
-            return redirect("send_email_otp")
+            return redirect("otp_login")
 
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             messages.error(request, "User not found.")
-            return redirect("send_email_otp")
+            return redirect("otp_login")
 
         try:
             otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
@@ -419,7 +427,7 @@ def verify_email_otp(request):
         if otp_obj.is_expired():
             otp_obj.delete()
             messages.error(request, "OTP expired. Please request again.")
-            return redirect("send_email_otp")
+            return redirect("otp_login")
 
         # ✅ Valid OTP
         otp_obj.delete()  # remove after use
@@ -432,7 +440,7 @@ def verify_email_otp(request):
     return render(request, "store/verify_otp.html")
 
 def otp_success(request):
-    return render(request, "store/otp_success.html")
+    return render(request, "store/verify_email_otp.html")
 
 @login_required
 def payments(request):
@@ -454,12 +462,6 @@ class CustomPasswordChangeView(PasswordChangeView):
         messages.success(self.request, "✅ Your password has been updated successfully!")
 
         return response
-
-def account_dashboard(request):
-    user_coupons = Coupon.objects.filter(users=request.user, is_active=True)
-    return render(request, "account/dashboard.html", {
-        "user_coupons": user_coupons
-    })
 
 def account_offers(request):
     coupons = Coupon.objects.filter(users=request.user, is_active=True)
