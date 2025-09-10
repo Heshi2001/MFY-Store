@@ -409,7 +409,7 @@ def verify_email_otp(request):
 
         if not user_id:
             messages.error(request, "Session expired. Please request OTP again.")
-            return redirect("otp_login")
+            return redirect("otp_login")  # ✅ fixed
 
         try:
             user = User.objects.get(id=user_id)
@@ -421,24 +421,23 @@ def verify_email_otp(request):
             otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
         except EmailOTP.DoesNotExist:
             messages.error(request, "Invalid OTP.")
-            return render(request, "store/verify_otp.html")
+            return render(request, "store/verify_email_otp.html")  # ✅ fixed template
 
-        # Check if expired
         if otp_obj.is_expired():
             otp_obj.delete()
             messages.error(request, "OTP expired. Please request again.")
             return redirect("otp_login")
 
-        # ✅ Valid OTP
-        otp_obj.delete()  # remove after use
+        # ✅ OTP valid
+        otp_obj.delete()
         login(request, user)
         del request.session["otp_user_id"]
-
         messages.success(request, "OTP verified successfully. You are now logged in.")
         return redirect("otp_success")
 
-    return render(request, "store/verify_otp.html")
+    return render(request, "store/verify_email_otp.html")  # ✅ fixed template
 
+            
 def otp_success(request):
     return render(request, "store/verify_email_otp.html")
 
