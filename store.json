@@ -1,0 +1,300 @@
+[
+{
+  "model": "store.category",
+  "pk": 1,
+  "fields": {
+    "name": "Dress"
+  }
+},
+{
+  "model": "store.product",
+  "pk": 1,
+  "fields": {
+    "category": 1,
+    "name": "T-Shirt",
+    "price": "700.00",
+    "offer_price": "500.00",
+    "description": "Best Printed styled t-shirt",
+    "material": "Cotton",
+    "rating": 5,
+    "stock": 10
+  }
+},
+{
+  "model": "store.product",
+  "pk": 2,
+  "fields": {
+    "category": 1,
+    "name": "Leganga",
+    "price": "20000.00",
+    "offer_price": "10000.00",
+    "description": "Perfect fit for Wedding",
+    "material": "georgette",
+    "rating": 5,
+    "stock": 100
+  }
+},
+{
+  "model": "store.product",
+  "pk": 3,
+  "fields": {
+    "category": 1,
+    "name": "Modern Top",
+    "price": "700.00",
+    "offer_price": "500.00",
+    "description": "Trendy top for girls",
+    "material": "Silk",
+    "rating": 5,
+    "stock": 10
+  }
+},
+{
+  "model": "store.color",
+  "pk": 1,
+  "fields": {
+    "name": "white",
+    "hex_code": "#FFFFFF",
+    "image": "image/upload/v1752125814/yshvghnkxshfw9869e9e.webp"
+  }
+},
+{
+  "model": "store.color",
+  "pk": 2,
+  "fields": {
+    "name": "Green",
+    "hex_code": "#008000",
+    "image": "image/upload/v1752126283/hedacyttmha76wmhjzfh.jpg"
+  }
+},
+{
+  "model": "store.color",
+  "pk": 3,
+  "fields": {
+    "name": "Light Blue",
+    "hex_code": "#ADD8E6",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 4,
+  "fields": {
+    "name": "Light Green",
+    "hex_code": "#90EE90",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 5,
+  "fields": {
+    "name": "Olive Green",
+    "hex_code": "#808000",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 6,
+  "fields": {
+    "name": "Light pink",
+    "hex_code": "#FFB6C1",
+    "image": null
+  }
+},
+{
+  "model": "store.size",
+  "pk": 1,
+  "fields": {
+    "name": "S"
+  }
+},
+{
+  "model": "store.size",
+  "pk": 2,
+  "fields": {
+    "name": "M"
+  }
+},
+{
+  "model": "store.size",
+  "pk": 4,
+  "fields": {
+    "name": "XL"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 1,
+  "fields": {
+    "product": 1,
+    "color": 1,
+    "size": 1,
+    "age_group": "20+",
+    "quantity": 16,
+    "image": null
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 2,
+  "fields": {
+    "product": 1,
+    "color": 2,
+    "size": 2,
+    "age_group": null,
+    "quantity": null,
+    "image": null
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 3,
+  "fields": {
+    "product": 2,
+    "color": 1,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752648199/b6jrfysn3vauoiwvffka.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 4,
+  "fields": {
+    "product": 2,
+    "color": 2,
+    "size": 2,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752648200/n4qv2aqefbetzhonrati.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 6,
+  "fields": {
+    "product": 3,
+    "color": 6,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822046/tssxhsyff9ytv5vwg5vb.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 7,
+  "fields": {
+    "product": 3,
+    "color": 4,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822048/bnfefzvknn0c6iqqyrss.webp"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 8,
+  "fields": {
+    "product": 3,
+    "color": 5,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822049/n0scxbf30m8xk8tucext.jpg"
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 1,
+  "fields": {
+    "product": 1,
+    "image": "image/upload/v1752126388/hnc6ncbp4my2quycla4l.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 2,
+  "fields": {
+    "product": 1,
+    "image": "image/upload/v1752126389/bcvco19rbwswgqwyrixy.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 3,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752648201/i3ih97n9ombh7gt4zusl.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 4,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752648987/izkpxctdbv5ka4quzjy1.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 5,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752760833/g4uk0srtoghiaqidrluv.jpg",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 6,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822050/qrx2t3mjxvce2j7vhmr9.jpg",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 7,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822051/phhkitfanijzwfu684ii.webp",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 8,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822052/ayrde7ytmw7nxjfl6s7u.jpg",
+    "is_main": true
+  }
+},
+{
+  "model": "store.userprofile",
+  "pk": 1,
+  "fields": {
+    "user": 7,
+    "phone": null,
+    "profile_image": ""
+  }
+},
+{
+  "model": "store.userprofile",
+  "pk": 2,
+  "fields": {
+    "user": 8,
+    "phone": null,
+    "profile_image": ""
+  }
+}
+]

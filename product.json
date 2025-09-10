@@ -1,0 +1,44 @@
+[
+{
+  "model": "store.product",
+  "pk": 1,
+  "fields": {
+    "category": 1,
+    "name": "T-Shirt",
+    "price": "700.00",
+    "offer_price": "500.00",
+    "description": "Best Printed styled t-shirt",
+    "material": "Cotton",
+    "rating": 5,
+    "stock": 10
+  }
+},
+{
+  "model": "store.product",
+  "pk": 2,
+  "fields": {
+    "category": 1,
+    "name": "Leganga",
+    "price": "20000.00",
+    "offer_price": "10000.00",
+    "description": "Perfect fit for Wedding",
+    "material": "georgette",
+    "rating": 5,
+    "stock": 100
+  }
+},
+{
+  "model": "store.product",
+  "pk": 3,
+  "fields": {
+    "category": 1,
+    "name": "Modern Top",
+    "price": "700.00",
+    "offer_price": "500.00",
+    "description": "Trendy top for girls",
+    "material": "Silk",
+    "rating": 5,
+    "stock": 10
+  }
+}
+]

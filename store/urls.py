@@ -1,5 +1,7 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
+from .views import CustomPasswordChangeView, account_dashboard
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -20,4 +22,15 @@ urlpatterns = [
     path('otp-login/', views.send_email_otp, name='otp_login'),
     path('verify-email-otp/', views.verify_email_otp, name='verify_email_otp'),
     path('otp-success/', views.otp_success, name='otp_success'),
+    path('account/dashboard/', views.account_dashboard, name='account_dashboard'),
+    path("account/logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("account/settings/", views.account_settings, name="account_settings"),
+    path("account/orders/", views.orders_list, name="orders"), 
+    path("account/addresses/", views.addresses, name="addresses"),
+    path("account/addresses/add/", views.address_add, name="address_add"),
+    path("account/addresses/<int:pk>/edit/", views.edit_address, name="edit_address"),
+    path("account/addresses/<int:pk>/delete/", views.delete_address, name="delete_address"),
+    path("account/payments/", views.payments, name="payments"),
+    path("account/password/change/", CustomPasswordChangeView.as_view(), name="account_change_password"),
+    path("account/offers/", views.account_offers, name="account_offers"),
 ]

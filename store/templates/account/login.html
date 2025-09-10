@@ -112,8 +112,20 @@
       </div>
     </div>
   </div>
-   
-  <!-- Footer -->
+ 
+<!-- Social Login Section (outside card) -->
+<div class="social-login mt-3 text-center">
+  <p class="text-muted mb-2">{% trans "Or continue with" %}</p>
+  <div class="d-flex justify-content-center gap-2 flex-wrap">
+    
+    <!-- Google -->
+    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger btn-social">
+      <i class="fab fa-google"></i> Google
+    </a>
+  </div>
+</div>
+
+<!-- Footer -->
   <footer>
     <div class="container">
       <div class="row">

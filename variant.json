@@ -1,0 +1,86 @@
+[
+{
+  "model": "store.productvariant",
+  "pk": 1,
+  "fields": {
+    "product": 1,
+    "color": 1,
+    "size": 1,
+    "age_group": "20+",
+    "quantity": 16,
+    "image": null
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 2,
+  "fields": {
+    "product": 1,
+    "color": 2,
+    "size": 2,
+    "age_group": null,
+    "quantity": null,
+    "image": null
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 3,
+  "fields": {
+    "product": 2,
+    "color": 1,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752648199/b6jrfysn3vauoiwvffka.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 4,
+  "fields": {
+    "product": 2,
+    "color": 2,
+    "size": 2,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752648200/n4qv2aqefbetzhonrati.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 6,
+  "fields": {
+    "product": 3,
+    "color": 6,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822046/tssxhsyff9ytv5vwg5vb.jpg"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 7,
+  "fields": {
+    "product": 3,
+    "color": 4,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822048/bnfefzvknn0c6iqqyrss.webp"
+  }
+},
+{
+  "model": "store.productvariant",
+  "pk": 8,
+  "fields": {
+    "product": 3,
+    "color": 5,
+    "size": null,
+    "age_group": null,
+    "quantity": null,
+    "image": "image/upload/v1752822049/n0scxbf30m8xk8tucext.jpg"
+  }
+}
+]

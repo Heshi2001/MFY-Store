@@ -53,10 +53,25 @@
            </span>
            {% endif %}
           </a>
-        <!-- Mobile Login Icon -->
+        <!-- Mobile User/Login --> 
+        {% if user.is_authenticated %}
+          <div class="d-inline-block text-white text-center ml-2">
+            <div>Hi</div>
+            <a href="{% url 'account_dashboard' %}" class="text-white fw-bold text-decoration-none">
+              {{ user.username }}
+            </a>
+         </div>
+          <form method="post" action="{% url 'account_logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link login-icon text-white ml-2 p-0">
+              <i class="fa fa-sign-out-alt"></i>
+            </button>
+          </form>
+        {% else %}
          <a href="{% url 'account_login' %}" class="login-icon text-white ml-2">
-           <i class="fa fa-user fa-lg"></i>
+            <i class="fa fa-user fa-lg"></i>
          </a>
+        {% endif %}
        </div>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
@@ -89,10 +104,25 @@
           </span>
           {% endif %}
         </a>
-        <!-- Desktop Login Icon -->
-        <a href="{% url 'account_login' %}" class="login-icon text-white ml-3">
-          <i class="fa fa-user fa-lg"></i>
-        </a>
+        <!-- Desktop User/Login -->
+        {% if user.is_authenticated %}
+          <div class="d-inline-block text-white text-center ml-3">
+            <div>Hi</div>
+              <a href="{% url 'account_dashboard' %}" class="text-white fw-bold text-decoration-none">
+                {{ user.username }}
+             </a>
+            </div>
+          <form method="post" action="{% url 'account_logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link login-icon text-white ml-3 p-0">
+              <i class="fa fa-sign-out-alt"></i> Logout
+            </button>
+          </form>
+       {% else %}
+          <a href="{% url 'account_login' %}" class="login-icon text-white ml-3">
+          <i class="fa fa-user fa-lg"></i> Login
+          </a>
+       {% endif %}
        </div>
       </div>
     </nav>

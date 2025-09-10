@@ -1,0 +1,23 @@
+[
+{
+  "model": "store.size",
+  "pk": 1,
+  "fields": {
+    "name": "S"
+  }
+},
+{
+  "model": "store.size",
+  "pk": 2,
+  "fields": {
+    "name": "M"
+  }
+},
+{
+  "model": "store.size",
+  "pk": 4,
+  "fields": {
+    "name": "XL"
+  }
+}
+]

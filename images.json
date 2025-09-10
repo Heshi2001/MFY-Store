@@ -1,0 +1,74 @@
+[
+{
+  "model": "store.productimage",
+  "pk": 1,
+  "fields": {
+    "product": 1,
+    "image": "image/upload/v1752126388/hnc6ncbp4my2quycla4l.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 2,
+  "fields": {
+    "product": 1,
+    "image": "image/upload/v1752126389/bcvco19rbwswgqwyrixy.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 3,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752648201/i3ih97n9ombh7gt4zusl.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 4,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752648987/izkpxctdbv5ka4quzjy1.jpg",
+    "is_main": false
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 5,
+  "fields": {
+    "product": 2,
+    "image": "image/upload/v1752760833/g4uk0srtoghiaqidrluv.jpg",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 6,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822050/qrx2t3mjxvce2j7vhmr9.jpg",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 7,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822051/phhkitfanijzwfu684ii.webp",
+    "is_main": true
+  }
+},
+{
+  "model": "store.productimage",
+  "pk": 8,
+  "fields": {
+    "product": 3,
+    "image": "image/upload/v1752822052/ayrde7ytmw7nxjfl6s7u.jpg",
+    "is_main": true
+  }
+}
+]

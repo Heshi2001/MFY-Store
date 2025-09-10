@@ -18,9 +18,9 @@ def main():
         # Run migrations automatically on startup
         try:
             call_command('migrate', interactive=False)
-            print("✔ Database migration applied successfully.")
+            print("Database migration applied successfully.")
         except Exception as e:
-            print(f"⚠ Migration failed: {e}")
+            print(f"Migration failed: {e}")
             
     except ImportError as exc:
         raise ImportError(

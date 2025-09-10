@@ -1,0 +1,11 @@
+[
+{
+  "model": "store.cart",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "product": 2,
+    "quantity": 1
+  }
+}
+]

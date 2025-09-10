@@ -56,14 +56,14 @@ INSTALLED_APPS = [
 if DEBUG:
     INSTALLED_APPS += ["django_extensions"]
 
-SITE_ID = 1
+SITE_ID = config("SITE_ID", default=1, cast=int)
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Django default
     'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
 ]
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/account/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Allow login with either username or email

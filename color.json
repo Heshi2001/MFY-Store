@@ -1,0 +1,56 @@
+[
+{
+  "model": "store.color",
+  "pk": 1,
+  "fields": {
+    "name": "white",
+    "hex_code": "#FFFFFF",
+    "image": "image/upload/v1752125814/yshvghnkxshfw9869e9e.webp"
+  }
+},
+{
+  "model": "store.color",
+  "pk": 2,
+  "fields": {
+    "name": "Green",
+    "hex_code": "#008000",
+    "image": "image/upload/v1752126283/hedacyttmha76wmhjzfh.jpg"
+  }
+},
+{
+  "model": "store.color",
+  "pk": 3,
+  "fields": {
+    "name": "Light Blue",
+    "hex_code": "#ADD8E6",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 4,
+  "fields": {
+    "name": "Light Green",
+    "hex_code": "#90EE90",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 5,
+  "fields": {
+    "name": "Olive Green",
+    "hex_code": "#808000",
+    "image": null
+  }
+},
+{
+  "model": "store.color",
+  "pk": 6,
+  "fields": {
+    "name": "Light pink",
+    "hex_code": "#FFB6C1",
+    "image": null
+  }
+}
+]
