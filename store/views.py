@@ -19,6 +19,10 @@ from .forms import AddressForm
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse_lazy
+import logging
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -365,81 +369,115 @@ class CombinedLoginView(LoginView):
 
    
 def send_email_otp(request):
-    if request.method == "POST":
-        email = request.POST.get("email")
+    """
+    Accepts POST(email) -> creates OTP row, emails user, stores user id in session,
+    then redirects to verify page. Always handles exceptions and logs them.
+    """
+    if request.method != "POST":
+        return redirect("account_login")
 
-        # Check if email exists
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            messages.error(request, "No account found with this email.")
-            return redirect("account_login")
+    email = (request.POST.get("email") or "").strip()
+    if not email:
+        messages.error(request, "Please enter an email address.")
+        return redirect("account_login")
 
-        # Generate OTP
-        otp = str(random.randint(100000, 999999))
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        messages.error(request, "No account found with this email.")
+        return redirect("account_login")
 
-        # Save OTP in DB (delete old ones first)
+    otp = f"{random.randint(100000, 999999)}"
+
+    try:
+        # Remove any old OTPs for this user and create a new one
         EmailOTP.objects.filter(user=user).delete()
         EmailOTP.objects.create(user=user, otp=otp)
+    except Exception as e:
+        logger.exception("Failed to save OTP to DB for %s", email)
+        messages.error(request, "Server error. Please try again shortly.")
+        return redirect("account_login")
 
-        # Send OTP via email
-        try:
-             send_mail(
-                subject="Your OTP Code",
-                message=f"Your OTP code is {otp}",
-                from_email="euliheshicleetus2001@gmail.com",
-                recipient_list=[email],
-            )
-        except Exception as e:
-            messages.error(request, "Unable to send OTP email. Please try again later.")
-            return redirect("account_login")     
+    # Attempt to send email
+    try:
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or settings.EMAIL_HOST_USER
+        send_mail(
+            subject="Your OTP Code",
+            message=f"Your OTP code is {otp}",
+            from_email=from_email,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        logger.exception("Failed to send OTP email to %s", email)
+        messages.error(request, "Unable to send OTP email. Please try again later.")
+        return redirect("account_login")
 
-        # Store user_id in session for verification step
-        request.session["otp_user_id"] = user.id
+    # Save the user id in session for verification step
+    request.session["otp_user_id"] = user.id
+    # Optionally set expiry for session key (session cookie expiry already set in settings)
+    messages.success(request, "OTP sent to your email.")
+    return redirect("verify_email_otp")
 
-        messages.success(request, "OTP sent to your email.")
-        return redirect("verify_email_otp")   # ✅ go to OTP verification page
-
-    return redirect("account_login")
 
 def verify_email_otp(request):
+    """
+    POST: checks OTP against EmailOTP table for the user stored in session.
+    GET: renders the verify form.
+    This is defensive: it logs unexpected exceptions and never raises 500 to the user.
+    """
     if request.method == "POST":
-        otp_entered = request.POST.get("otp")
-        user_id = request.session.get("otp_user_id")
-
-        if not user_id:
-            messages.error(request, "Session expired. Please request OTP again.")
-            return redirect("account_login")  # ✅ fixed
-
         try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            messages.error(request, "User not found.")
-            return redirect("account_login")
+            otp_entered = (request.POST.get("otp") or "").strip()
+            user_id = request.session.get("otp_user_id")
 
-        try:
-            otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
-        except EmailOTP.DoesNotExist:
-            messages.error(request, "Invalid OTP.")
-            return render(request, "store/verify_email_otp.html")  # ✅ fixed template
+            if not user_id:
+                messages.error(request, "Session expired. Please request a new OTP.")
+                return redirect("account_login")
 
-        if otp_obj.is_expired():
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                messages.error(request, "User not found. Please request OTP again.")
+                return redirect("account_login")
+
+            # Look up OTP in DB
+            try:
+                otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
+            except EmailOTP.DoesNotExist:
+                messages.error(request, "Invalid OTP. Please try again.")
+                return render(request, "store/verify_email_otp.html")
+
+            # Check expiry method; protect against exceptions in is_expired()
+            try:
+                if otp_obj.is_expired():
+                    otp_obj.delete()
+                    messages.error(request, "OTP expired. Please request again.")
+                    return redirect("account_login")
+            except Exception as e:
+                logger.exception("Error while checking OTP expiry for user %s", user.email)
+                messages.error(request, "Server error while verifying OTP. Try again.")
+                return redirect("account_login")
+
+            # Valid OTP -> login and cleanup
             otp_obj.delete()
-            messages.error(request, "OTP expired. Please request again.")
+            login(request, user)
+            request.session.pop("otp_user_id", None)
+            messages.success(request, "OTP verified — you are now logged in.")
+            return redirect("otp_success")
+
+        except Exception as e:
+            # Catch any unexpected exception, log full trace, show friendly message (avoid 500)
+            logger.exception("Unexpected error in verify_email_otp")
+            messages.error(request, "Unexpected server error. Please try again.")
             return redirect("account_login")
 
-        # ✅ OTP valid
-        otp_obj.delete()
-        login(request, user)
-        del request.session["otp_user_id"]
-        messages.success(request, "OTP verified successfully. You are now logged in.")
-        return redirect("otp_success")
-
-    return render(request, "store/verify_email_otp.html")  # ✅ fixed template
-
-            
-def otp_success(request):
+    # GET
     return render(request, "store/verify_email_otp.html")
+
+
+def otp_success(request):
+    return render(request, "store/otp_success.html")
 
 @login_required
 def payments(request):
