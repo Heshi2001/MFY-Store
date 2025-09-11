@@ -472,7 +472,7 @@ def verify_email_otp(request):
             request.session.pop("otp_user_id", None)
 
             messages.success(request, "OTP verified — you are now logged in.")
-            return redirect("otp_success")
+            return redirect("account_dashboard")
 
         except Exception:
             logger.exception("Unexpected error in verify_email_otp")
