@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Category, Product, ProductVariant, ProductImage, Color, Size,
-    Wishlist, Cart, Order, OrderItem, TeamMember, Service, Client, Contact, Review
+    Wishlist, Cart, Order, OrderItem, TeamMember, Service, Client, Contact, Review, Address
 )
 
 # Inline for adding images directly when editing a product
@@ -92,3 +92,7 @@ class ReviewAdmin(admin.ModelAdmin):
     list_display = ['product', 'user', 'rating', 'created_at']
     list_filter = ['rating']
     search_fields = ['product__name', 'user__username']
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ("user", "first_name", "last_name", "city", "is_default", "address_type")

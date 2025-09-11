@@ -22,21 +22,23 @@
           <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body">
               <h5 class="card-title">
-                {{ address.full_name }}
+                {{ address.first_name }} {{ address.last_name }}
                 {% if address.is_default %}
                   <span class="badge bg-success ms-2">Default</span>
                 {% endif %}
               </h5>
-              <p class="card-text mb-1">{{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}</p>
+              <p class="card-text mb-1">
+                {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}
+              </p>
               <p class="card-text mb-1">{{ address.city }}, {{ address.state }} - {{ address.postal_code }}</p>
               <p class="card-text mb-1">{{ address.country }}</p>
               <p class="card-text"><strong>Phone:</strong> {{ address.phone }}</p>
 
               <div class="d-flex flex-wrap gap-2 mt-3">
-                <a href="{% url 'address_edit' address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'address_delete' address.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                <a href="{% url 'edit_address' address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
                 {% if not address.is_default %}
-                  <a href="{% url 'address_set_default' address.id %}" class="btn btn-sm btn-outline-success">Set Default</a>
+                  <a href="{% url 'set_default_address' address.id %}" class="btn btn-sm btn-outline-success">Set Default</a>
                 {% endif %}
               </div>
             </div>
