@@ -465,8 +465,7 @@ def verify_email_otp(request):
             logger.info("Attempting to log in user %s (id=%s) via OTP", user.email, user.id)
 
             # Use auth_login explicitly
-            auth_login(request, user)
-
+            auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             # Force-save session (optional) and remove otp_user_id
             request.session.modified = True
             request.session.pop("otp_user_id", None)
