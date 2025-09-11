@@ -21,6 +21,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.urls import reverse_lazy
 import logging
 from django.conf import settings
+from django.contrib.auth import login as auth_login
 
 logger = logging.getLogger(__name__)
 
@@ -419,13 +420,7 @@ def send_email_otp(request):
     messages.success(request, "OTP sent to your email.")
     return redirect("verify_email_otp")
 
-
 def verify_email_otp(request):
-    """
-    POST: checks OTP against EmailOTP table for the user stored in session.
-    GET: renders the verify form.
-    This is defensive: it logs unexpected exceptions and never raises 500 to the user.
-    """
     if request.method == "POST":
         try:
             otp_entered = (request.POST.get("otp") or "").strip()
@@ -441,33 +436,45 @@ def verify_email_otp(request):
                 messages.error(request, "User not found. Please request OTP again.")
                 return redirect("account_login")
 
-            # Look up OTP in DB
             try:
                 otp_obj = EmailOTP.objects.get(user=user, otp=otp_entered)
             except EmailOTP.DoesNotExist:
                 messages.error(request, "Invalid OTP. Please try again.")
                 return render(request, "store/verify_email_otp.html")
 
-            # Check expiry method; protect against exceptions in is_expired()
+            # expiry check
             try:
                 if otp_obj.is_expired():
                     otp_obj.delete()
                     messages.error(request, "OTP expired. Please request again.")
                     return redirect("account_login")
-            except Exception as e:
-                logger.exception("Error while checking OTP expiry for user %s", user.email)
+            except Exception:
+                logger.exception("Error checking OTP expiry for user %s", user.email)
                 messages.error(request, "Server error while verifying OTP. Try again.")
                 return redirect("account_login")
 
             # Valid OTP -> login and cleanup
             otp_obj.delete()
-            login(request, user)
-            request.session.pop("otp_user_id", None)
-            messages.success(request, "OTP verified — you are now logged in.")
-            return redirect("store/otp_success")
 
-        except Exception as e:
-            # Catch any unexpected exception, log full trace, show friendly message (avoid 500)
+            # Ensure user is active
+            if not user.is_active:
+                messages.error(request, "Your account is inactive. Contact support.")
+                return redirect("account_login")
+
+            # Log the attempt
+            logger.info("Attempting to log in user %s (id=%s) via OTP", user.email, user.id)
+
+            # Use auth_login explicitly
+            auth_login(request, user)
+
+            # Force-save session (optional) and remove otp_user_id
+            request.session.modified = True
+            request.session.pop("otp_user_id", None)
+
+            messages.success(request, "OTP verified — you are now logged in.")
+            return redirect("otp_success")
+
+        except Exception:
             logger.exception("Unexpected error in verify_email_otp")
             messages.error(request, "Unexpected server error. Please try again.")
             return redirect("account_login")
@@ -475,8 +482,8 @@ def verify_email_otp(request):
     # GET
     return render(request, "store/verify_email_otp.html")
 
-
 def otp_success(request):
+    logger.info("otp_success view hit. User: %s authenticated=%s", getattr(request.user, 'email', None), request.user.is_authenticated)
     return render(request, "store/otp_success.html")
 
 @login_required
