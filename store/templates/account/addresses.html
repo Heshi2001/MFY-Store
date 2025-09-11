@@ -37,9 +37,6 @@
               <div class="d-flex flex-wrap gap-2 mt-3">
                 <a href="{% url 'edit_address' address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
                 <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
-                {% if not address.is_default %}
-                  <a href="{% url 'set_default_address' address.id %}" class="btn btn-sm btn-outline-success">Set Default</a>
-                {% endif %}
               </div>
             </div>
           </div>
