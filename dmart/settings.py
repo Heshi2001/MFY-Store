@@ -63,19 +63,6 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',  # Allauth
 ]
 
-LOGIN_REDIRECT_URL = '/account/dashboard/'
-LOGOUT_REDIRECT_URL = '/'
-
-# Allow login with either username or email
-ACCOUNT_LOGIN_METHODS = {"username", "email"}
-
-# Show these fields on signup
-ACCOUNT_SIGNUP_FIELDS = ["username", "email", "password1", "password2"]
-
-# Other options
-ACCOUNT_EMAIL_VERIFICATION = "optional"
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = True  # since username is part of signup
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -181,6 +168,30 @@ if DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.smtp.EmailBackend':
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_REDIRECT_URL = '/account/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Allow login with either username or email
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+
+# Show these fields on signup
+ACCOUNT_SIGNUP_FIELDS = ["username", "email", "password1", "password2"]
+
+# Other options
+ACCOUNT_EMAIL_VERIFICATION = "optional"
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = True  # since username is part of signup
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+
+ACCOUNT_ADAPTER = "store.adapters.CustomAccountAdapter"
+SOCIALACCOUNT_ADAPTER = "store.adapters.CustomSocialAccountAdapter"
 
 # ✅ Allow anonymous ratings
 STAR_RATINGS_ANONYMOUS = True

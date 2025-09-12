@@ -86,6 +86,12 @@ def address_add(request):
             address = form.save(commit=False)
             address.user = request.user
             address.save()
+            # ✅ Sync names into User model
+            if address.first_name and address.last_name:
+                request.user.first_name = address.first_name
+                request.user.last_name = address.last_name
+                request.user.save()
+
             return redirect("account_addresses")  # redirect to address list
     else:
         form = AddressForm()
@@ -101,6 +107,12 @@ def edit_address(request, pk):
             if address.is_default:
                 Address.objects.filter(user=request.user, is_default=True).exclude(pk=address.pk).update(is_default=False)
             address.save()
+            # ✅ Sync names into User model again
+            if address.first_name and address.last_name:
+                request.user.first_name = address.first_name
+                request.user.last_name = address.last_name
+                request.user.save()
+                
             return redirect("account_addresses")
     else:
         form = AddressForm(instance=address)
