@@ -20,12 +20,14 @@ from store.views import CombinedLoginView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
+from store.views import CustomSignupView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('reviews/', include('reviews.urls')),
     path('ratings/', include('star_ratings.urls', namespace='ratings')), 
     path('accounts/login/', CombinedLoginView.as_view(), name='account_login'),
+    path("accounts/signup/", CustomSignupView.as_view(), name="account_signup"),
     path('accounts/', include('allauth.urls')),
     path('', include('store.urls')),
 ]

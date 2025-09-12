@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from allauth.account.views import LoginView
 from allauth.account.forms import SignupForm
+from allauth.account.views import SignupView
 from .forms import AddressForm
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth import update_session_auth_hash
@@ -112,7 +113,7 @@ def edit_address(request, pk):
                 request.user.first_name = address.first_name
                 request.user.last_name = address.last_name
                 request.user.save()
-                
+
             return redirect("account_addresses")
     else:
         form = AddressForm(instance=address)
@@ -523,3 +524,6 @@ def account_offers(request):
     return render(request, "account/offers.html", {
         "coupons": coupons
     })
+
+class CustomSignupView(SignupView):
+    template_name = "account/login.html"
