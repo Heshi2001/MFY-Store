@@ -621,7 +621,7 @@ def update_cart(request, item_id):
         return JsonResponse({
             "item_total": float(cart_item.total_price),
             "cart_total": float(cart.total_price),
-            "cart_count": cart.total_items,
+            "cart_count": cart.items.count(),
         })
 
     return redirect("cart")
