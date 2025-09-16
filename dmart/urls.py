@@ -28,6 +28,7 @@ urlpatterns = [
     path('ratings/', include('star_ratings.urls', namespace='ratings')), 
     path('accounts/login/', CombinedLoginView.as_view(), name='account_login'),
     path("accounts/signup/", CustomSignupView.as_view(), name="account_signup"),
+    path("__reload__/", include("django_browser_reload.urls")),
     path('accounts/', include('allauth.urls')),
     path('', include('store.urls')),
 ]

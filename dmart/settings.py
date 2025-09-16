@@ -50,7 +50,16 @@ INSTALLED_APPS = [
     'reviews',
     'star_ratings',
     'cloudinary',
-    'cloudinary_storage',
+    'cloudinary_storage',  
+    'tailwind',
+    'django_browser_reload',  
+    'theme',
+]
+
+TAILWIND_APP_NAME = "theme"
+
+INTERNAL_IPS = [
+    "127.0.0.1",
 ]
 
 if DEBUG:
@@ -203,3 +212,8 @@ cloudinary.config(
     api_secret=config('CLOUDINARY_API_SECRET')
 )
 
+# Use Windows npm path only if running locally, otherwise use default "npm"
+if os.name == "nt":  # Windows
+    NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+else:  # Linux (Render, Heroku, etc.)
+    NPM_BIN_PATH = "/usr/bin/npm"

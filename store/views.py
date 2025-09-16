@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon
+from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib.auth import login
@@ -9,6 +9,7 @@ from .forms import ContactForm, ReviewForm, UserUpdateForm
 from django.contrib.auth.models import User
 from .models import EmailOTP
 import json
+from django.http import JsonResponse
 import random
 from datetime import timedelta
 from django.contrib import messages
@@ -23,6 +24,7 @@ from django.urls import reverse_lazy
 import logging
 from django.conf import settings
 from django.contrib.auth import login as auth_login
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -527,3 +529,121 @@ def account_offers(request):
 
 class CustomSignupView(SignupView):
     template_name = "account/login.html"
+                                                                      
+def get_or_create_session_key(request):
+    """Ensure session_key exists for guest carts."""
+    if not request.session.session_key:
+        request.session.create()
+    return request.session.session_key
+
+
+def merge_guest_cart(user, session_key):
+    """Merge guest cart into user's cart after login."""
+    try:
+        guest_cart = Cart.objects.get(session_key=session_key, user=None)
+    except Cart.DoesNotExist:
+        return
+
+    user_cart, _ = Cart.objects.get_or_create(user=user)
+
+    for item in guest_cart.items.all():
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=user_cart, product=item.product
+        )
+        if not created:
+            cart_item.quantity += item.quantity
+        cart_item.save()
+
+    guest_cart.delete()
+
+
+def cart_view(request):
+    """Display the cart page for user or guest."""
+    if request.user.is_authenticated:
+        # Merge guest cart if exists
+        session_key = get_or_create_session_key(request)
+        merge_guest_cart(request.user, session_key)
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    return render(request, "store/cart.html", {
+        "cart_items": cart_data["items"],
+        "cart_total": cart_data["cart_total"],
+        "cart_count": cart_data["cart_count"],
+    })
+
+
+@require_POST
+def add_to_cart(request, product_id):
+    """Add product to cart (user or guest)."""
+    product = get_object_or_404(Product, id=product_id)
+
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart = cart_data["cart"]
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    if not created:
+        cart_item.quantity += 1
+    cart_item.save()
+
+    return redirect("cart")
+
+
+@require_POST
+def update_cart(request, item_id):
+    """Update quantity of cart item (AJAX-friendly)."""
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart = cart_data["cart"]
+    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+        if quantity < 1:
+            quantity = 1
+    except (TypeError, ValueError):
+        quantity = 1
+
+    cart_item.quantity = quantity
+    cart_item.save()
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "item_total": float(cart_item.total_price),
+            "cart_total": float(cart.total_price),
+            "cart_count": cart.total_items,
+        })
+
+    return redirect("cart")
+
+
+@require_POST
+def remove_from_cart(request, item_id):
+    """Remove cart item (AJAX-friendly)."""
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart = cart_data["cart"]
+    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    cart_item.delete()
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "cart_total": float(cart.total_price),
+            "cart_count": cart.total_items,
+        })
+
+    return redirect("cart")

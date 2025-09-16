@@ -6,7 +6,10 @@ from .views import CustomPasswordChangeView, account_dashboard
 urlpatterns = [
     path('', views.index, name='index'),
     path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-    path('cart/', views.view_cart, name='cart'),
+    path("cart/", views.cart_view, name="cart"),
+    path("cart/add/<int:product_id>/", views.add_to_cart, name="add_to_cart"),
+    path("cart/update/<int:item_id>/", views.update_cart, name="update_cart"),
+    path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),
     path('checkout/', views.checkout, name='checkout'),
     path('about/', views.about, name='about'),
     path('products/', views.products_view, name='products'),

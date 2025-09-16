@@ -1,19 +1,26 @@
 from django.contrib import admin
 from .models import (
     Category, Product, ProductVariant, ProductImage, Color, Size,
-    Wishlist, Cart, Order, OrderItem, TeamMember, Service, Client, Contact, Review, Address
+    Wishlist, Cart, CartItem, Order, OrderItem, TeamMember,
+    Service, Client, Contact, Review, Address
 )
 
-# Inline for adding images directly when editing a product
+# --- Inlines ---
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
 
-# Inline for adding variants directly when editing a product
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
 
+class CartItemInline(admin.TabularInline):
+    model = CartItem
+    extra = 0
+    readonly_fields = ["total_price"]
+    autocomplete_fields = ["product"]
+
+# --- Product & Category ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'price', 'offer_price', 'stock']
@@ -26,6 +33,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+# --- Variants & Images ---
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):
     list_display = ['product', 'color', 'size', 'quantity']
@@ -47,26 +55,41 @@ class SizeAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+# --- Wishlist ---
 @admin.register(Wishlist)
 class WishlistAdmin(admin.ModelAdmin):
     list_display = ['user', 'product']
     search_fields = ['user__username', 'product__name']
 
+# --- Cart ---
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ['user', 'product', 'quantity']
-    search_fields = ['user__username', 'product__name']
+    list_display = ['user', 'created_at']
+    search_fields = ['user__username']
+    inlines = [CartItemInline]
+
+@admin.register(CartItem)
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ['cart', 'product', 'quantity', 'total_price']
+    search_fields = ['cart__user__username', 'product__name']
+    list_editable = ['quantity']
+
+# --- Orders ---
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    readonly_fields = ['product', 'quantity', 'price']
+    autocomplete_fields = ['product']
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['user', 'total_price', 'created_at', 'payment_id']
+    list_display = ['user', 'total_price', 'status', 'created_at', 'payment_id']
     readonly_fields = ['created_at']
     search_fields = ['user__username', 'payment_id']
+    list_filter = ['status', 'created_at']
+    inlines = [OrderItemInline]
 
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ['order', 'product', 'quantity', 'price']
-
+# --- Others ---
 @admin.register(TeamMember)
 class TeamMemberAdmin(admin.ModelAdmin):
     list_display = ['name', 'role']

@@ -1,18 +1,184 @@
-{% extends 'store/index.html' %}
-{% block content %}
-<h2>Your Cart</h2>
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shopping Cart - MFY</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% if cart_items %}
-    <ul class="list-group">
-        {% for item in cart_items %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ item.product.name }} - ${{ item.product.price }}
-            <span>Qty: {{ item.quantity }}</span>
-        </li>
-        {% endfor %}
-    </ul>
-    <p>Total: ${{ total_price }}</p>
-{% else %}
-    <p>Your cart is empty.</p>
-{% endif %}
-{% endblock %}
+  <!-- Tailwind CSS -->
+  {% tailwind_css %}
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <a href="/" class="text-2xl font-bold text-blue-600">MFY</a>
+      <div class="space-x-6 flex items-center">
+        <a href="/" class="hover:text-blue-600">Home</a>
+        <a href="/products/" class="hover:text-blue-600">Products</a>
+
+        <!-- Cart with badge -->
+        <a href="/cart/" class="hover:text-blue-600 font-semibold relative">
+          Cart
+          <span id="cart-count"
+                class="absolute -top-2 -right-4 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            {{ cart_count|default:0 }}
+          </span>
+        </a>
+
+        {% if user.is_authenticated %}
+          <a href="/account/dashboard/" class="hover:text-blue-600">Account</a>
+          <a href="/account/logout/" class="hover:text-red-600">Logout</a>
+        {% else %}
+          <a href="/accounts/login/" class="hover:text-blue-600">Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Shopping Cart</h1>
+
+    {% if cart_items %}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Cart items -->
+        <div class="lg:col-span-2 space-y-4">
+          {% for item in cart_items %}
+          <div class="bg-white p-4 rounded-lg shadow flex items-center justify-between" id="cart-item-{{ item.id }}">
+            <div class="flex items-center space-x-4">
+              <!-- Product Image -->
+              <img src="{{ item.product.get_main_image_url }}"
+                   alt="{{ item.product.name }}"
+                   class="w-20 h-20 object-cover rounded">
+
+              <div>
+                <h2 class="text-lg font-semibold">{{ item.product.name }}</h2>
+                <p class="text-gray-500">
+                  ₹{% if item.product.offer_price %}{{ item.product.offer_price|floatformat:2 }}{% else %}{{ item.product.price|floatformat:2 }}{% endif %}
+                </p>
+
+                <!-- Quantity input (auto AJAX update) -->
+                <form method="post" action="{% url 'update_cart' item.id %}"
+                      class="update-cart-form flex items-center space-x-2 mt-2"
+                      data-id="{{ item.id }}">
+                  {% csrf_token %}
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                         class="quantity w-16 border rounded px-2 py-1 text-center appearance-none">
+                </form>
+
+                <!-- Remove -->
+                <form method="post" action="{% url 'remove_from_cart' item.id %}"
+                      class="remove-cart-form mt-2"
+                      data-id="{{ item.id }}">
+                  {% csrf_token %}
+                  <button type="submit"
+                          class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition text-sm">
+                    Remove
+                  </button>
+                </form>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold item-total">₹{{ item.total_price|floatformat:2 }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Cart summary -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h2 class="text-xl font-bold mb-4">Order Summary</h2>
+          <div class="flex justify-between mb-2">
+            <span>Subtotal</span>
+            <span id="cart-total">₹{{ cart_total|floatformat:2 }}</span>
+          </div>
+          <div class="flex justify-between mb-2">
+            <span>Shipping</span>
+            <span class="text-green-600">Free</span>
+          </div>
+          <hr class="my-2">
+          <div class="flex justify-between font-bold text-lg">
+            <span>Total</span>
+            <span id="cart-summary-total">₹{{ cart_total|floatformat:2 }}</span>
+          </div>
+          <a href="{% url 'checkout' %}" 
+             class="block bg-blue-600 text-white text-center py-3 rounded-lg mt-6 hover:bg-blue-700 transition">
+            Proceed to Checkout
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-gray-500">Your cart is empty. 
+        <a href="/products/" class="text-blue-600 hover:underline">Shop now</a>.
+      </p>
+    {% endif %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-300 mt-8">
+    <div class="max-w-7xl mx-auto px-4 py-6 text-center">
+      <p>&copy; 2025 Dmart. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- AJAX Script -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // Auto update quantity
+    document.querySelectorAll(".update-cart-form .quantity").forEach(input => {
+      input.addEventListener("change", function() {
+        let form = this.closest(".update-cart-form");
+        let formData = new FormData(form);
+
+        fetch(form.action, {
+          method: "POST",
+          body: formData,
+          headers: {"X-Requested-With": "XMLHttpRequest"}
+        })
+        .then(res => res.json())
+        .then(data => {
+          // Update item + totals
+          document.querySelector("#cart-item-" + form.dataset.id + " .item-total").textContent = "₹" + data.item_total.toFixed(2);
+          document.querySelector("#cart-total").textContent = "₹" + data.cart_total.toFixed(2);
+          document.querySelector("#cart-summary-total").textContent = "₹" + data.cart_total.toFixed(2);
+          document.querySelector("#cart-count").textContent = data.cart_count;
+        });
+      });
+    });
+
+    // Handle remove item
+    document.querySelectorAll(".remove-cart-form").forEach(form => {
+      form.addEventListener("submit", function(e) {
+        e.preventDefault();
+        let formData = new FormData(this);
+
+        fetch(this.action, {
+          method: "POST",
+          body: formData,
+          headers: {"X-Requested-With": "XMLHttpRequest"}
+        })
+        .then(res => res.json())
+        .then(data => {
+          // Remove item from DOM
+          let itemDiv = document.querySelector("#cart-item-" + this.dataset.id);
+          if(itemDiv) itemDiv.remove();
+
+          // Update totals
+          document.querySelector("#cart-total").textContent = "₹" + data.cart_total.toFixed(2);
+          document.querySelector("#cart-summary-total").textContent = "₹" + data.cart_total.toFixed(2);
+          document.querySelector("#cart-count").textContent = data.cart_count;
+        });
+      });
+    });
+  });
+  </script>
+
+  {% if debug %}
+    <script src="{% static 'django_browser_reload/reload.js' %}"></script>
+  {% endif %}
+</body>
+</html>
