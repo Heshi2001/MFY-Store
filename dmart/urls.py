@@ -21,6 +21,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from store.views import CustomSignupView
+from rest_framework.routers import DefaultRouter
+from store.views import ProductViewSet
+
+router = DefaultRouter()
+router.register(r"products", ProductViewSet, basename="product")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,6 +34,7 @@ urlpatterns = [
     path('accounts/login/', CombinedLoginView.as_view(), name='account_login'),
     path("accounts/signup/", CustomSignupView.as_view(), name="account_signup"),
     path("__reload__/", include("django_browser_reload.urls")),
+    path("api/", include(router.urls)),
     path('accounts/', include('allauth.urls')),
     path('', include('store.urls')),
 ]

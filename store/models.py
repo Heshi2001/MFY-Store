@@ -13,9 +13,20 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
 class Product(models.Model):
+    DEALER_CHOICES = [
+        ("Self", "Self-Fulfilled"),
+        ("Qikink", "Qikink"),
+        ("Printrove", "Printrove"),
+    ]
+
+    IMAGE_MODE_CHOICES = [
+        ("qikink", "Qikink Image"),
+        ("custom", "Custom Image"),
+    ]
+
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="products")
+    sku = models.CharField(max_length=100, unique=True, null=True, blank=True)  # 🟢 NEW FIELD
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     offer_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -23,12 +34,22 @@ class Product(models.Model):
     material = models.CharField(max_length=100, blank=True, null=True)
     rating = models.IntegerField(default=5)
     stock = models.PositiveIntegerField(default=0)
+    dealer = models.CharField(max_length=20, choices=DEALER_CHOICES, default="Self")  # 🟢 NEW FIELD
+     # 🟢 NEW FIELDS
+    image_mode = models.CharField(
+        max_length=20,
+        choices=IMAGE_MODE_CHOICES,
+        default="qikink"
+    )
+    custom_image = CloudinaryField("custom_image", blank=True, null=True)
 
     def __str__(self):
-        return self.name
-
+        return f"{self.name} ({self.get_dealer_display()})"
+   
     def get_main_image_url(self):
-        """Return the main image or fallback image or placeholder."""
+        """Return correct image based on mode (custom or qikink)."""
+        if self.image_mode == "custom" and self.custom_image:
+            return self.custom_image.url
         main_image = self.images.filter(is_main=True).first()
         if main_image:
             return main_image.image.url
@@ -36,7 +57,6 @@ class Product(models.Model):
         if fallback_image:
             return fallback_image.image.url
         return "/static/store/images/placeholder.png"
-
 
 class Color(models.Model):
     name = models.CharField(max_length=30)
@@ -213,16 +233,23 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["cart", "product"], name="unique_cart_product")
+            models.UniqueConstraint(fields=["cart", "product", "variant"], name="unique_cart_product_variant")
         ]
 
     def __str__(self):
-        return f"{self.product.name} (x{self.quantity})"
+        parts = [self.product.name]
+        if self.variant:
+            if self.variant.color:
+                parts.append(self.variant.color.name)
+            if self.variant.size:
+                parts.append(self.variant.size.name)
+        return f"{' - '.join(parts)} (x{self.quantity})"
 
     @property
     def total_price(self):
@@ -232,12 +259,12 @@ class CartItem(models.Model):
 # ----------------------
 # Orders
 # ----------------------
+
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     payment_id = models.CharField(max_length=255)
-
     order_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     status = models.CharField(
         max_length=20,
@@ -245,19 +272,66 @@ class Order(models.Model):
         default="Pending",
     )
 
-    def __str__(self):
-        return f"Order {self.id} - {self.user.username}"
-
+    shipping_address = models.ForeignKey(
+        Address, on_delete=models.SET_NULL, null=True, blank=True, related_name="shipping_orders"
+    )
+    billing_address = models.ForeignKey(
+        Address, on_delete=models.SET_NULL, null=True, blank=True, related_name="billing_orders"
+    )
+    payment_method = models.CharField(max_length=50, blank=True)
+    transaction_id = models.CharField(max_length=100, blank=True)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    dealer = models.CharField(  # 🟢 NEW FIELD (copied from Product at order time)
+        max_length=20,
+        choices=Product.DEALER_CHOICES,
+        default="Self"
+    )
+
+    @property
+    def total_price(self):
+        return self.price * self.quantity
 
     def __str__(self):
-        return f"{self.product.name} (x{self.quantity})"
+        parts = [self.product.name]
+        if self.variant:
+            if self.variant.color:
+                parts.append(self.variant.color.name)
+            if self.variant.size:
+                parts.append(self.variant.size.name)
+        return f"{' - '.join(parts)} (x{self.quantity})"
 
+class Fulfillment(models.Model):
+    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="fulfillments")
+    dealer = models.CharField(max_length=20)  # "Qikink" | "Printrove" | "Self"
+    dealer_order_id = models.CharField(max_length=200, blank=True, null=True)  # id returned by dealer
+    tracking_id = models.CharField(max_length=200, blank=True, null=True)
+    status = models.CharField(max_length=50, default="created")  # created, sent, confirmed, shipped, delivered
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    raw_response = models.JSONField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Fulfillment {self.id} for Order {self.order.id} via {self.dealer}"
+
+class DealerPayout(models.Model):
+    dealer = models.CharField(max_length=50)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reference = models.CharField(max_length=200, blank=True, null=True)  # bank transfer id or invoice id
+    status = models.CharField(
+        max_length=20,
+        choices=[("pending", "pending"), ("paid", "paid")],
+        default="pending"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.dealer} - {self.amount} ({self.status})"
 
 # ----------------------
 # Marketing / Content

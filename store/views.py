@@ -9,8 +9,10 @@ from .forms import ContactForm, ReviewForm, UserUpdateForm
 from django.contrib.auth.models import User
 from .models import EmailOTP
 import json
-from django.http import JsonResponse
 import random
+import razorpay
+from django.http import JsonResponse
+from django.http import HttpResponse
 from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -25,6 +27,12 @@ import logging
 from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.views.decorators.http import require_POST
+from rest_framework import viewsets, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from .serializers import ProductSerializer
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.db.models import Sum
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +46,11 @@ def index(request):
         products = Product.objects.all().order_by('-id')[:6]  # Latest 6
 
     for product in products:
-        product.first_image = product.images.first()  # Show only first image
+        # Use custom_image if image_mode=custom
+        if product.image_mode == "custom" and product.custom_image:
+            product.first_image = product.custom_image
+        else:
+            product.first_image = product.images.first()  # fallback
 
     return render(request, 'store/index.html', {'products': products})
 
@@ -133,7 +145,11 @@ def products_view(request):
     products = Product.objects.prefetch_related('images').order_by('-id')
 
     for product in products:
-        product.first_image = product.images.first()  # Used for showing image
+        # Use custom_image if image_mode=custom
+        if product.image_mode == "custom" and product.custom_image:
+            product.first_image = product.custom_image
+        else:
+            product.first_image = product.images.first()  # fallback
 
     return render(request, 'store/products.html', {
         "products": products
@@ -141,14 +157,37 @@ def products_view(request):
 
 @login_required
 def orders_list(request):
-    # later you can fetch real orders for the logged-in user
-    orders = []  
+    """
+    Show all orders for the logged-in user.
+    Orders are sorted with the newest first.
+    """
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
     return render(request, "account/orders.html", {"orders": orders})
+
+@login_required
+def order_detail(request, order_id):
+    """
+    Show details of a single order (items, status, price).
+    """
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    items = order.orderitem_set.select_related("product").all()
+
+    return render(request, "account/order_detail.html", {
+        "order": order,
+        "items": items,
+    })
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     variants = product.variants.all()
     main_images = product.images.filter(is_main=True)
+
+    # Use custom_image if image_mode=custom
+    if product.image_mode == "custom" and product.custom_image:
+        first_image_url = product.custom_image.url
+    else:
+        first_image_url = main_images.first().image.url if main_images.exists() else ""
+
     reviews = Review.objects.filter(product=product).order_by('-id')
     sizes = list(dict.fromkeys(
         [variant.size for variant in variants if variant.size is not None]
@@ -157,19 +196,17 @@ def product_detail(request, product_id):
         [variant.color for variant in variants if variant.color is not None]
     ))
 
-    first_image_url =  main_images.first().image.url if main_images.exists() else ""
-   
     variant_map = json.dumps([
-    {
-        "color": variant.color.id if variant.color else None,
-        "image_url": variant.image.url if variant.image else first_image_url
-    }
-    for variant in variants
+        {
+            "color": variant.color.id if variant.color else None,
+            "image_url": variant.image.url if variant.image else first_image_url
+        }
+        for variant in variants
     ])
-   
+
     if request.user.is_authenticated:
         wishlist_product_ids = list(
-        Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+            Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
         )
     else:
         wishlist_product_ids = []
@@ -186,10 +223,20 @@ def product_detail(request, product_id):
         'wishlist_product_ids': wishlist_product_ids,
         'recommended_products': recommended_products,
         'reviews': reviews,
-        'form': ReviewForm()
+        'form': ReviewForm(),
+        'first_image_url': first_image_url,  # pass to template for default display
     }
     return render(request, 'store/product_detail.html', context)
 
+@method_decorator(cache_page(60*5), name="list")
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Product.objects.all().prefetch_related("images", "variants__color", "variants__size").select_related("category")
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["dealer", "category__id", "category__name", "sku"]
+    search_fields = ["name", "description", "sku"]
+    ordering_fields = ["price", "name", "stock"]
+    ordering = ["name"]
 
 def add_to_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -222,51 +269,157 @@ def submit_review(request, product_id):
     return redirect('product_detail', product_id=product.id)
 
 @login_required
-def add_to_cart(request, product_id):
-    product = Product.objects.get(id=product_id)
-    cart_item, created = Cart.objects.get_or_create(user=request.user, product=product)
-    if not created:
-        cart_item.quantity += 1
-    cart_item.save()
-    return redirect('index')
-
-@login_required
-def view_cart(request):
-    cart_items = Cart.objects.filter(user=request.user)
-    return render(request, 'store/cart.html', {'cart_items': cart_items})
-
-@login_required
 def checkout(request):
-    cart_items = Cart.objects.filter(user=request.user)
-    if not cart_items:
-        return redirect('view_cart')
-
-    total_price = sum(item.product.price * item.quantity for item in cart_items)
-
-    order = Order.objects.create(
-        user=request.user,
-        total_price=total_price,
-        created_at=timezone.now(),
-        payment_id='COD'
+    """
+    Checkout page – creates Razorpay order and passes it to template.
+    """
+    cart_data = Cart.objects.for_user_or_session(
+        user=request.user, session_key=request.session.session_key
     )
+    cart = cart_data["cart"]
+    items = cart_data["items"]
 
-    for item in cart_items:
-        if item.product.stock < item.quantity:
-            return render(request, 'store/out_of_stock.html', {'product': item.product})
+    if not items:
+        return redirect("view_cart")
 
-        OrderItem.objects.create(
-            order=order,
-            product=item.product,
-            quantity=item.quantity,
-            price=item.product.price
-        )
+    addresses = Address.objects.filter(user=request.user)
+    coupon_code = request.GET.get("coupon") or request.POST.get("coupon")
+    discount = 0
 
-        item.product.stock -= item.quantity
-        item.product.save()
+    # 🟢 Coupon handling
+    if coupon_code:
+        try:
+            coupon = Coupon.objects.get(code=coupon_code, is_active=True)
+            if coupon.is_valid():
+                discount = coupon.discount_percent
+                coupon.users.add(request.user)
+            else:
+                messages.error(request, "Invalid or expired coupon.")
+        except Coupon.DoesNotExist:
+            messages.error(request, "Coupon not found.")
 
-    cart_items.delete()
+    # 🟢 Total price after discount
+    total_price = cart.total_price
+    if discount:
+        total_price = total_price - (total_price * discount / 100)
 
-    return render(request, 'store/invoice.html', {'order': order})
+    # 🟢 Create Razorpay order
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    razorpay_order = client.order.create({
+        "amount": int(total_price * 100),  # in paise
+        "currency": "INR",
+        "payment_capture": "1",
+    })
+
+    # Save order_id temporarily in session
+    request.session["razorpay_order_id"] = razorpay_order["id"]
+
+    return render(request, "store/checkout.html", {
+        "cart": cart,
+        "items": items,
+        "addresses": addresses,
+        "total_price": total_price,
+        "discount": discount,
+        "razorpay_key": settings.RAZORPAY_KEY_ID,
+        "razorpay_order": razorpay_order,
+    })
+
+
+@csrf_exempt
+@login_required
+def payment_success(request):
+    """
+    Razorpay callback – verifies signature, creates dealer/self orders,
+    reduces stock, clears cart, and triggers external dealer APIs.
+    """
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+            # 🟢 Verify Razorpay signature
+            params_dict = {
+                "razorpay_order_id": data.get("razorpay_order_id"),
+                "razorpay_payment_id": data.get("razorpay_payment_id"),
+                "razorpay_signature": data.get("razorpay_signature"),
+            }
+            client.utility.verify_payment_signature(params_dict)
+
+            # 🟢 Get cart
+            cart_data = Cart.objects.for_user_or_session(
+                user=request.user, session_key=request.session.session_key
+            )
+            cart = cart_data["cart"]
+            items = cart_data["items"]
+
+            if not items:
+                return JsonResponse({"success": False, "error": "Cart empty"})
+
+            address_id = request.session.get("checkout_address_id")
+            shipping_address = Address.objects.filter(id=address_id, user=request.user).first()
+
+            # 🟢 Create dealer-wise orders
+            dealer_orders = {}
+            for item in items:
+                dealer = getattr(item.product, "dealer", "Self")  # default Self
+
+                if dealer not in dealer_orders:
+                    dealer_orders[dealer] = Order.objects.create(
+                        user=request.user,
+                        total_price=0,
+                        payment_id=data["razorpay_order_id"],  # link with Razorpay order
+                        shipping_address=shipping_address,
+                        billing_address=shipping_address,
+                        status="Paid",
+                    )
+
+                order = dealer_orders[dealer]
+
+                # Out of stock check for self-fulfilled
+                if item.product.stock < item.quantity and dealer == "Self":
+                    return render(request, "store/out_of_stock.html", {"product": item.product})
+
+                # Create order item
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    variant=item.variant,
+                    quantity=item.quantity,
+                    price=item.product.offer_price or item.product.price,
+                )
+
+                order.total_price += (item.product.offer_price or item.product.price) * item.quantity
+                order.save()
+
+                # Reduce stock for self-fulfilled
+                if dealer == "Self":
+                    item.product.stock -= item.quantity
+                    item.product.save()
+
+                # 🟢 API calls for Qikink / Printrove
+                if dealer == "Qikink":
+                    from store.qikink_api import create_test_order
+                    response = create_test_order(order)
+                    print("Qikink response:", response)
+                elif dealer == "Printrove":
+                    # TODO: Replace with real Printrove API
+                    print(f"Send order {order.id} to Printrove API")
+
+            # 🟢 Clear cart
+            cart.items.all().delete()
+
+            return JsonResponse({"success": True})
+
+        except razorpay.errors.SignatureVerificationError:
+            return JsonResponse({"success": False, "error": "Payment verification failed"})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Invalid request"})
+
+def order_success(request):
+    return render(request, "store/order_success.html")
 
 def about(request):
     context = {
@@ -558,92 +711,123 @@ def merge_guest_cart(user, session_key):
 
 
 def cart_view(request):
-    """Display the cart page for user or guest."""
+    session_key = get_or_create_session_key(request)
+
     if request.user.is_authenticated:
-        # Merge guest cart if exists
-        session_key = get_or_create_session_key(request)
         merge_guest_cart(request.user, session_key)
         cart_data = Cart.objects.for_user_or_session(user=request.user)
     else:
-        session_key = get_or_create_session_key(request)
         cart_data = Cart.objects.for_user_or_session(session_key=session_key)
 
-    return render(request, "store/cart.html", {
-        "cart_items": cart_data["items"],
-        "cart_total": cart_data["cart_total"],
-        "cart_count": cart_data["cart_count"],
+    # Assign first_image for each cart item product
+    for item in cart_data.get("items", []):
+        product = item.product
+        if product.image_mode == "custom" and product.custom_image:
+            product.first_image = product.custom_image
+        else:
+            product.first_image = product.images.first()  # fallback
+    cart_data["cart_items"] = cart_data.get("items", [])
+
+    return render(request, "store/cart.html", cart_data)
+
+@require_POST
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    variant_id = request.POST.get("variant_id")
+    variant = ProductVariant.objects.filter(id=variant_id).first() if variant_id else None
+    quantity = int(request.POST.get("quantity", 1))
+
+    session_key = get_or_create_session_key(request)
+
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart = cart_data["cart"]
+
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        product=product,
+        variant=variant,
+        defaults={"quantity": quantity}
+    )
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.save()
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({
+            "success": True,
+            "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
+            "item_total": cart_item.total_price,
+            "subtotal": cart.total_price,
+            "total": cart.total_price,
+        })
+
+    return redirect("cart")
+
+@require_POST
+def update_cart(request, item_id):
+    """Update or remove a cart item (AJAX)."""
+    if request.user.is_authenticated:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__session_key=session_key)
+
+    action = request.POST.get("action")
+    quantity = request.POST.get("quantity")
+
+    # ✅ Handle increase/decrease buttons
+    if action == "increase":
+        cart_item.quantity += 1
+    elif action == "decrease" and cart_item.quantity > 1:
+        cart_item.quantity -= 1
+    # ✅ Handle direct input field
+    elif quantity is not None:
+        quantity = int(quantity)
+        if quantity > 0:
+            cart_item.quantity = quantity
+        else:
+            cart_item.delete()
+            cart = cart_item.cart
+            return JsonResponse({
+                "success": True,
+                "item_total": 0,
+                "subtotal": cart.total_price,
+                "total": cart.total_price,
+                "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
+            })
+
+    cart_item.save()
+    cart = cart_item.cart
+
+    return JsonResponse({
+        "success": True,
+        "item_total": cart_item.total_price,
+        "subtotal": cart.total_price,
+        "total": cart.total_price,
+        "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
     })
 
 
 @require_POST
-def add_to_cart(request, product_id):
-    """Add product to cart (user or guest)."""
-    product = get_object_or_404(Product, id=product_id)
-
-    if request.user.is_authenticated:
-        cart_data = Cart.objects.for_user_or_session(user=request.user)
-    else:
-        session_key = get_or_create_session_key(request)
-        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
-
-    cart = cart_data["cart"]
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-    if not created:
-        cart_item.quantity += 1
-    cart_item.save()
-
-    return redirect("cart")
-
-
-@require_POST
-def update_cart(request, item_id):
-    """Update quantity of cart item (AJAX-friendly)."""
-    if request.user.is_authenticated:
-        cart_data = Cart.objects.for_user_or_session(user=request.user)
-    else:
-        session_key = get_or_create_session_key(request)
-        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
-
-    cart = cart_data["cart"]
-    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
-
-    try:
-        quantity = int(request.POST.get("quantity", 1))
-        if quantity < 1:
-            quantity = 1
-    except (TypeError, ValueError):
-        quantity = 1
-
-    cart_item.quantity = quantity
-    cart_item.save()
-
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return JsonResponse({
-            "item_total": float(cart_item.total_price),
-            "cart_total": float(cart.total_price),
-            "cart_count": cart.items.count(),
-        })
-
-    return redirect("cart")
-
-
-@require_POST
 def remove_from_cart(request, item_id):
-    """Remove cart item (AJAX-friendly)."""
+    """Remove item from cart (AJAX)."""
     if request.user.is_authenticated:
-        cart_data = Cart.objects.for_user_or_session(user=request.user)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     else:
         session_key = get_or_create_session_key(request)
-        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__session_key=session_key)
 
-    cart = cart_data["cart"]
-    cart_item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    cart = cart_item.cart
     cart_item.delete()
 
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        return JsonResponse({
-            "cart_total": float(cart.total_price),
-            "cart_count": cart.total_items,
-        })
-
-    return redirect("cart")
+    return JsonResponse({
+        "success": True,
+        "item_total": 0,
+        "subtotal": cart.total_price,
+        "total": cart.total_price,
+        "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
+    })

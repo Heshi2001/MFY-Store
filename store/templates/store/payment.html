@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Payment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="min-h-screen flex items-center justify-center">
+    <div class="max-w-lg w-full bg-white p-8 rounded-2xl shadow-lg">
+      
+      <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">
+        Complete Your Payment
+      </h2>
+
+      <div class="mb-6 text-center">
+        <p class="text-gray-600"><strong>Order ID:</strong> #{{ order.id }}</p>
+        <p class="text-gray-700 text-lg mt-2">
+          <strong>Total Amount:</strong> ₹{{ order.total_price }}
+        </p>
+      </div>
+
+      <!-- Razorpay Checkout Button -->
+      <form action="{% url 'payment_success' %}" method="POST" class="text-center">
+        {% csrf_token %}
+        <script src="https://checkout.razorpay.com/v1/checkout.js"
+                data-key="{{ razorpay_key }}"
+                data-amount="{{ razorpay_amount }}"
+                data-currency="{{ currency }}"
+                data-order_id="{{ razorpay_order_id }}"
+                data-buttontext="Pay Securely with Razorpay"
+                data-name="My Shop"
+                data-description="Order Payment"
+                data-prefill.name="{{ request.user.get_full_name }}"
+                data-prefill.email="{{ request.user.email }}"
+                data-theme.color="#2563eb">
+        </script>
+        <input type="hidden" value="Hidden Element">
+      </form>
+
+      <p class="text-sm text-gray-500 text-center mt-4">
+        You will be securely redirected to Razorpay to complete your payment.
+      </p>
+
+    </div>
+  </div>
+
+</body>
+</html>

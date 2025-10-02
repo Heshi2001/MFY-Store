@@ -2,8 +2,13 @@ from django.contrib import admin
 from .models import (
     Category, Product, ProductVariant, ProductImage, Color, Size,
     Wishlist, Cart, CartItem, Order, OrderItem, TeamMember,
-    Service, Client, Contact, Review, Address
+    Service, Client, Contact, Review, Address, Fulfillment
 )
+
+from .qikink_api import send_order_to_qikink
+from django.contrib import admin, messages
+from django.utils.translation import ngettext
+
 
 # --- Inlines ---
 class ProductImageInline(admin.TabularInline):
@@ -74,21 +79,6 @@ class CartItemAdmin(admin.ModelAdmin):
     search_fields = ['cart__user__username', 'product__name']
     list_editable = ['quantity']
 
-# --- Orders ---
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    readonly_fields = ['product', 'quantity', 'price']
-    autocomplete_fields = ['product']
-
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ['user', 'total_price', 'status', 'created_at', 'payment_id']
-    readonly_fields = ['created_at']
-    search_fields = ['user__username', 'payment_id']
-    list_filter = ['status', 'created_at']
-    inlines = [OrderItemInline]
-
 # --- Others ---
 @admin.register(TeamMember)
 class TeamMemberAdmin(admin.ModelAdmin):
@@ -119,3 +109,63 @@ class ReviewAdmin(admin.ModelAdmin):
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
     list_display = ("user", "first_name", "last_name", "city", "is_default", "address_type")
+
+# --- Orders ---
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
+    readonly_fields = ['product', 'quantity', 'price']
+    autocomplete_fields = ['product']
+
+class FulfillmentInline(admin.TabularInline):
+    model = Fulfillment
+    extra = 0
+    readonly_fields = ['dealer', 'status', 'raw_response', 'created_at']  # 🟢 fixed
+
+@admin.register(Fulfillment)
+class FulfillmentAdmin(admin.ModelAdmin):   # ✅ proper ModelAdmin
+    list_display = ("order", "dealer", "status", "created_at")
+    list_filter = ("dealer", "status")
+    search_fields = ("order__id", "dealer")
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['user', 'total_price', 'status', 'created_at', 'payment_id']
+    readonly_fields = ['created_at']
+    search_fields = ['user__username', 'payment_id']
+    list_filter = ['status', 'created_at']
+    inlines = [OrderItemInline, FulfillmentInline]
+    actions = ["resend_to_qikink"]
+
+    def resend_to_qikink(self, request, queryset):
+        success, failed = 0, 0
+        for order in queryset:
+            try:
+                result = send_order_to_qikink(order)
+                Fulfillment.objects.create(
+                    order=order,
+                    dealer="Qikink", 
+                    status="success" if result.get("status") == "success" else "failed",
+                    raw_response=result,
+                )
+                success += 1
+            except Exception as e:
+                Fulfillment.objects.create(
+                    order=order,
+                    dealer="Qikink",
+                    status="failed",
+                    raw_response={"error": str(e)},
+                )
+                failed += 1
+
+        self.message_user(
+            request,
+            ngettext(
+                "%d order was resent successfully. %d failed.",
+                "%d orders were resent successfully. %d failed.",
+                success,
+            ) % (success, failed),
+            messages.SUCCESS if failed == 0 else messages.WARNING,
+        )
+    
+    resend_to_qikink.short_description = "Resend selected orders to Qikink"

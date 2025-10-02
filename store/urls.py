@@ -10,7 +10,7 @@ urlpatterns = [
     path("cart/add/<int:product_id>/", views.add_to_cart, name="add_to_cart"),
     path("cart/update/<int:item_id>/", views.update_cart, name="update_cart"),
     path("cart/remove/<int:item_id>/", views.remove_from_cart, name="remove_from_cart"),
-    path('checkout/', views.checkout, name='checkout'),
+    path("order-success/", views.order_success, name="order_success"),
     path('about/', views.about, name='about'),
     path('products/', views.products_view, name='products'),
     path('products/<int:product_id>/', views.product_detail, name='product_detail'),
@@ -28,7 +28,6 @@ urlpatterns = [
     path('account/dashboard/', views.account_dashboard, name='account_dashboard'),
     path("account/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("account/settings/", views.account_settings, name="account_settings"),
-    path("account/orders/", views.orders_list, name="orders"), 
     path("account/addresses/", views.addresses, name="account_addresses"),
     path("account/addresses/add/", views.address_add, name="address_add"),
     path("account/addresses/<int:pk>/edit/", views.edit_address, name="edit_address"),
@@ -36,4 +35,9 @@ urlpatterns = [
     path("account/payments/", views.payments, name="payments"),
     path("account/password/change/", CustomPasswordChangeView.as_view(), name="account_change_password"),
     path("account/offers/", views.account_offers, name="account_offers"),
+    path("checkout/", views.checkout, name="checkout"),
+    path("payment/success/", views.payment_success, name="payment_success"),
+    path("account/orders/", views.orders_list, name="orders"),
+    path("account/orders/<int:order_id>/", views.order_detail, name="order_detail"),
+
 ]

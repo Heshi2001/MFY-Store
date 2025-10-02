@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'widget_tweaks',
     'bootstrap4',
+    'rest_framework',
+    'django_filters',
     
      # Allauth apps
     'allauth',
@@ -211,6 +213,47 @@ cloudinary.config(
     api_key=config('CLOUDINARY_API_KEY'),
     api_secret=config('CLOUDINARY_API_SECRET')
 )
+
+# Qikink 
+
+QIKINK_BASE_URL = config("QIKINK_BASE_URL", default="https://sandbox.qikink.com")
+QIKINK_SANDBOX_CLIENT_ID = config("QIKINK_SANDBOX_CLIENT_ID", default="")
+QIKINK_SANDBOX_CLIENT_SECRET = config("QIKINK_SANDBOX_CLIENT_SECRET", default="")
+QIKINK_LIVE_CLIENT_ID = config("QIKINK_LIVE_CLIENT_ID", default="")
+QIKINK_LIVE_CLIENT_SECRET = config("QIKINK_LIVE_CLIENT_SECRET", default="")
+QIKINK_MODE = config("QIKINK_MODE", default="sandbox")
+
+# DRF / REST framework settings
+REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 12,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+}
+
+# Razorpay
+RAZORPAY_TEST_KEY_ID = config("RAZORPAY_TEST_KEY_ID", default="")
+RAZORPAY_TEST_KEY_SECRET = config("RAZORPAY_TEST_KEY_SECRET", default="")
+RAZORPAY_LIVE_KEY_ID = config("RAZORPAY_LIVE_KEY_ID", default="")
+RAZORPAY_LIVE_KEY_SECRET = config("RAZORPAY_LIVE_KEY_SECRET", default="")
+
+# Choose mode: "test" or "live"
+RAZORPAY_MODE = config("RAZORPAY_MODE", default="test")
+
+if RAZORPAY_MODE == "live":
+    RAZORPAY_KEY_ID = RAZORPAY_LIVE_KEY_ID
+    RAZORPAY_KEY_SECRET = RAZORPAY_LIVE_KEY_SECRET
+else:
+    RAZORPAY_KEY_ID = RAZORPAY_TEST_KEY_ID
+    RAZORPAY_KEY_SECRET = RAZORPAY_TEST_KEY_SECRET
+
+
+#PRINTROVE_API_KEY = config("PRINTROVE_API_KEY", default="")
+#PRINTROVE_BASE_URL = config("PRINTROVE_BASE_URL", default="https://api.printrove.com/v1")
 
 # Use Windows npm path only if running locally, otherwise use default "npm"
 if os.name == "nt":  # Windows

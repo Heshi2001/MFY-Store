@@ -1,0 +1,88 @@
+/* ========== GENERAL ========== */
+body.bg-light {
+  background: linear-gradient(135deg, #f8fbff, #eef3ff);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 960px;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+/* ========== CARDS ========== */
+.card {
+  border-radius: 1rem !important;
+  border: 1px solid #e6eaf0;
+  transition: all 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ========== HEADINGS ========== */
+h2, h4 {
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2a2a2a;
+}
+
+/* ========== BADGES ========== */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.4em 0.6em;
+  border-radius: 0.5rem;
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+  border-radius: 0.75rem;
+  font-weight: 500;
+  padding: 0.55rem 1.2rem;
+}
+.btn-sm {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+}
+
+/* ========== FORM ========== */
+form .form-control,
+form .form-select {
+  border-radius: 0.75rem;
+  border: 1px solid #d0d7e2;
+  box-shadow: none !important;
+  font-size: 0.95rem;
+}
+form .form-control:focus,
+form .form-select:focus {
+  border-color: #4f80ff;
+  box-shadow: 0 0 0 0.2rem rgba(79, 128, 255, 0.25) !important;
+}
+
+/* ========== DELETE CONFIRM ========== */
+.card-body.text-center p.text-muted {
+  font-size: 0.9rem;
+  color: #6c757d !important;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 576px) {
+  .card-body {
+    padding: 1.25rem !important;
+  }
+  .btn {
+    width: 100%;
+  }
+  .d-flex.gap-2 {
+    flex-direction: column;
+  }
+  .mt-3 .btn + .btn {
+    margin-top: 0.75rem;
+  }
+}

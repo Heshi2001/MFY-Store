@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="max-w-4xl mx-auto py-10">
+    <h1 class="text-2xl font-bold mb-6">Checkout</h1>
+
+    <div class="bg-white p-6 shadow rounded-lg">
+      <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+      <ul class="divide-y">
+        {% for item in items %}
+        <li class="py-2 flex justify-between">
+          <span>{{ item.product.name }} (x{{ item.quantity }})</span>
+          <span>₹{{ item.total_price }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="mt-4 flex justify-between font-bold text-lg">
+       <span>Total</span>
+       <span>₹{{ total_price }}</span>
+      </div>
+      <button id="pay-btn"
+        class="w-full bg-blue-600 text-white py-3 mt-6 rounded-lg shadow hover:bg-blue-700">
+        Pay with Razorpay
+      </button>
+    </div>
+  </div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById("pay-btn").onclick = function(e){
+  var options = {
+    "key": "{{ razorpay_key }}",
+    "amount": "{{ razorpay_order.amount }}",
+    "currency": "INR",
+    "name": "MyShop",
+    "description": "Order #{{ cart.id }}",
+    "order_id": "{{ razorpay_order.id }}",
+    "handler": function (response){
+      fetch("{% url 'payment_success' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify(response)
+      }).then(res => res.json())
+        .then(data => {
+          if(data.success){
+            window.location.href = "{% url 'order_success' %}";
+          } else {
+            alert("Payment Failed: " + data.error);
+          }
+        })
+    },
+    "theme": { "color": "#3399cc" }
+  };
+  var rzp1 = new Razorpay(options);
+  rzp1.open();
+  e.preventDefault();
+}
+</script>
+</body>
+</html>

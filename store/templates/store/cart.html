@@ -92,28 +92,28 @@
           {% endfor %}
         </div>
 
-        <!-- Cart summary -->
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h2 class="text-xl font-bold mb-4">Order Summary</h2>
-          <div class="flex justify-between mb-2">
-            <span>Subtotal</span>
-            <span id="cart-total">₹{{ cart_total|floatformat:2 }}</span>
-          </div>
-          <div class="flex justify-between mb-2">
-            <span>Shipping</span>
-            <span class="text-green-600">Free</span>
-          </div>
-          <hr class="my-2">
-          <div class="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span id="cart-summary-total">₹{{ cart_total|floatformat:2 }}</span>
-          </div>
-          <a href="{% url 'checkout' %}" 
-             class="block bg-blue-600 text-white text-center py-3 rounded-lg mt-6 hover:bg-blue-700 transition">
-            Proceed to Checkout
-          </a>
+       <!-- Cart summary -->
+      <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Order Summary</h2>
+        <div class="flex justify-between mb-2">
+          <span>Subtotal</span>
+          <span id="cart-subtotal">₹{{ cart_total|floatformat:2 }}</span>
         </div>
+      <div class="flex justify-between mb-2">
+         <span>Shipping</span>
+         <span class="text-green-600">Free</span>
       </div>
+      <hr class="my-2">
+      <div class="flex justify-between font-bold text-lg">
+        <span>Total</span>
+        <span id="cart-total">₹{{ cart_total|floatformat:2 }}</span>
+     </div>
+     <a href="{% url 'checkout' %}" 
+        class="block bg-blue-600 text-white text-center py-3 rounded-lg mt-6 hover:bg-blue-700 transition">
+      Proceed to Checkout
+     </a>
+    </div>
+   </div>
     {% else %}
       <p class="text-gray-500">Your cart is empty. 
         <a href="/products/" class="text-blue-600 hover:underline">Shop now</a>.
@@ -128,60 +128,84 @@
     </div>
   </footer>
 
-  <!-- AJAX Script -->
-  <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    // Auto update quantity
-    document.querySelectorAll(".update-cart-form .quantity").forEach(input => {
-      ["input", "change"].forEach(evt => {
-        input.addEventListener(evt, function() {
-          let form = this.closest(".update-cart-form");
-          let formData = new FormData(form);
+  <!-- ✅ AJAX Script -->
 
-          fetch(form.action, {
-            method: "POST",
-            body: formData,
-            headers: {"X-Requested-With": "XMLHttpRequest"}
-          })
-          .then(res => res.json())
-          .then(data => {
-            // Update item + totals
-            document.querySelector("#cart-item-" + form.dataset.id + " .item-total").textContent = "₹" + data.item_total.toFixed(2);
-            document.querySelector("#cart-total").textContent = "₹" + data.cart_total.toFixed(2);
-            document.querySelector("#cart-summary-total").textContent = "₹" + data.cart_total.toFixed(2);
-            document.querySelector("#cart-count").textContent = data.cart_count;
-          });
-        });
-      });
-    });
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Auto update quantity
+  document.querySelectorAll(".update-cart-form .quantity").forEach(input => {
+    ["input", "change"].forEach(evt => {
+      input.addEventListener(evt, function() {
+        let form = this.closest(".update-cart-form");
+        let formData = new FormData(form);
 
-    // Handle remove item
-    document.querySelectorAll(".remove-cart-form").forEach(form => {
-      form.addEventListener("submit", function(e) {
-        e.preventDefault();
-        let formData = new FormData(this);
-
-        fetch(this.action, {
+        fetch(form.action, {
           method: "POST",
           body: formData,
           headers: {"X-Requested-With": "XMLHttpRequest"}
         })
         .then(res => res.json())
         .then(data => {
-          // Remove item from DOM
-          let itemDiv = document.querySelector("#cart-item-" + this.dataset.id);
-          if(itemDiv) itemDiv.remove();
+          if (data.success) {
+            // Safely convert values to numbers
+            const itemTotal = Number(data.item_total) || 0;
+            const subtotal = Number(data.subtotal) || 0;
+            const total = Number(data.total) || 0;
+            const cartCount = Number(data.cart_count) || 0;
 
-          // Update totals
-          document.querySelector("#cart-total").textContent = "₹" + data.cart_total.toFixed(2);
-          document.querySelector("#cart-summary-total").textContent = "₹" + data.cart_total.toFixed(2);
-          document.querySelector("#cart-count").textContent = data.cart_count;
-        });
+            // Update item + totals
+            // #️⃣ CHANGE: update cart values after quantity change
+            const itemRow = document.querySelector("#cart-item-" + form.dataset.id);
+            if (itemRow) {
+              itemRow.querySelector(".item-total").textContent = "₹" + itemTotal.toFixed(2);
+            }
+            document.querySelector("#cart-subtotal").textContent = "₹" + subtotal.toFixed(2);
+            document.querySelector("#cart-total").textContent = "₹" + total.toFixed(2);
+            document.querySelector("#cart-count").textContent = cartCount;
+            console.error("Error updating cart quantity:", data.error);
+          }
+         })
+        .catch(err => console.error("AJAX error:", err));
       });
     });
   });
-  </script>
 
+  // Handle remove item
+  document.querySelectorAll(".remove-cart-form").forEach(form => {
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      let formData = new FormData(this);
+
+      fetch(this.action, {
+        method: "POST",
+        body: formData,
+        headers: {"X-Requested-With": "XMLHttpRequest"}
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // #️⃣ CHANGE: safer remove
+          const itemDiv = document.querySelector("#cart-item-" + this.dataset.id);
+          if (itemDiv) itemDiv.remove();
+
+          // Safely convert values to numbers
+          const subtotal = Number(data.subtotal) || 0;
+          const total = Number(data.total) || 0;
+          const cartCount = Number(data.cart_count) || 0;
+
+          // Update totals
+          document.querySelector("#cart-subtotal").textContent = "₹" + subtotal.toFixed(2);
+          document.querySelector("#cart-total").textContent = "₹" + total.toFixed(2);
+          document.querySelector("#cart-count").textContent = cartCount;
+        } else {
+          console.error("Error removing cart item:", data.error);
+        }
+      })
+      .catch(err => console.error("AJAX error:", err));
+    });
+  });
+});
+</script>        
   {% if debug %}
     <script src="{% static 'django_browser_reload/reload.js' %}"></script>
   {% endif %}
