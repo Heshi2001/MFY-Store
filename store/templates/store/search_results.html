@@ -2,26 +2,37 @@
 
 {% block content %}
 <div class="container mt-5">
-  <h3>Search Results for "{{ query }}"</h3>
-  <div class="row">
-    {% if results %}
-      {% for product in results %}
-        <div class="col-md-4">
-          <div class="product-item">
-            <a href="#"><img src="{{ product.image.url }}" alt="{{ product.title }}"></a>
-            <div class="down-content">
-              <a href="#"><h4>{{ product.title }}</h4></a>
-              <h6>${{ product.price }}</h6>
-              <p>{{ product.description|truncatewords:12 }}</p>
+    <h3>Search Results for "{{ query }}"</h3>
+    <div class="row mt-4">
+        {% if products %}
+            {% for product in products %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <a href="{% url 'product_detail' product.id %}">
+                            <img 
+                                src="{{ product.first_image.image.url|default:'https://via.placeholder.com/300x300' }}" 
+                                class="card-img-top" 
+                                alt="{{ product.name }}" 
+                                style="object-fit:cover; height:300px;"
+                            >
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h5>
+                            <p class="card-text">${{ product.price }}</p>
+                            <p class="card-text text-truncate">{{ product.description|truncatewords:12 }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-md-12">
+                <p class="text-muted">No matching products found.</p>
             </div>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="col-md-12">
-        <p>No matching products found.</p>
-      </div>
-    {% endif %}
-  </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

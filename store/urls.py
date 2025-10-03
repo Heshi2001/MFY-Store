@@ -17,6 +17,7 @@ urlpatterns = [
     path('contact/', views.contact_view, name='contact'),
     path('contact_thanks/', views.contact_thanks, name='contact_thanks'),
     path('search_results/', views.search_view, name='search_results'),
+    path("search-suggestions/", views.search_suggestions, name="search_suggestions"),
     path('faq/', views.faq, name='faq'),
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('add_to_wishlist/<int:product_id>/', views.add_to_wishlist, name='add_to_wishlist'),

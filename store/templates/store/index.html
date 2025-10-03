@@ -20,6 +20,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
   <link rel="stylesheet" href="{% static 'store/css/owl.css' %}">
+
+  <!-- Custom styles for search suggestions -->
+  <style>
+    #suggestions {
+        max-height: 300px;
+        overflow-y: auto;
+        display: none; /* hidden by default */
+        border: 1px solid #ddd;
+        background: #fff;
+        border-radius: 4px;
+        z-index: 1000; /* ensure it appears above other elements */
+    }
+    #suggestions a.list-group-item {
+        cursor: pointer;
+    }
+  </style>
+ 
 </head>
 
 <body>
@@ -155,13 +172,22 @@
 <!-- Search Bar BELOW Banner -->
 <div class="container search-bar-container py-4">
   <form method="GET" action="{% url 'search_results' %}" class="search-bar-form d-flex justify-content-center">
-    <input type="text" name="query" placeholder="Search products" class="search-bar-input form-control me-2" />
+    <input 
+      type="text" 
+      id="search-box"
+      name="query" 
+      placeholder="Search products (e.g. shoes, red, t-shirt)" 
+      class="search-bar-input form-control me-2"
+      value="{{ request.GET.query|default_if_none:'' }}"
+      autocomplete="off"
+    />
     <button type="submit" class="search-bar-button btn btn-dark">
       <i class="fas fa-search"></i>
     </button>
   </form>
-</div>                                                                 
-
+  <div id="suggestions" class="list-group position-absolute w-50" style="z-index:1000;"></div>
+</div>
+                                                            
  <!-- Latest Products -->
   <div class="latest-products">
     <div class="container">
@@ -292,5 +318,51 @@
     }
    </script>
  
+<script>
+$(document).ready(function(){
+    const $searchBox = $("#search-box");
+    const $suggestions = $("#suggestions");
+
+    // Fetch suggestions on keyup
+    $searchBox.on("keyup", function(){
+        let query = $(this).val();
+        if(query.length > 2){
+            $.ajax({
+                url: "/search-suggestions/",
+                data: {q: query},
+                success: function(data){
+                    $suggestions.html(data); // render list of suggestions
+                    $suggestions.show();
+                }
+            });
+        } else {
+            $suggestions.empty();
+            $suggestions.hide();
+        }
+    });
+
+    // Hide suggestions when clicking outside
+    $(document).on("click", function(e){
+        if(!$(e.target).closest($searchBox).length && !$(e.target).closest($suggestions).length){
+            $suggestions.hide();
+        }
+    });
+
+    // Optional: hide on ESC key
+    $(document).on("keydown", function(e){
+        if(e.key === "Escape"){
+            $suggestions.hide();
+        }
+    });
+
+    // Optional: click suggestion to fill input
+    $suggestions.on("click", "a", function(e){
+        e.preventDefault();
+        $searchBox.val($(this).text());
+        $suggestions.hide();
+        $searchBox.closest("form").submit();
+    });
+});
+</script>
 </body>
 </html>

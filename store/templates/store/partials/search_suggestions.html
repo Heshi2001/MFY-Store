@@ -1,0 +1,20 @@
+{% if results %}
+  {% for product in results %}
+    <a href="{% url 'product_detail' product.id %}" 
+       class="list-group-item list-group-item-action d-flex align-items-center">
+       
+       <img 
+           src="{{ product.first_image.image.url|default:'https://via.placeholder.com/50' }}" 
+           alt="{{ product.name }}" 
+           class="me-2 rounded" 
+           width="50" 
+           height="50" 
+           style="object-fit: cover;"
+       >
+       
+       <span>{{ product.name }}</span>
+    </a>
+  {% endfor %}
+{% else %}
+  <div class="list-group-item text-muted">No results found</div>
+{% endif %}

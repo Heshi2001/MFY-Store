@@ -33,6 +33,8 @@ from .serializers import ProductSerializer
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.db.models import Sum
+from django.db.models import Q
+from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
@@ -514,13 +516,48 @@ def contact_view(request):
 def contact_thanks(request):
     return render(request, 'store/contact_thanks.html')
 
+# Search page view
 def search_view(request):
-    query = request.GET.get('query')
+    query = request.GET.get('query', '').strip()
     products = []
-    if query:
-        products = Product.objects.filter(name__icontains=query)
 
-    return render(request, 'store/search_results.html', {'products': products, 'query': query})
+    if query:
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(category__name__icontains=query)  # only if Category is related
+        ).distinct()
+
+        # Assign first_image for each product
+        for product in products:
+            if product.image_mode == "custom" and product.custom_image:
+                product.first_image = product.custom_image
+            else:
+                product.first_image = product.images.first()  # fallback
+
+    return render(request, 'store/search_results.html', {
+        'products': products,
+        'query': query
+    })
+
+
+# AJAX search suggestions
+def search_suggestions(request):
+    query = request.GET.get("q", "").strip()
+    results = []
+
+    if query:
+        results = Product.objects.filter(name__icontains=query)[:5]
+
+        # Assign first_image for each product
+        for product in results:
+            if product.image_mode == "custom" and product.custom_image:
+                product.first_image = product.custom_image
+            else:
+                product.first_image = product.images.first()  # fallback
+
+    html = render_to_string("store/partials/search_suggestions.html", {"results": results})
+    return HttpResponse(html)
 
 def faq(request):
     return render(request, 'store/faq.html')
