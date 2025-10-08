@@ -9,9 +9,14 @@ from datetime import timedelta
 # ----------------------
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True)  # new field for category image
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return f"/products/?category={self.slug}"
 
 class Product(models.Model):
     DEALER_CHOICES = [
@@ -42,6 +47,16 @@ class Product(models.Model):
         default="qikink"
     )
     custom_image = CloudinaryField("custom_image", blank=True, null=True)
+    
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, editable=False)
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate discount percent when offer_price < price"""
+        if self.offer_price and self.offer_price < self.price:
+            self.discount_percent = round(((self.price - self.offer_price) / self.price) * 100, 2)
+        else:
+            self.discount_percent = 0.00
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.get_dealer_display()})"

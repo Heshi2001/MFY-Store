@@ -28,15 +28,40 @@ class CartItemInline(admin.TabularInline):
 # --- Product & Category ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'price', 'offer_price', 'stock']
-    list_filter = ['category']
-    search_fields = ['name', 'description']
+    list_display = [
+        'name',
+        'category',
+        'price',
+        'offer_price',
+        'discount_percent',  # ✅ shows in list view
+        'stock',
+        'dealer',
+        'rating',
+    ]
+    list_filter = ['category', 'dealer']
+    search_fields = ['name', 'description', 'sku']
     inlines = [ProductVariantInline, ProductImageInline]
+    readonly_fields = ['discount_percent']
 
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('name', 'category', 'sku', 'price', 'offer_price', 'discount_percent', 'stock', 'rating')
+        }),
+        ('Image Settings', {
+            'fields': ('image_mode', 'custom_image')
+        }),
+        ('Dealer Info', {
+            'fields': ('dealer',)
+        }),
+        ('Description', {
+            'fields': ('description', 'material')
+        }),
+    )
+        
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ['name']
-    search_fields = ['name']
+    list_display = ('name', 'slug', 'image')
+    prepopulated_fields = {'slug': ('name',)}
 
 # --- Variants & Images ---
 @admin.register(ProductVariant)

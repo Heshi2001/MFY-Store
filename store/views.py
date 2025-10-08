@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem
+from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib.auth import login
@@ -45,16 +45,39 @@ def index(request):
     if query:
         products = Product.objects.filter(name__icontains=query)
     else:
-        products = Product.objects.all().order_by('-id')[:6]  # Latest 6
+        products = Product.objects.all().order_by('-id')[:6]
 
+    # Prepare product images & discount
     for product in products:
-        # Use custom_image if image_mode=custom
         if product.image_mode == "custom" and product.custom_image:
             product.first_image = product.custom_image
         else:
-            product.first_image = product.images.first()  # fallback
+            product.first_image = product.images.first()
 
-    return render(request, 'store/index.html', {'products': products})
+        if product.offer_price and product.offer_price < product.price:
+            product.discount_percent = round(
+                ((product.price - product.offer_price) / product.price) * 100
+            )
+        else:
+            product.discount_percent = None
+    
+    # ✅ Fetch categories for display
+    categories = Category.objects.all()
+
+    # Get cart count for badge
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
+
+    return render(request, 'store/index.html', {
+        'products': products,
+        'categories': categories, 
+        'cart_items_count': cart_items_count,
+    })
 
 @login_required
 def account_dashboard(request):
@@ -152,6 +175,13 @@ def products_view(request):
             product.first_image = product.custom_image
         else:
             product.first_image = product.images.first()  # fallback
+         # Calculate discount if applicable
+        if product.offer_price and product.offer_price < product.price:
+            product.discount_percent = round(
+                ((product.price - product.offer_price) / product.price) * 100
+            )
+        else:
+            product.discount_percent = None
 
     return render(request, 'store/products.html', {
         "products": products
@@ -172,7 +202,7 @@ def order_detail(request, order_id):
     Show details of a single order (items, status, price).
     """
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    items = order.orderitem_set.select_related("product").all()
+    items = order.items.select_related("product").all()
 
     return render(request, "account/order_detail.html", {
         "order": order,
@@ -867,4 +897,37 @@ def remove_from_cart(request, item_id):
         "subtotal": cart.total_price,
         "total": cart.total_price,
         "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
+    })
+
+def category_products(request, category_id):
+    category = get_object_or_404(Category, id=category_id)
+    products = Product.objects.filter(category=category)
+
+    # Add image + discount logic like index page
+    for product in products:
+        if product.image_mode == "custom" and product.custom_image:
+            product.first_image = product.custom_image
+        else:
+            product.first_image = product.images.first()
+
+        if product.offer_price and product.offer_price < product.price:
+            product.discount_percent = round(
+                ((product.price - product.offer_price) / product.price) * 100
+            )
+        else:
+            product.discount_percent = None
+
+    # Get cart count for badge
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = request.session.session_key or request.session.save() or request.session.session_key
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
+
+    return render(request, 'store/category_products.html', {
+        'category': category,
+        'products': products,
+        'cart_items_count': cart_items_count,
     })

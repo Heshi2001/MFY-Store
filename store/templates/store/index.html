@@ -1,368 +1,397 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
-
-  <title>MFY</title>
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
-
-  <!-- Bootstrap core CSS -->
-  <link href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-
-  <!-- Additional CSS Files -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}">
-
-  <!-- Custom styles for search suggestions -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MFY Store | Made For You</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    #suggestions {
-        max-height: 300px;
-        overflow-y: auto;
-        display: none; /* hidden by default */
-        border: 1px solid #ddd;
-        background: #fff;
-        border-radius: 4px;
-        z-index: 1000; /* ensure it appears above other elements */
-    }
-    #suggestions a.list-group-item {
-        cursor: pointer;
-    }
-  </style>
- 
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
 </head>
+<body class="font-sans bg-black text-white">
 
-<body>
+<!-- Navbar -->
+<header class="bg-black text-white shadow-md border-b border-gray-800">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
 
-  <!-- ***** Preloader Start ***** -->
-  <div id="preloader">
-    <div class="jumper">
-      <div></div>
-      <div></div>
-      <div></div>
-    </div>
-  </div>
-  <!-- ***** Preloader End ***** -->
-
-<!-- Header -->
-  <header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container d-flex justify-content-between align-items-center">
-        <!-- Logo + Brand -->
-        <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
-        </a>
-        
-        <div class="d-lg-none cart-icon-mobile">
-         <a href="{% url 'cart' %}" class="cart-icon position-relative">
-           <i class="fa fa-shopping-cart fa-lg"></i>
-           {% if cart_items_count %}
-           <span class="cart-badge position-absolute badge rounded-pill bg-danger">
-             {{ cart_items_count }}
-           </span>
-           {% endif %}
-          </a>
-        <!-- Mobile User/Login --> 
-        {% if user.is_authenticated %}
-          <div class="d-inline-block text-white text-center ml-2">
-            <div>Hi</div>
-            <a href="{% url 'account_dashboard' %}" class="text-white fw-bold text-decoration-none">
-              {{ user.username }}
-            </a>
-         </div>
-          <form method="post" action="{% url 'account_logout' %}" class="d-inline">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-link login-icon text-white ml-2 p-0">
-              <i class="fa fa-sign-out-alt"></i>
-            </button>
-          </form>
-        {% else %}
-         <a href="{% url 'account_login' %}" class="login-icon text-white ml-2">
-            <i class="fa fa-user fa-lg"></i>
-         </a>
-        {% endif %}
-       </div>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
-          aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+      <!-- Left: Hamburger (mobile menu button) -->
+      <div class="flex items-center md:hidden">
+        <button id="mobile-menu-button" class="focus:outline-none">
+          <i class="fa fa-bars text-2xl"></i>
         </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">           
-            <li class="nav-item active">
-              <a class="nav-link" href="{% url 'index'%}">Home
-                <span class="sr-only">(current)</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'products' %}">Our Products</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'about' %}">About Us</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'contact'  %}">Contact Us</a>
-          </ul>
-        </div>
-        <div class="d-none d-lg-block cart-icon-desktop">
-        <a href="{% url 'cart' %}" class="cart-icon position-relative">
-          <i class="fa fa-shopping-cart fa-lg"></i>
+      </div>
+
+      <!-- Center: Logo/Brand -->
+      <a href="{% url 'index' %}" class="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
+        <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="h-10 w-auto">
+        <h2 class="text-xl font-bold">MADE FOR <em class="text-[#006A4E]">YOU</em></h2>
+      </a>
+
+      <!-- Right: Cart + User/Login -->
+      <div class="flex items-center space-x-4 ml-auto">
+        <!-- Cart -->
+        <a href="{% url 'cart' %}" class="relative flex items-center space-x-1 hover:text-[#006A4E]">
+          <i class="fa fa-shopping-cart text-xl"></i>
           {% if cart_items_count %}
-          <span class="cart-badge position-absolute badge rounded-pill bg-danger">
+          <span class="cart-items-count absolute -top-2 -right-2 bg-red-600 text-xs px-2 py-0.5 rounded-full">
             {{ cart_items_count }}
           </span>
           {% endif %}
         </a>
-        <!-- Desktop User/Login -->
-        {% if user.is_authenticated %}
-          <div class="d-inline-block text-white text-center ml-3">
-            <div>Hi</div>
-              <a href="{% url 'account_dashboard' %}" class="text-white fw-bold text-decoration-none">
-                {{ user.username }}
-             </a>
-            </div>
-          <form method="post" action="{% url 'account_logout' %}" class="d-inline">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-link login-icon text-white ml-3 p-0">
-              <i class="fa fa-sign-out-alt"></i> Logout
-            </button>
-          </form>
-       {% else %}
-          <a href="{% url 'account_login' %}" class="login-icon text-white ml-3">
-          <i class="fa fa-user fa-lg"></i> Login
-          </a>
-       {% endif %}
-       </div>
-      </div>
-    </nav>
-  </header>
 
-  <!-- Banner -->
-  <div class="banner header-text">
-    <div class="owl-banner owl-carousel">
-      <div class="banner-item-01">
-        <div class="text-content">        
-          <h4>Best Offer</h4>
-          <h2>New Arrivals On Sale</h2>
-        </div>
-      </div>
-      <div class="banner-item-02">
-        <div class="text-content">
-          <h4>Flash Deals</h4>
-          <h2>Get your best products</h2>
-        </div>
-      </div>
-      <div class="banner-item-03">
-        <div class="text-content">
-          <h4>Last Minute</h4>
-          <h2>Grab last minute deals</h2>
-        </div>
+        <!-- User / Login -->
+        {% if user.is_authenticated %}
+          <div class="flex items-center space-x-2">
+            <span class="hidden md:inline text-gray-300">Hi,</span>
+            <a href="{% url 'account_dashboard' %}" 
+               class="bg-[#006A4E] hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
+              {{ user.username }}
+            </a>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="hover:text-red-400 ml-2">
+                <i class="fa fa-sign-out-alt"></i>
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <a href="{% url 'account_login' %}" 
+             class="bg-[#006A4E] hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
+            <i class="fa fa-user"></i>
+            <span class="hidden sm:inline">Login</span>
+          </a>
+        {% endif %}
       </div>
     </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden md:hidden bg-gray-900 px-4 py-2 space-y-2 border-t border-gray-700">
+    <a href="{% url 'index' %}" class="block hover:text-[#006A4E]">Home</a>
+    <a href="{% url 'products' %}" class="block hover:text-[#006A4E]">Our Products</a>
+    <a href="{% url 'about' %}" class="block hover:text-[#006A4E]">About Us</a>
+    <a href="{% url 'contact' %}" class="block hover:text-[#006A4E]">Contact Us</a>
   </div>
-  
-<!-- Search Bar BELOW Banner -->
-<div class="container search-bar-container py-4">
-  <form method="GET" action="{% url 'search_results' %}" class="search-bar-form d-flex justify-content-center">
+</header>
+
+<!-- Banner Carousel -->
+<section class="relative h-[400px] overflow-hidden">
+  <div id="banner-carousel" class="relative h-full w-full">
+    <!-- Slide -->
+    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center transition-opacity duration-1000 opacity-0">
+      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
+        <h2 class="text-4xl md:text-5xl font-bold">Best Offer</h2>
+        <p class="mt-4 text-lg text-gray-200">New Arrivals On Sale</p>
+      </div>
+    </div>
+    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center transition-opacity duration-1000 opacity-0">
+      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
+        <h2 class="text-4xl md:text-5xl font-bold">Flash Deals</h2>
+        <p class="mt-4 text-lg text-gray-200">Get your best products</p>
+      </div>
+    </div>
+    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center transition-opacity duration-1000 opacity-0">
+      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
+        <h2 class="text-4xl md:text-5xl font-bold">Last Minute</h2>
+        <p class="mt-4 text-lg text-gray-200">Grab last minute deals</p>
+      </div>
+    </div>
+
+    <!-- Arrows -->
+    <button id="prev-slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button id="next-slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+
+    <!-- Dots -->
+    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+    </div>
+  </div>
+</section>
+
+<!-- Search Bar -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
+  <form method="GET" action="{% url 'search_results' %}" class="flex justify-center">
     <input 
       type="text" 
       id="search-box"
       name="query" 
       placeholder="Search products (e.g. shoes, red, t-shirt)" 
-      class="search-bar-input form-control me-2"
+      class="w-full md:w-2/3 lg:w-1/2 px-4 py-2 rounded-l-lg text-black border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#006A4E]"
       value="{{ request.GET.query|default_if_none:'' }}"
       autocomplete="off"
     />
-    <button type="submit" class="search-bar-button btn btn-dark">
+    <button type="submit" class="bg-[#006A4E] hover:bg-green-700 text-white px-4 py-2 rounded-r-lg">
       <i class="fas fa-search"></i>
     </button>
   </form>
-  <div id="suggestions" class="list-group position-absolute w-50" style="z-index:1000;"></div>
+  <div id="suggestions" class="absolute left-1/2 transform -translate-x-1/2 mt-1 w-2/3 lg:w-1/2 bg-white text-black border border-gray-300 rounded-lg shadow-lg hidden z-50"></div>
 </div>
-                                                            
- <!-- Latest Products -->
-  <div class="latest-products">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="section-heading">
-            <h2>Latest Products</h2>
-            <a href="{% url 'products' %}">view all products <i class="fa fa-angle-right"></i></a>
-          </div>
-        </div>
 
-        {% for product in products %}
-        <div class="col-md-4">
-        <div class="product-item">
-        <a href="{% url 'product_detail' product.id %}">        
-          <img src="{{ product.first_image.image.url }}" alt="{{ product.name }}" class="product-card-image">
-        </a>
-    <div class="down-content">
-      <a href="{% url 'product_detail' product.id %}"><h4>{{ product.name }}</h4></a>
-      <h6>${{ product.price }}</h6>
-      <p>{{ product.description }}</p>
-      <ul class="stars">
-        {% for i in "12345"|slice:":product.rating|default:0" %}
-          <li><i class="fa fa-star"></i></li>
-        {% endfor %}
-      </ul>
+<!-- Categories Section -->
+<section class="max-w-7xl mx-auto mt-10 px-4">
+  <h2 class="text-2xl font-bold text-center mb-6 text-white">Shop by Category</h2>
 
-      <form action="{% url 'add_to_cart' product.id %}" method="POST" class="variant-form" id="variant-form-{{ product.id }}">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary btn-block mt-2" style="background-color:#ff5e00; border:none;">
-          <i class="fa fa-cart-plus"></i> Add to Cart
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-{% endfor %}
-  <!-- About -->
-  <div class="best-features">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="section-heading">
-            <h2>About MFY</h2>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="left-content">
-            <h4>Looking for the best products?</h4>
-            <p><a rel="nofollow" href="https://templatemo.com/tm-546-sixteen-clothing" target="_blank">This template</a> is free to use for your business websites. Redistribution is not allowed. <a rel="nofollow" href="https://templatemo.com/contact">Contact us</a> for more info.</p>
-            <ul class="featured-list">
-              <li><a href="#">Lorem ipsum dolor sit amet</a></li>
-              <li><a href="#">Consectetur adipisicing elit</a></li>
-              <li><a href="#">Corporis nulla aspernatur</a></li>
-              <li><a href="#">Omnis doloremque</a></li>
-              <li><a href="#">Non cum id reprehenderit</a></li>
-            </ul>
-            <a href="{% url 'about' %}" class="filled-button">Read More</a>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="right-image">
-            <img src="{% static 'store/images/feature-image.jpg' %}" alt="">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Call to Action -->
-  <div class="call-to-action">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <div class="row">
-              <div class="col-md-8">
-                <h4>Creative &amp; Unique <em>Sixteen</em> Products</h4>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Itaque corporis amet elit.</p>
-              </div>
-              <div class="col-md-4">
-                <a href="{% url 'products' %}" class="filled-button">Purchase Now</a>
-              </div>
+  <div class="overflow-x-auto pb-4 scrollbar-hide scroll-smooth snap-x snap-mandatory">
+    <div class="flex space-x-6 px-2 w-max">
+      {% for category in categories %}
+        <div class="flex-shrink-0 text-center group snap-start">
+          <a href="{% url 'category_products' category.id %}" class="block">
+            <div class="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-2 border-[#006A4E] mx-auto shadow-md transform transition-transform duration-300 group-hover:scale-105">
+              {% if category.image %}
+                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-full object-cover">
+              {% else %}
+                <div class="w-full h-full bg-gray-800 flex items-center justify-center text-gray-400 text-lg font-bold">
+                  {{ category.name|slice:":1" }}
+                </div>
+              {% endif %}
             </div>
-          </div>
+            <p class="mt-2 text-sm md:text-base font-medium text-gray-300 group-hover:text-[#00C897] transition">
+              {{ category.name }}
+            </p>
+          </a>
         </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Products -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <h2 class="text-3xl font-bold text-center mb-8">Featured Products</h2>
+
+  <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-4">
+    {% for product in products %}
+      <div class="relative bg-white rounded-2xl shadow hover:shadow-lg transition duration-300 p-3 flex flex-col items-center text-center">
+
+        {% if product.discount_percent > 0 %}
+          <div class="absolute top-2 left-2 bg-red-500 text-white text-xs sm:text-sm font-semibold px-3 py-1 rounded-full shadow-md z-10">
+            {{ product.discount_percent }}% OFF
+          </div>
+        {% endif %}
+          
+        <div class="relative w-full overflow-hidden rounded-xl group">
+          <a href="{% url 'product_detail' product.id %}">
+            <img src="{{ product.get_main_image_url|safe }}" alt="{{ product.name }}" 
+                 class="w-full h-60 object-contain transform transition-transform duration-500 group-hover:scale-110 rounded-xl">
+          </a>
+
+          <!-- Quick Add to Cart -->
+          <button 
+            class="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 
+                   bg-gray-900 text-white text-sm font-medium py-2 rounded-b-xl transition-all duration-300 ease-in-out add-to-cart-btn"
+            data-product-id="{{ product.id }}">
+            Add to Cart
+          </button>
+        </div>
+
+        <h3 class="text-gray-900 font-semibold text-base sm:text-lg mt-3">{{ product.name }}</h3>
+
+        {% if product.average_rating %}
+          <div class="flex items-center justify-center mt-1">
+            {% for i in "12345" %}
+              {% if forloop.counter <= product.average_rating %}
+                <i class="fa fa-star text-yellow-400 text-sm"></i>
+              {% else %}
+                <i class="fa fa-star text-gray-300 text-sm"></i>
+              {% endif %}
+            {% endfor %}
+            <span class="text-xs text-gray-600 ml-1">({{ product.average_rating }})</span>
+          </div>
+        {% endif %}
+
+        {% if product.offer_price and product.offer_price < product.price %}
+          <div class="mt-2">
+            <span class="text-gray-400 line-through text-sm sm:text-base">₹{{ product.price }}</span>
+            <span class="text-red-600 font-bold text-base sm:text-lg ml-2">₹{{ product.offer_price }}</span>
+          </div>
+        {% else %}
+          <p class="text-gray-800 font-semibold text-base sm:text-lg mt-2">₹{{ product.price }}</p>
+        {% endif %}
+
+        <div class="mt-3">
+          <a href="{% url 'product_detail' product.id %}"
+             class="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm sm:text-base hover:bg-gray-800 transition">
+            View Product
+          </a>
+        </div>
+
+      </div>
+    {% empty %}
+      <p class="col-span-full text-center text-gray-500">No products available.</p>
+    {% endfor %}
+  </div>
+
+</section>
+
+<!-- About Section -->
+<section class="bg-gray-900 py-12">
+  <div class="max-w-5xl mx-auto text-center px-4">
+    <h2 class="text-3xl font-bold mb-4 text-white">About Us</h2>
+    <p class="text-gray-300">We are dedicated to bringing you the best products tailored just for you. 
+    Our mission is to combine quality, affordability, and style in every item we offer.</p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-[#006A4E] text-white py-12 text-center">
+  <h2 class="text-3xl font-bold">Join Our Community</h2>
+  <p class="mt-2">Sign up today and get exclusive discounts and updates!</p>
+  <a href="{% url 'account_signup' %}" class="mt-4 inline-block bg-white text-[#006A4E] font-semibold px-6 py-2 rounded-lg hover:bg-gray-100">
+    Sign Up
+  </a>
+</section>
+
+<!-- Footer -->
+<footer class="bg-black text-white py-8 mt-12 border-t border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-8">
+    <div>
+      <h3 class="font-semibold text-lg mb-2">MFY Store</h3>
+      <p class="text-gray-400">Made For You – Bringing quality products to your doorstep.</p>
+    </div>
+    <div>
+      <h3 class="font-semibold text-lg mb-2">Quick Links</h3>
+      <ul class="space-y-2">
+        <li><a href="{% url 'terms' %}" class="hover:text-[#006A4E]">Terms & Conditions</a></li>
+        <li><a href="{% url 'privacy' %}" class="hover:text-[#006A4E]">Privacy Policy</a></li>
+        <li><a href="{% url 'refund' %}" class="hover:text-[#006A4E]">Refund & Cancellation</a></li>
+        <li><a href="{% url 'shipping' %}" class="hover:text-[#006A4E]">Shipping Policy</a></li>
+        <li><a href="{% url 'contact' %}" class="hover:text-[#006A4E]">Contact Us</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-lg mb-2">Follow Us</h3>
+      <div class="flex space-x-4">
+        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-facebook"></i></a>
+        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-instagram"></i></a>
       </div>
     </div>
   </div>
+  <div class="text-center text-gray-500 mt-8 text-sm">
+    &copy; 2025 MFY Store. All rights reserved.
+  </div>
+</footer>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <ul>
-             <li><a href="https://merchant.razorpay.com/policy/QOWoMZ24sdA4ei/terms" target="_blank">Terms & Conditions</a></li>
-             <li><a href="https://merchant.razorpay.com/policy/QOWoMZ24sdA4ei/privacy" target="_blank">Privacy Policy</a></li>
-             <li><a href="https://merchant.razorpay.com/policy/QOWoMZ24sdA4ei/refund" target="_blank">Refund & Cancellation</a></li>
-             <li><a href="https://merchant.razorpay.com/policy/QOWoMZ24sdA4ei/shipping" target="_blank">Shipping Policy</a></li>
-             <li><a href="https://merchant.razorpay.com/policy/QOWoMZ24sdA4ei/contact_us" target="_blank">Contact Us</a></li>
-            </ul>
-            <p>Copyright &copy; 2025 MFY.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
+<!-- Cart Toast -->
+<div id="cart-toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden z-50">
+  <span id="cart-toast-message"></span>
+</div>
 
-  <!-- Scripts -->
-  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'store/js/custom.js' %}"></script>
-  <script src="{% static 'store/js/owl.js' %}"></script>
-  <script src="{% static 'store/js/slick.js' %}"></script>
-  <script src="{% static 'store/js/isotope.js' %}"></script>
-  <script src="{% static 'store/js/accordions.js' %}"></script>
-  
-  <script>
-    let cleared = [0, 0, 0]; // set a cleared flag for each field
-    function clearField(t) {
-      if (!cleared[t.id]) {
-        cleared[t.id] = 1;
-        t.value = '';
-        t.style.color = '#fff';
-      }
-    }
-   </script>
- 
+<!-- Scripts -->
 <script>
-$(document).ready(function(){
-    const $searchBox = $("#search-box");
-    const $suggestions = $("#suggestions");
+  // Mobile menu toggle
+  document.getElementById("mobile-menu-button").addEventListener("click", () => {
+    document.getElementById("mobile-menu").classList.toggle("hidden");
+  });
 
-    // Fetch suggestions on keyup
-    $searchBox.on("keyup", function(){
-        let query = $(this).val();
-        if(query.length > 2){
-            $.ajax({
-                url: "/search-suggestions/",
-                data: {q: query},
-                success: function(data){
-                    $suggestions.html(data); // render list of suggestions
-                    $suggestions.show();
-                }
-            });
-        } else {
-            $suggestions.empty();
-            $suggestions.hide();
-        }
-    });
+  // Banner carousel
+  const slides = document.querySelectorAll(".carousel-slide");
+  const dots = document.querySelectorAll(".carousel-dot");
+  let currentSlide = 0;
+  const totalSlides = slides.length;
 
-    // Hide suggestions when clicking outside
-    $(document).on("click", function(e){
-        if(!$(e.target).closest($searchBox).length && !$(e.target).closest($suggestions).length){
-            $suggestions.hide();
-        }
-    });
+  function showSlide(index) {
+    slides.forEach((slide, i) => slide.style.opacity = i === index ? "1" : "0");
+    dots.forEach((dot, i) => dot.classList.toggle("bg-[#006A4E]", i === index));
+  }
 
-    // Optional: hide on ESC key
-    $(document).on("keydown", function(e){
-        if(e.key === "Escape"){
-            $suggestions.hide();
-        }
-    });
+  let slideInterval = setInterval(() => {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    showSlide(currentSlide);
+  }, 5000);
 
-    // Optional: click suggestion to fill input
-    $suggestions.on("click", "a", function(e){
-        e.preventDefault();
-        $searchBox.val($(this).text());
-        $suggestions.hide();
-        $searchBox.closest("form").submit();
+  document.getElementById("next-slide").addEventListener("click", () => {
+    currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); resetInterval();
+  });
+  document.getElementById("prev-slide").addEventListener("click", () => {
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; showSlide(currentSlide); resetInterval();
+  });
+  dots.forEach((dot, i) => dot.addEventListener("click", () => { currentSlide = i; showSlide(currentSlide); resetInterval(); }));
+  function resetInterval() { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); }, 5000); }
+  showSlide(currentSlide);
+
+  // Search suggestions
+  const $searchBox = document.getElementById("search-box");
+  const $suggestions = document.getElementById("suggestions");
+  $searchBox.addEventListener("keyup", function() {
+    let query = this.value;
+    if(query.length > 2){
+      fetch(`/search-suggestions/?q=${query}`)
+        .then(res => res.text())
+        .then(data => {
+          $suggestions.innerHTML = data;
+          $suggestions.classList.remove("hidden");
+        });
+    } else {
+      $suggestions.innerHTML = '';
+      $suggestions.classList.add("hidden");
+    }
+  });
+  document.addEventListener("click", e => {
+    if(!e.target.closest("#search-box") && !e.target.closest("#suggestions")) {
+      $suggestions.classList.add("hidden");
+    }
+  });
+
+  // Add to Cart AJAX
+  document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const buttons = document.querySelectorAll('.add-to-cart-btn');
+    const toast = document.getElementById('cart-toast');
+    const toastMsg = document.getElementById('cart-toast-message');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const productId = btn.dataset.productId;
+        const quantity = btn.dataset.quantity || 1;
+        const variantId = btn.dataset.variantId || '';
+
+        fetch("{% url 'add_to_cart' 0 %}".replace('0', productId), {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            quantity: quantity,
+            variant_id: variantId
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if(data.success){
+            toastMsg.textContent = "Added to cart!";
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2000);
+
+            const cartCountEl = document.querySelector('.cart-items-count');
+            if(cartCountEl) cartCountEl.textContent = data.cart_count;
+          } else {
+            alert("Failed to add to cart");
+          }
+        })
+        .catch(err => console.error(err));
+      });
     });
-});
+  });
 </script>
 </body>
 </html>

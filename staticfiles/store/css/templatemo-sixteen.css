@@ -397,14 +397,25 @@ header .navbar {
 }
 
 /* Style the logo image */
+
 .logo-img {
-  width: 60px;
-  height: 60px;
+  height: 45px;
+  width: 45px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #ffffff;
-  border: 2px solid #ccc;
-  margin-bottom: 4px; /* space between image and text */
+  margin-right: 8px;
+}
+
+.brand-text {
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.brand-text em {
+  color: #00b894;   /* ✅ highlight */
+  font-style: normal;
 }
 
 /* Style the text below the logo */

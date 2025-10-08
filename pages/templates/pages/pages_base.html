@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}MFY Store{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}MFY Store - Shop Your Style{% endblock %}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="{% static 'images/favicon.ico' %}">
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+  
+  <!-- Header -->
+  <header class="bg-gray-900 text-white shadow">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+      <a href="/" class="text-2xl font-bold tracking-wide">MFY Store</a>
+      <nav class="space-x-6 hidden sm:block">
+        <a href="/" class="hover:text-gray-300">Home</a>
+        <a href="/store" class="hover:text-gray-300">Shop</a>
+        <a href="{% url 'contact' %}" class="hover:text-gray-300">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-300 mt-10">
+    <div class="max-w-7xl mx-auto px-6 py-8 grid md:grid-cols-3 gap-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-3">MFY Store</h3>
+        <p class="text-sm">Made for you — fashion, comfort, and quality combined.</p>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Quick Links</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="{% url 'terms' %}" class="hover:text-white">Terms & Conditions</a></li>
+          <li><a href="{% url 'privacy' %}" class="hover:text-white">Privacy Policy</a></li>
+          <li><a href="{% url 'refund' %}" class="hover:text-white">Refund & Cancellation</a></li>
+          <li><a href="{% url 'shipping' %}" class="hover:text-white">Shipping Policy</a></li>
+          <li><a href="{% url 'contact' %}" class="hover:text-white">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Follow Us</h3>
+        <div class="flex space-x-4 text-xl">
+          <a href="#" class="hover:text-white"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="hover:text-white"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="hover:text-white"><i class="fa-brands fa-x-twitter"></i></a>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-sm py-4 border-t border-gray-700">&copy; 2025 MFY Store. All rights reserved.</p>
+  </footer>
+
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
