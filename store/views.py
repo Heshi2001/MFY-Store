@@ -35,6 +35,7 @@ from django.views.decorators.cache import cache_page
 from django.db.models import Sum
 from django.db.models import Q
 from django.template.loader import render_to_string
+from .utils import get_or_create_session_key 
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,16 @@ def index(request):
             )
         else:
             product.discount_percent = None
-    
+
     # ✅ Fetch categories for display
     categories = Category.objects.all()
 
-    # Get cart count for badge
+    # ✅ Fetch wishlist product IDs for logged-in user
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+
+    # ✅ Get cart count for badge
     if request.user.is_authenticated:
         cart_data = Cart.objects.for_user_or_session(user=request.user)
     else:
@@ -73,10 +79,12 @@ def index(request):
 
     cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
 
+    # ✅ Send all context to template
     return render(request, 'store/index.html', {
         'products': products,
-        'categories': categories, 
+        'categories': categories,
         'cart_items_count': cart_items_count,
+        'wishlist_ids': wishlist_ids,  # 🔥 add this line
     })
 
 @login_required
@@ -270,10 +278,18 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["price", "name", "stock"]
     ordering = ["name"]
 
+@login_required
 def add_to_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    Wishlist.objects.get_or_create(user=request.user if request.user.is_authenticated else None, product=product)
-    return redirect('wishlist')
+    wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+
+    # If it already exists, remove it (toggle)
+    if not created:
+        wishlist_item.delete()
+        return JsonResponse({'added': False})
+
+    # If added new
+    return JsonResponse({'added': True})
 
 def remove_from_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)

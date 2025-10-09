@@ -39,6 +39,30 @@
     .carousel-slide.active {
       opacity: 1;
     }
+    .wishlist-btn i {
+      transition: all 0.3s ease;
+    }
+    .wishlist-btn:hover i {
+      transform: scale(1.2);
+    }
+ @keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.4);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.wishlist-btn i.animate-heart {
+  animation: heartPulse 0.4s ease-in-out;
+}
   </style>
 </head>
 <body class="font-sans bg-black text-white">
@@ -180,21 +204,47 @@
 
 <!-- Products Section -->
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-  <h2 class="text-3xl font-bold text-center mb-8">Featured Products</h2>
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-white">Featured Products</h2>
+    <a href="{% url 'products' %}" class="text-[#00C897] hover:text-[#00A07A] text-sm font-semibold">View All →</a>
+  </div>
 
   {% if products %}
-    <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 p-4">
-      {% for product in products %}
-      <div class="bg-gray-900 rounded-2xl overflow-hidden shadow-md group relative transition-transform transform hover:scale-105 hover:shadow-2xl">
+  <div class="relative">
+    <!-- Scroll Buttons -->
+    <button id="scroll-left" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-800 hover:bg-[#00A07A] text-white p-3 rounded-full shadow-md z-10">
+      <i class="fa fa-chevron-left"></i>
+    </button>
+    <button id="scroll-right" class="absolute right-0 top-1/2 -translate-y-1/2 bg-gray-800 hover:bg-[#00A07A] text-white p-3 rounded-full shadow-md z-10">
+      <i class="fa fa-chevron-right"></i>
+    </button>
 
+    <!-- Horizontal Scroll Container -->
+    <div id="product-scroll" class="flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-4">
+      {% for product in products %}
+      <div class="min-w-[220px] bg-gray-900 rounded-2xl overflow-hidden shadow-md relative flex-shrink-0 transition-transform transform hover:scale-105 hover:shadow-2xl group">
+
+        <!-- Wishlist Heart Icon -->
+        <button 
+          class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn"
+          data-product-id="{{ product.id }}">
+          {% if product.id in wishlist_ids %}
+            <i class="fa-solid fa-heart text-[#00C897]"></i>
+          {% else %}
+            <i class="fa-regular fa-heart"></i>
+          {% endif %}
+        </button>
+
+        <!-- Product Image -->
         <a href="{% url 'product_detail' product.id %}">
           {% if product.get_main_image_url %}
-            <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-64 object-cover">
+            <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-56 object-cover">
           {% else %}
-            <div class="w-full h-64 bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
+            <div class="w-full h-56 bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
           {% endif %}
         </a>
 
+        <!-- Discount Badge -->
         {% if product.discount_percent %}
         <span class="absolute top-2 left-2 bg-[#00C897]/80 text-white shadow-md text-xs font-semibold px-3 py-1 rounded-md animate-float">
           {{ product.discount_percent }}% OFF
@@ -202,7 +252,7 @@
         {% endif %}
 
         <!-- Product Info -->
-        <div class="p-4 text-center">
+        <div class="p-3 text-center">
           <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
           {% if product.offer_price %}
             <p class="mt-2">
@@ -219,12 +269,13 @@
           bg-gradient-to-r from-[#00C897] to-[#00A07A] hover:from-[#00A07A] hover:to-[#008060]
           text-white text-sm font-semibold py-2 rounded-md transition-all duration-300 ease-in-out add-to-cart-btn"
           data-product-id="{{ product.id }}">
-         Add to Cart
-       </button>
+          Add to Cart
+        </button>
 
       </div>
       {% endfor %}
     </div>
+  </div>
   {% else %}
     <p class="text-center text-gray-400 text-lg">No products available.</p>
   {% endif %}
@@ -337,6 +388,67 @@
       });
     });
   });
+</script>
+<script>
+  // Scroll Buttons
+  const scrollContainer = document.getElementById("product-scroll");
+  document.getElementById("scroll-left").addEventListener("click", () => {
+    scrollContainer.scrollBy({ left: -300, behavior: "smooth" });
+  });
+  document.getElementById("scroll-right").addEventListener("click", () => {
+    scrollContainer.scrollBy({ left: 300, behavior: "smooth" });
+  });
+  // Wishlist AJAX Toggle with Pulse Animation
+  document.querySelectorAll(".wishlist-btn").forEach(btn => {
+    btn.addEventListener("click", function() {
+      const productId = this.dataset.productId;
+      const icon = this.querySelector("i");
+
+      fetch(`/add_to_wishlist/${productId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.added) {
+          // Change to filled heart
+          icon.classList.remove("fa-regular");
+          icon.classList.add("fa-solid", "text-[#00C897]");
+
+          // Add pulse animation
+          icon.classList.add("animate-heart");
+          setTimeout(() => icon.classList.remove("animate-heart"), 400);
+
+        } else {
+          // Change back to outline
+          icon.classList.remove("fa-solid", "text-[#00C897]");
+          icon.classList.add("fa-regular");
+
+          // Small reverse pulse for removal
+          icon.classList.add("animate-heart");
+          setTimeout(() => icon.classList.remove("animate-heart"), 400);
+        }
+      });
+    });
+  });
+
+  // CSRF helper
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 </script>
 </body>
 </html>
