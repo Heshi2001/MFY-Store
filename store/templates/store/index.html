@@ -9,149 +9,172 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .scrollbar-hide::-webkit-scrollbar {
-      display: none;
-    }
-    .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    /* Discount badge float animation */
-    @keyframes floatBadge {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    .animate-float {
-      animation: floatBadge 2s ease-in-out infinite;
-    }
-
-    /* Add-to-cart hover glow */
-    .add-to-cart-btn:hover {
-      box-shadow: 0 8px 20px rgba(0, 200, 151, 0.6);
-    }
-
-    /* Carousel fade transition */
-    .carousel-slide {
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-    }
-    .carousel-slide.active {
-      opacity: 1;
-    }
-    .wishlist-btn i {
-      transition: all 0.3s ease;
-    }
-    .wishlist-btn:hover i {
-      transform: scale(1.2);
-    }
- @keyframes heartPulse {
-  0% {
-    transform: scale(1);
-  }
-  40% {
-    transform: scale(1.4);
-  }
-  60% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.wishlist-btn i.animate-heart {
-  animation: heartPulse 0.4s ease-in-out;
-}
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes floatBadge {0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+    .animate-float { animation: floatBadge 2s ease-in-out infinite; }
+    .add-to-cart-btn:hover { box-shadow: 0 8px 20px rgba(0,200,151,0.6); }
+    .carousel-slide { opacity: 0; transition: opacity 1s ease-in-out; }
+    .carousel-slide.active { opacity: 1; }
+    .wishlist-btn i { transition: all 0.3s ease; }
+    .wishlist-btn:hover i { transform: scale(1.2); }
+    @keyframes heartPulse {0%{transform:scale(1);}40%{transform:scale(1.4);}60%{transform:scale(0.9);}100%{transform:scale(1);} }
+    .wishlist-btn i.animate-heart { animation: heartPulse 0.4s ease-in-out; }
+    @keyframes bounce-soft {0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); }}
+    .animate-bounce-soft { animation: bounce-soft 0.4s ease-in-out; }
   </style>
 </head>
 <body class="font-sans bg-black text-white">
 
 <!-- Navbar -->
-<header class="bg-black text-white shadow-md border-b border-gray-800">
-  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
-      <div class="flex items-center md:hidden">
-        <button id="mobile-menu-button" class="focus:outline-none">
-          <i class="fa fa-bars text-2xl"></i>
-        </button>
-      </div>
-      <a href="{% url 'index' %}" class="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-        <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="h-10 w-auto">
-        <h2 class="text-xl font-bold">MADE FOR <em class="text-[#006A4E]">YOU</em></h2>
-      </a>
-      <div class="flex items-center space-x-4 ml-auto">
-        <a href="{% url 'cart' %}" class="relative flex items-center space-x-1 hover:text-[#006A4E]">
-          <i class="fa fa-shopping-cart text-xl"></i>
-          {% if cart_items_count %}
-          <span class="cart-items-count absolute -top-2 -right-2 bg-red-600 text-xs px-2 py-0.5 rounded-full">
-            {{ cart_items_count }}
-          </span>
-          {% endif %}
-        </a>
-        {% if user.is_authenticated %}
-          <div class="flex items-center space-x-2">
-            <span class="hidden md:inline text-gray-300">Hi,</span>
-            <a href="{% url 'account_dashboard' %}" 
-               class="bg-[#006A4E] hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
-              {{ user.username }}
-            </a>
-            <form method="post" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="hover:text-red-400 ml-2">
-                <i class="fa fa-sign-out-alt"></i>
-              </button>
-            </form>
-          </div>
-        {% else %}
-          <a href="{% url 'account_login' %}" 
-             class="bg-[#006A4E] hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
-            <i class="fa fa-user"></i>
-            <span class="hidden sm:inline">Login</span>
-          </a>
+<nav class="bg-gray-900 fixed w-full z-50 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+
+    <!-- Left: Modern Hamburger -->
+    <button id="menu-btn" class="text-white focus:outline-none text-2xl group relative w-8 h-6 flex flex-col justify-between items-start">
+      <span class="block h-[2px] w-8 bg-white rounded-full group-hover:bg-green-400 transition-all duration-300"></span>
+      <span class="block h-[2px] w-5 bg-white rounded-full group-hover:bg-green-400 transition-all duration-300"></span>
+      <span class="block h-[2px] w-6 bg-white rounded-full group-hover:bg-green-400 transition-all duration-300"></span>
+    </button>
+
+    <!-- Center: Logo -->
+    <a href="{% url 'index' %}" class="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
+      <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="h-10 w-auto">
+      <h2 class="text-xl font-bold tracking-wide">MADE FOR <span class="text-green-500">YOU</span></h2>
+    </a>
+
+    <!-- Right: Cart + User -->
+    <div class="flex items-center space-x-4">
+      <a href="{% url 'cart' %}" class="relative flex items-center justify-center group transition-all duration-300 hover:scale-105">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-7 h-7 text-white group-hover:text-green-400 transition-all duration-300 group-hover:animate-bounce-soft">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 6h14l-1.5 9h-11z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 6L5 3H2" />
+          <circle cx="9" cy="20" r="1" />
+          <circle cx="18" cy="20" r="1" />
+        </svg>
+        {% if cart_items_count %}
+        <span class="absolute -top-2 -right-2 bg-green-500 text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">
+          {{ cart_items_count }}
+        </span>
         {% endif %}
+      </a>
+
+      {% if user.is_authenticated %}
+      <div class="flex items-center space-x-2">
+        <a href="{% url 'account_dashboard' %}" class="bg-[#006A4E] hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">{{ user.username }}</a>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="hover:text-red-400 ml-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white hover:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
+            </svg>
+          </button>
+        </form>
       </div>
+      {% endif %}
     </div>
-  </nav>
-  <div id="mobile-menu" class="hidden md:hidden bg-gray-900 px-4 py-2 space-y-2 border-t border-gray-700">
-    <a href="{% url 'index' %}" class="block hover:text-[#006A4E]">Home</a>
-    <a href="{% url 'products' %}" class="block hover:text-[#006A4E]">Our Products</a>
-    <a href="{% url 'about' %}" class="block hover:text-[#006A4E]">About Us</a>
-    <a href="{% url 'contact' %}" class="block hover:text-[#006A4E]">Contact Us</a>
   </div>
-</header>
+</nav>
+
+<!-- Overlay -->
+<div id="overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40 transition-opacity"></div>
+
+<!-- ✅ Sidebar (Properly Closed Now) -->
+<div id="sidebar" class="fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900 text-white transform -translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between p-4 border-b border-gray-700">
+    <div class="flex items-center space-x-2">
+      <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="MFY Logo" class="h-8 w-8">
+      <h1 class="text-lg font-semibold">Made For <span class="text-green-500">You</span></h1>
+    </div>
+    <button id="close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+  </div>
+
+  <!-- Promo Banner -->
+  <div class="bg-gradient-to-r from-green-500 to-green-400 text-black text-center py-2 font-semibold">
+    🔥 Get 10% OFF on your first order! <a href="#" class="underline">Shop Now</a>
+  </div>
+
+  <!-- Top Links -->
+  <div class="p-4 space-y-2 border-b border-gray-700">
+    <a href="{% url 'index' %}" class="block hover:text-green-400">Home</a>
+  </div>
+
+  <!-- Categories -->
+  <div class="p-5 space-y-2 scrollbar-hide">
+    {% for category in categories %}
+    <div>
+      <button class="w-full flex justify-between items-center text-gray-300 hover:text-green-400 font-medium px-2 py-1 rounded-md category-toggle">
+        {{ category.name }}
+        <i class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+      </button>
+      <ul class="ml-4 mt-1 hidden subcategory-list space-y-1">
+        {% if category.subcategories.all %}
+          {% for sub in category.subcategories.all %}
+          <li><a href="{% url 'category_products' sub.id %}" class="block hover:text-green-400">{{ sub.name }}</a></li>
+          {% endfor %}
+        {% else %}
+          <li><a href="{% url 'category_products' category.id %}" class="block hover:text-green-400">Browse {{ category.name }}</a></li>
+        {% endif %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="mt-4 border-t border-gray-700 bg-gray-900 p-4 pb-24">
+    <div class="mt-6 border-t border-gray-700 pt-4">
+      <h3 class="text-gray-400 uppercase text-[11px] font-semibold mb-3 tracking-wider">Your Account</h3>
+      <ul class="flex flex-col divide-y divide-gray-800 rounded-lg overflow-hidden bg-gray-800/40 backdrop-blur-sm">
+        <li><a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-heart text-pink-400"></i><span class="text-sm">Wishlist</span></a></li>
+        <li><a href="{% url 'orders' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-box text-yellow-400"></i><span class="text-sm">My Orders</span></a></li>
+        <li><a href="{% url 'faq' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-headset text-green-400"></i><span class="text-sm">Support</span></a></li>
+        <li>
+          {% if user.is_authenticated %}
+            <a href="{% url 'account_dashboard' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-regular fa-user text-blue-400"></i><span class="text-sm">Dashboard</span></a>
+          {% else %}
+            <a href="{% url 'account_login' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-regular fa-user text-blue-400"></i><span class="text-sm">Login</span></a>
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div> <!-- ✅ Sidebar properly closed here -->
+
 
 <!-- Banner Carousel -->
 <section class="relative h-[400px] overflow-hidden">
   <div id="banner-carousel" class="relative h-full w-full">
-    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center active">
-      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
-        <h2 class="text-4xl md:text-5xl font-bold">Best Offer</h2>
-        <p class="mt-4 text-lg text-gray-200">New Arrivals On Sale</p>
+    {% for banner in banners %}
+      <div class="carousel-slide absolute inset-0 bg-cover bg-center {% if forloop.first %}active{% endif %}"
+           style="background-image: url('{{ banner.image.url }}');">
+        <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
+          <h2 class="text-4xl md:text-5xl font-bold">{{ banner.title }}</h2>
+          {% if banner.subtitle %}
+            <p class="mt-4 text-lg text-gray-200">{{ banner.subtitle }}</p>
+          {% endif %}
+        </div>
       </div>
-    </div>
-    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center">
-      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
-        <h2 class="text-4xl md:text-5xl font-bold">Flash Deals</h2>
-        <p class="mt-4 text-lg text-gray-200">Get your best products</p>
+    {% empty %}
+      <div class="carousel-slide absolute inset-0 bg-gray-800 flex items-center justify-center text-center text-white active">
+        <h2 class="text-3xl font-bold">No Banners Uploaded Yet</h2>
       </div>
-    </div>
-    <div class="carousel-slide absolute inset-0 bg-banner-2 bg-cover bg-center">
-      <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
-        <h2 class="text-4xl md:text-5xl font-bold">Last Minute</h2>
-        <p class="mt-4 text-lg text-gray-200">Grab last minute deals</p>
-      </div>
-    </div>
+    {% endfor %}
+
+    <!-- Navigation Buttons -->
     <button id="prev-slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
       <i class="fas fa-chevron-left"></i>
     </button>
     <button id="next-slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
       <i class="fas fa-chevron-right"></i>
     </button>
+
+    <!-- Dots -->
     <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
-      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
-      <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+      {% for banner in banners %}
+        <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -211,7 +234,6 @@
 
   {% if products %}
   <div class="relative">
-    <!-- Scroll Buttons -->
     <button id="scroll-left" class="absolute left-0 top-1/2 -translate-y-1/2 bg-gray-800 hover:bg-[#00A07A] text-white p-3 rounded-full shadow-md z-10">
       <i class="fa fa-chevron-left"></i>
     </button>
@@ -219,23 +241,17 @@
       <i class="fa fa-chevron-right"></i>
     </button>
 
-    <!-- Horizontal Scroll Container -->
     <div id="product-scroll" class="flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-4">
       {% for product in products %}
       <div class="min-w-[220px] bg-gray-900 rounded-2xl overflow-hidden shadow-md relative flex-shrink-0 transition-transform transform hover:scale-105 hover:shadow-2xl group">
-
-        <!-- Wishlist Heart Icon -->
-        <button 
-          class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn"
-          data-product-id="{{ product.id }}">
+        <button class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn" data-product-id="{{ product.id }}">
           {% if product.id in wishlist_ids %}
-            <i class="fa-solid fa-heart text-[#00C897]"></i>
+            <i class="fa-solid fa-heart text-white"></i>
           {% else %}
-            <i class="fa-regular fa-heart"></i>
+            <i class="fa-regular fa-heart text-white"></i>
           {% endif %}
         </button>
-
-        <!-- Product Image -->
+        
         <a href="{% url 'product_detail' product.id %}">
           {% if product.get_main_image_url %}
             <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-56 object-cover">
@@ -244,15 +260,13 @@
           {% endif %}
         </a>
 
-        <!-- Discount Badge -->
         {% if product.discount_percent %}
         <span class="absolute top-2 left-2 bg-[#00C897]/80 text-white shadow-md text-xs font-semibold px-3 py-1 rounded-md animate-float">
           {{ product.discount_percent }}% OFF
         </span>
         {% endif %}
 
-        <!-- Product Info -->
-        <div class="p-3 text-center">
+         <div class="p-3 text-center">
           <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
           {% if product.offer_price %}
             <p class="mt-2">
@@ -264,14 +278,9 @@
           {% endif %}
         </div>
 
-        <!-- Add to Cart Button -->
-        <button class="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0
-          bg-gradient-to-r from-[#00C897] to-[#00A07A] hover:from-[#00A07A] hover:to-[#008060]
-          text-white text-sm font-semibold py-2 rounded-md transition-all duration-300 ease-in-out add-to-cart-btn"
-          data-product-id="{{ product.id }}">
+        <button class="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 bg-gradient-to-r from-[#00C897] to-[#00A07A] hover:from-[#00A07A] hover:to-[#008060] text-white text-sm font-semibold py-2 rounded-md transition-all duration-300 ease-in-out add-to-cart-btn" data-product-id="{{ product.id }}">
           Add to Cart
         </button>
-
       </div>
       {% endfor %}
     </div>
@@ -337,12 +346,41 @@
 
 <!-- Scripts -->
 <script>
+  // ---------------------------
+  // Sidebar toggle
+  // ---------------------------
+  const menuBtn = document.getElementById('menu-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const closeBtn = document.getElementById('close-btn');
+
+  function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+  function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+
+  menuBtn.addEventListener('click', openSidebar);
+  closeBtn.addEventListener('click', closeSidebar);
+  overlay.addEventListener('click', closeSidebar);
+
+  // Collapsible categories
+  document.querySelectorAll('.category-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const list = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      list.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    });
+  });
+
+  // ---------------------------
   // Mobile menu toggle
+  // ---------------------------
   document.getElementById("mobile-menu-button").addEventListener("click", () => {
     document.getElementById("mobile-menu").classList.toggle("hidden");
   });
 
+  // ---------------------------
   // Banner carousel
+  // ---------------------------
   const slides = document.querySelectorAll(".carousel-slide");
   const dots = document.querySelectorAll(".carousel-dot");
   let currentSlide = 0;
@@ -367,30 +405,9 @@
   dots.forEach((dot, i) => dot.addEventListener("click", () => { currentSlide = i; showSlide(currentSlide); resetInterval(); }));
   function resetInterval() { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); }, 5000); }
 
-  // Add to Cart AJAX Toast
-  document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const productId = btn.getAttribute("data-product-id");
-      fetch("{% url 'add_to_cart' 0 %}".replace('0', productId),{
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({ product_id: productId, quantity: 1 })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const toast = document.getElementById("cart-toast");
-        document.getElementById("cart-toast-message").innerText = data.message || "Added to cart!";
-        toast.classList.remove("hidden");
-        setTimeout(() => toast.classList.add("hidden"), 3000);
-      });
-    });
-  });
-</script>
-<script>
+  // ---------------------------
   // Scroll Buttons
+  // ---------------------------
   const scrollContainer = document.getElementById("product-scroll");
   document.getElementById("scroll-left").addEventListener("click", () => {
     scrollContainer.scrollBy({ left: -300, behavior: "smooth" });
@@ -398,7 +415,10 @@
   document.getElementById("scroll-right").addEventListener("click", () => {
     scrollContainer.scrollBy({ left: 300, behavior: "smooth" });
   });
-  // Wishlist AJAX Toggle with Pulse Animation
+
+  // ---------------------------
+  // Wishlist AJAX Toggle
+  // ---------------------------
   document.querySelectorAll(".wishlist-btn").forEach(btn => {
     btn.addEventListener("click", function() {
       const productId = this.dataset.productId;
@@ -406,27 +426,18 @@
 
       fetch(`/add_to_wishlist/${productId}/`, {
         method: "POST",
-        headers: {
-          "X-CSRFToken": getCookie("csrftoken"),
-        },
+        headers: { "X-CSRFToken": getCookie("csrftoken") },
       })
       .then(response => response.json())
       .then(data => {
         if (data.added) {
-          // Change to filled heart
           icon.classList.remove("fa-regular");
           icon.classList.add("fa-solid", "text-[#00C897]");
-
-          // Add pulse animation
           icon.classList.add("animate-heart");
           setTimeout(() => icon.classList.remove("animate-heart"), 400);
-
         } else {
-          // Change back to outline
           icon.classList.remove("fa-solid", "text-[#00C897]");
           icon.classList.add("fa-regular");
-
-          // Small reverse pulse for removal
           icon.classList.add("animate-heart");
           setTimeout(() => icon.classList.remove("animate-heart"), 400);
         }
@@ -434,7 +445,50 @@
     });
   });
 
-  // CSRF helper
+  // ---------------------------
+  // Add-to-Cart AJAX
+  // ---------------------------
+  const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+
+  document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const productId = btn.dataset.productId;
+
+      fetch("{% url 'add_to_cart' 0 %}".replace('0', productId), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({ product_id: productId, quantity: 1 })
+      })
+      .then(res => res.json())
+      .then(data => {
+        // Update toast
+        const toast = document.getElementById("cart-toast");
+        document.getElementById("cart-toast-message").innerText = data.message || "Added to cart!";
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 3000);
+
+        // Update cart badge
+        const cartBadge = document.querySelector('a[href="{% url "cart" %}"] span');
+        if (cartBadge) {
+          cartBadge.innerText = data.cart_count || 0;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        const toast = document.getElementById("cart-toast");
+        document.getElementById("cart-toast-message").innerText = "Something went wrong!";
+        toast.classList.remove("hidden");
+        setTimeout(() => toast.classList.add("hidden"), 3000);
+      });
+    });
+  });
+
+  // ---------------------------
+  // CSRF helper function
+  // ---------------------------
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {

@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Category, Product, ProductVariant, ProductImage, Color, Size,
     Wishlist, Cart, CartItem, Order, OrderItem, TeamMember,
-    Service, Client, Contact, Review, Address, Fulfillment
+    Service, Client, Contact, Review, Address, Fulfillment, Banner
 )
 
 from .qikink_api import send_order_to_qikink
@@ -58,10 +58,12 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
         
-@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'image')
-    prepopulated_fields = {'slug': ('name',)}
+    list_display = ('name', 'parent', 'slug')
+    list_filter = ('parent',)
+    prepopulated_fields = {"slug": ("name",)}
+
+admin.site.register(Category, CategoryAdmin)
 
 # --- Variants & Images ---
 @admin.register(ProductVariant)
@@ -131,9 +133,15 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ['rating']
     search_fields = ['product__name', 'user__username']
 
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ('title', 'active', 'order')
+    list_editable = ('active', 'order')
+
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
     list_display = ("user", "first_name", "last_name", "city", "is_default", "address_type")
+
 
 # --- Orders ---
 class OrderItemInline(admin.TabularInline):

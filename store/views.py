@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category
+from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category, Banner
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.contrib.auth import login
@@ -48,7 +48,7 @@ def index(request):
     else:
         products = Product.objects.all().order_by('-id')[:6]
 
-    # Prepare product images & discount
+    # ✅ Prepare product images & discount logic
     for product in products:
         if product.image_mode == "custom" and product.custom_image:
             product.first_image = product.custom_image
@@ -62,8 +62,12 @@ def index(request):
         else:
             product.discount_percent = None
 
-    # ✅ Fetch categories for display
-    categories = Category.objects.all()
+     # ✅ Categories
+    top_categories = Category.objects.all()  # For round categories
+    categories_with_children = Category.objects.filter(parent__isnull=True).prefetch_related('children')  # Sidebar
+
+    # ✅ Fetch active banners (ordered by 'order')
+    banners = Banner.objects.filter(active=True).order_by('order')
 
     # ✅ Fetch wishlist product IDs for logged-in user
     wishlist_ids = []
@@ -79,12 +83,14 @@ def index(request):
 
     cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
 
-    # ✅ Send all context to template
+    # ✅ Final context for template
     return render(request, 'store/index.html', {
         'products': products,
-        'categories': categories,
+        'categories': top_categories,               # ✅ For round category section
+        'sidebar_categories': categories_with_children,
+        'banners': banners,             # 🖼️ added dynamic banners
+        'wishlist_ids': wishlist_ids,   # ❤️ for wishlist heart
         'cart_items_count': cart_items_count,
-        'wishlist_ids': wishlist_ids,  # 🔥 add this line
     })
 
 @login_required

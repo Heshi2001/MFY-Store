@@ -7,14 +7,30 @@ from datetime import timedelta
 # ----------------------
 # Category & Product
 # ----------------------
+from django.db import models
+from cloudinary.models import CloudinaryField
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
-    image = CloudinaryField('image', blank=True, null=True)  # new field for category image
+    image = CloudinaryField('image', blank=True, null=True)  # existing image field
+
+    # New field for nested categories
+    parent = models.ForeignKey(
+        'self', 
+        on_delete=models.CASCADE, 
+        blank=True, 
+        null=True, 
+        related_name='children'
+    )
+
+    class Meta:
+        verbose_name_plural = "Categories"
 
     def __str__(self):
         return self.name
 
+    # Returns URL for this category
     def get_absolute_url(self):
         return f"/products/?category={self.slug}"
 
@@ -438,3 +454,16 @@ class Coupon(models.Model):
     def is_valid(self):
         now = timezone.now()
         return self.is_active and self.valid_from <= now <= self.valid_to
+
+class Banner(models.Model):
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=300, blank=True, null=True)
+    image = models.ImageField(upload_to='banners/')  # Cloudinary or local media
+    order = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['order']
