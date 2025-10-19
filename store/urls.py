@@ -40,5 +40,5 @@ urlpatterns = [
     path("payment/success/", views.payment_success, name="payment_success"),
     path("account/orders/", views.orders_list, name="orders"),
     path("account/orders/<int:order_id>/", views.order_detail, name="order_detail"),
-    path('category/<int:category_id>/', views.category_products, name='category_products'),
+    path('category/<slug:slug>/', views.category_products, name='category_products'),
 ]

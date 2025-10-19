@@ -3,26 +3,24 @@ from django.contrib.auth.models import User
 from cloudinary.models import CloudinaryField
 from django.utils import timezone
 from datetime import timedelta
+from mptt.models import MPTTModel, TreeForeignKey
+from django.utils.text import slugify
 
-# ----------------------
-# Category & Product
-# ----------------------
-from django.db import models
-from cloudinary.models import CloudinaryField
-
-class Category(models.Model):
+class Category(MPTTModel):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True)
-    image = CloudinaryField('image', blank=True, null=True)  # existing image field
+    image = CloudinaryField('image', blank=True, null=True)
 
-    # New field for nested categories
-    parent = models.ForeignKey(
-        'self', 
-        on_delete=models.CASCADE, 
-        blank=True, 
-        null=True, 
+    parent = TreeForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='children'
     )
+
+    class MPTTMeta:
+        order_insertion_by = ['name']
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -30,10 +28,25 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-    # Returns URL for this category
-    def get_absolute_url(self):
-        return f"/products/?category={self.slug}"
+    def save(self, *args, **kwargs):
+        # Auto-generate slug if not set
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
+    def get_absolute_url(self):
+        return f"/category/{self.slug}/"
+
+    @property
+    def has_children(self):
+        return self.get_children().exists()
+ 
 class Product(models.Model):
     DEALER_CHOICES = [
         ("Self", "Self-Fulfilled"),

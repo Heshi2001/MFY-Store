@@ -22,15 +22,32 @@
     .wishlist-btn i.animate-heart { animation: heartPulse 0.4s ease-in-out; }
     @keyframes bounce-soft {0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); }}
     .animate-bounce-soft { animation: bounce-soft 0.4s ease-in-out; }
+     @keyframes flip-pop {
+     0% { transform: scale(0.9); opacity: 0.4; }
+     25% { transform: scale(1.05); opacity: 0.7; }
+     50% { transform: scale(1.1); opacity: 1; }
+     75% { transform: scale(1.05); opacity: 0.9; }
+     100% { transform: scale(1); opacity: 1; }
+    }
+   .animate-rotateY-pop-bounce {
+    animation: flip-pop 4s ease-in-out infinite;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    perspective: 1000px;
+    }
+    /* ensure transition property is present if Tailwind doesn't produce it */
+   .sub-list {
+   transition: max-height 300ms ease-in-out;
+   }
   </style>
 </head>
 <body class="font-sans bg-black text-white">
 
 <!-- Navbar -->
-<nav class="bg-gray-900 fixed w-full z-50 shadow-md">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+<nav class="bg-gray-900 fixed w-full z-50 shadow-md h-32 md:h-36 flex items-center">
+  <div class="max-w-7xl mx-auto px-4 flex justify-between items-center w-full relative">
 
-    <!-- Left: Modern Hamburger -->
+    <!-- Left: Hamburger -->
     <button id="menu-btn" class="text-white focus:outline-none text-2xl group relative w-8 h-6 flex flex-col justify-between items-start">
       <span class="block h-[2px] w-8 bg-white rounded-full group-hover:bg-green-400 transition-all duration-300"></span>
       <span class="block h-[2px] w-5 bg-white rounded-full group-hover:bg-green-400 transition-all duration-300"></span>
@@ -38,110 +55,119 @@
     </button>
 
     <!-- Center: Logo -->
-    <a href="{% url 'index' %}" class="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-2">
-      <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="h-10 w-auto">
-      <h2 class="text-xl font-bold tracking-wide">MADE FOR <span class="text-green-500">YOU</span></h2>
+    <a href="{% url 'index' %}" 
+       class="absolute left-1/2 transform -translate-x-1/2 flex items-center justify-center h-full py-1">
+       <img src="{% static 'store/images/logo.png' %}" 
+         alt="MFY Logo" 
+         class="h-30 sm:h-32 md:h-80 lg:h-82 w-auto object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] transition-transform duration-300 hover:scale-105 animate-rotateY-pop-bounce">
     </a>
 
-    <!-- Right: Cart + User -->
-    <div class="flex items-center space-x-4">
-      <a href="{% url 'cart' %}" class="relative flex items-center justify-center group transition-all duration-300 hover:scale-105">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-7 h-7 text-white group-hover:text-green-400 transition-all duration-300 group-hover:animate-bounce-soft">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 6h14l-1.5 9h-11z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M7 6L5 3H2" />
-          <circle cx="9" cy="20" r="1" />
-          <circle cx="18" cy="20" r="1" />
-        </svg>
-        {% if cart_items_count %}
-        <span class="absolute -top-2 -right-2 bg-green-500 text-xs px-2 py-0.5 rounded-full font-semibold shadow-md">
-          {{ cart_items_count }}
-        </span>
-        {% endif %}
-      </a>
+    <!-- Right: Cart + User Icon -->
+  <div class="flex items-center space-x-4">
 
-      {% if user.is_authenticated %}
-      <div class="flex items-center space-x-2">
-        <a href="{% url 'account_dashboard' %}" class="bg-[#006A4E] hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">{{ user.username }}</a>
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit" class="hover:text-red-400 ml-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white hover:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
-            </svg>
-          </button>
-        </form>
-      </div>
-      {% endif %}
-    </div>
-  </div>
+  <!-- Cart Icon (matches hamburger button size) -->
+  <a href="{% url 'cart' %}" class="relative flex items-center justify-center w-12 h-12  group">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+       class="h-6 w-6 text-white group-hover:text-green-400 transition-all duration-300">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M7 6h14l-1.5 9h-11z" />
+    <path stroke-linecap="round" stroke-linejoin="round" d="M7 6L5 3H2" />
+    <circle cx="9" cy="20" r="1" />
+    <circle cx="18" cy="20" r="1" />
+  </svg>
+  {% if cart_items_count %}
+  <span class="absolute -top-2 -right-2 bg-green-500 text-xs px-1.5 py-0.5 rounded-full font-semibold shadow-md">
+    {{ cart_items_count }}
+  </span>
+  {% endif %}
+ </a>
+ </div>
+</div>
 </nav>
 
-<!-- Overlay -->
-<div id="overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-40 transition-opacity"></div>
+<!-- Sidebar -->
+<div id="sidebar" class="fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900 text-white transform -translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto flex flex-col">
 
-<!-- ✅ Sidebar (Properly Closed Now) -->
-<div id="sidebar" class="fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900 text-white transform -translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
-
-  <!-- Header -->
-  <div class="flex items-center justify-between p-4 border-b border-gray-700">
-    <div class="flex items-center space-x-2">
-      <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="MFY Logo" class="h-8 w-8">
-      <h1 class="text-lg font-semibold">Made For <span class="text-green-500">You</span></h1>
-    </div>
-    <button id="close-btn" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+ <!-- Sidebar Header -->
+<div class="relative flex flex-col items-center justify-center p-4 border-b border-gray-700">
+  <div class="flex flex-col items-center justify-center">
+    <img src="{% static 'store/images/logo.png' %}" alt="MFY Logo" class="h-20 w-24 block m-0 p-0">
+    <h1 class="text-lg font-semibold m-0 p-0 -mt-1 leading-none">Made For You</h1>
   </div>
+  <button id="close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+</div>
 
   <!-- Promo Banner -->
   <div class="bg-gradient-to-r from-green-500 to-green-400 text-black text-center py-2 font-semibold">
     🔥 Get 10% OFF on your first order! <a href="#" class="underline">Shop Now</a>
   </div>
 
-  <!-- Top Links -->
+  <!-- Top Navigation Links -->
   <div class="p-4 space-y-2 border-b border-gray-700">
     <a href="{% url 'index' %}" class="block hover:text-green-400">Home</a>
+    <!-- Add more top links here if needed -->
   </div>
 
-  <!-- Categories -->
-  <div class="p-5 space-y-2 scrollbar-hide">
-    {% for category in categories %}
-    <div>
-      <button class="w-full flex justify-between items-center text-gray-300 hover:text-green-400 font-medium px-2 py-1 rounded-md category-toggle">
-        {{ category.name }}
-        <i class="fa-solid fa-chevron-down transition-transform duration-200"></i>
-      </button>
-      <ul class="ml-4 mt-1 hidden subcategory-list space-y-1">
-        {% if category.subcategories.all %}
-          {% for sub in category.subcategories.all %}
-          <li><a href="{% url 'category_products' sub.id %}" class="block hover:text-green-400">{{ sub.name }}</a></li>
-          {% endfor %}
-        {% else %}
-          <li><a href="{% url 'category_products' category.id %}" class="block hover:text-green-400">Browse {{ category.name }}</a></li>
-        {% endif %}
-      </ul>
-    </div>
-    {% endfor %}
+  <!-- Sidebar Categories -->
+  <div class="p-5 space-y-2 scrollbar-hide flex-1">
+    <h2 class="text-gray-400 text-sm uppercase tracking-wide mb-2">Categories</h2>
+    {% include 'store/partials/category_tree.html' with categories=sidebar_categories %}
   </div>
 
-  <!-- Bottom Section -->
-  <div class="mt-4 border-t border-gray-700 bg-gray-900 p-4 pb-24">
-    <div class="mt-6 border-t border-gray-700 pt-4">
-      <h3 class="text-gray-400 uppercase text-[11px] font-semibold mb-3 tracking-wider">Your Account</h3>
-      <ul class="flex flex-col divide-y divide-gray-800 rounded-lg overflow-hidden bg-gray-800/40 backdrop-blur-sm">
-        <li><a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-heart text-pink-400"></i><span class="text-sm">Wishlist</span></a></li>
-        <li><a href="{% url 'orders' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-box text-yellow-400"></i><span class="text-sm">My Orders</span></a></li>
-        <li><a href="{% url 'faq' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-solid fa-headset text-green-400"></i><span class="text-sm">Support</span></a></li>
-        <li>
-          {% if user.is_authenticated %}
-            <a href="{% url 'account_dashboard' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-regular fa-user text-blue-400"></i><span class="text-sm">Dashboard</span></a>
-          {% else %}
-            <a href="{% url 'account_login' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition"><i class="fa-regular fa-user text-blue-400"></i><span class="text-sm">Login</span></a>
-          {% endif %}
-        </li>
-      </ul>
-    </div>
-  </div>
-</div> <!-- ✅ Sidebar properly closed here -->
+  <!-- Bottom Section (Wishlist / Orders / Support + Auth) -->
+  <div class="mt-auto border-t border-gray-700 bg-gray-900 p-4">
+    
+    <!-- Wishlist / Orders / FAQ -->
+    <ul class="flex flex-col divide-y divide-gray-800 rounded-lg overflow-hidden bg-gray-800/40 backdrop-blur-sm mb-4">
+      <li>
+        <a href="{% url 'wishlist' %}" 
+           class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+           <i class="fa-solid fa-heart text-pink-400"></i>
+           <span class="text-sm">Wishlist</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'orders' %}" 
+           class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+           <i class="fa-solid fa-box text-yellow-400"></i>
+           <span class="text-sm">My Orders</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'faq' %}" 
+           class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+           <i class="fa-solid fa-headset text-green-400"></i>
+           <span class="text-sm">Support</span>
+        </a>
+      </li>
+    </ul>
 
+    <!-- Login / Username + Logout -->
+    <h3 class="text-gray-400 uppercase text-[11px] font-semibold mb-3 tracking-wider">Your Account</h3>
+    {% if user.is_authenticated %}
+      <div class="flex flex-col gap-2">
+        <a href="{% url 'account_dashboard' %}" 
+           class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+           <i class="fa-regular fa-user text-blue-400"></i>
+           <span class="text-sm">{{ user.username }}</span>
+        </a>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" 
+                  class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-red-600 hover:text-white transition rounded-lg">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="text-sm">Logout</span>
+          </button>
+        </form>
+      </div>
+    {% else %}
+      <a href="{% url 'account_login' %}" 
+         class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+         <i class="fa-regular fa-user text-blue-400"></i>
+         <span class="text-sm">Login</span>
+      </a>
+    {% endif %}
+  </div>
+</div>
 
 <!-- Banner Carousel -->
 <section class="relative h-[400px] overflow-hidden">
@@ -205,7 +231,7 @@
     <div class="flex space-x-6 px-2 w-max">
       {% for category in categories %}
         <div class="flex-shrink-0 text-center group snap-start">
-          <a href="{% url 'category_products' category.id %}" class="block">
+          <a href="{{ category.get_absolute_url }}" class="block">
             <div class="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-2 border-[#006A4E] mx-auto shadow-md transform transition-transform duration-300 group-hover:scale-105">
               {% if category.image %}
                 <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-full object-cover">
@@ -503,6 +529,156 @@
     }
     return cookieValue;
   }
+// ---- Category Tree Expand/Collapse with Accordion + State Persistence ----
+
+// Helpers for smooth open/close
+function openSubList(el) {
+    el.classList.remove('hidden');
+    el.style.maxHeight = el.scrollHeight + 'px';
+    el.addEventListener('transitionend', function handler() {
+        el.style.maxHeight = 'none';
+        el.removeEventListener('transitionend', handler);
+    });
+}
+
+function closeSubList(el) {
+    el.style.maxHeight = el.scrollHeight + 'px';
+    void el.offsetHeight;
+    el.style.maxHeight = '0px';
+    el.addEventListener('transitionend', function handler() {
+        el.classList.add('hidden');
+        el.style.maxHeight = null;
+        el.removeEventListener('transitionend', handler);
+    });
+}
+
+// Generate a unique key for each category node (based on URL)
+function getNodeKey(btn) {
+    const link = btn.closest('li').querySelector('a[href]');
+    return link ? link.getAttribute('href') : null;
+}
+
+// Save open states in localStorage
+function saveOpenStates() {
+    const openNodes = Array.from(document.querySelectorAll('.sub-list:not(.hidden)'))
+        .map(el => getNodeKey(el.closest('li').querySelector('.toggle-sub')))
+        .filter(Boolean);
+    localStorage.setItem('categoryTreeOpen', JSON.stringify(openNodes));
+}
+
+// Restore open states on load
+function restoreOpenStates() {
+    const openNodes = JSON.parse(localStorage.getItem('categoryTreeOpen') || '[]');
+    openNodes.forEach(key => {
+        const btn = document.querySelector(`a[href="${key}"]`)?.closest('li')?.querySelector('.toggle-sub');
+        if (btn) {
+            const listWrapper = btn.closest('li').querySelector('.sub-list');
+            const icon = btn.querySelector('svg');
+            if (listWrapper) {
+                listWrapper.classList.remove('hidden');
+                listWrapper.style.maxHeight = 'none';
+                icon?.classList.add('rotate-90');
+            }
+        }
+    });
+}
+
+// Close siblings (accordion behavior)
+function closeSiblings(currentLi) {
+    const parentUl = currentLi.parentElement;
+    if (!parentUl) return;
+    const siblings = parentUl.querySelectorAll(':scope > li > .sub-list:not(.hidden)');
+    siblings.forEach(sub => {
+        if (sub.closest('li') !== currentLi) {
+            const siblingBtn = sub.closest('li').querySelector('.toggle-sub');
+            const siblingIcon = siblingBtn?.querySelector('svg');
+            if (siblingBtn) siblingIcon?.classList.remove('rotate-90');
+            closeSubList(sub);
+        }
+    });
+}
+
+// Click listener for toggling
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.toggle-sub');
+    if (!btn) return;
+
+    const li = btn.closest('li');
+    const listWrapper = li.querySelector('.sub-list');
+    const icon = btn.querySelector('svg');
+    if (!listWrapper) return;
+
+    const isHidden = listWrapper.classList.contains('hidden');
+
+    // Accordion: close other open siblings at same level
+    if (isHidden) closeSiblings(li);
+
+    if (isHidden) {
+    icon.classList.add('rotate-90');
+    openSubList(listWrapper);
+    li.querySelector('div').classList.add('open'); // highlight active
+    } else {
+    icon.classList.remove('rotate-90');
+    closeSubList(listWrapper);
+    li.querySelector('div').classList.remove('open'); // remove highlight
+    }
+    // Save open/close state
+    setTimeout(saveOpenStates, 400); // small delay for animation
+});
+// ---- Handle category link click to highlight active item ----
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.sub-list a, ul a');
+  if (!link) return;
+
+  // Remove previous active highlight
+  document.querySelectorAll('.text-green-400').forEach(a => {
+    a.classList.remove('text-green-400');
+    a.classList.add('text-gray-200');
+  });
+
+  // Highlight the clicked one
+  link.classList.remove('text-gray-200');
+  link.classList.add('text-green-400');
+
+  // Also expand parent branches
+  let parent = link.closest('.sub-list');
+  while (parent) {
+    const toggleBtn = parent.previousElementSibling?.querySelector('.toggle-sub');
+    const icon = toggleBtn?.querySelector('svg');
+    if (toggleBtn) {
+      parent.classList.remove('hidden');
+      parent.style.maxHeight = 'none';
+      icon?.classList.add('rotate-90');
+      toggleBtn.closest('li').querySelector('div').classList.add('open');
+    }
+    parent = parent.closest('.sub-list');
+  }
+
+  // Save the open state to localStorage after click
+  setTimeout(saveOpenStates, 400);
+});
+
+// Restore state on page load
+document.addEventListener('DOMContentLoaded', restoreOpenStates);
+// ---- Auto-highlight and auto-expand active category ----
+document.addEventListener('DOMContentLoaded', () => {
+  const activeLink = document.querySelector('.text-green-400');
+  if (activeLink) {
+    let parent = activeLink.closest('.sub-list');
+    while (parent) {
+      const toggleBtn = parent.previousElementSibling?.querySelector('.toggle-sub');
+      const icon = toggleBtn?.querySelector('svg');
+      if (toggleBtn) {
+        // Open the parent branch visually
+        parent.classList.remove('hidden');
+        parent.style.maxHeight = 'none';
+        icon?.classList.add('rotate-90');
+        toggleBtn.closest('li').querySelector('div').classList.add('open');
+      }
+      parent = parent.closest('.sub-list');
+    }
+  }
+});
 </script>
 </body>
-</html>
+</html> 

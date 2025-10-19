@@ -1,0 +1,40 @@
+{# Recursive category tree #}
+<ul class="space-y-1">
+  {% for category in categories %}
+    <li class="border-b border-gray-800 pb-1 group relative">
+      <!-- Active row -->
+      <div class="flex items-center justify-between rounded-md px-1 py-1 transition-colors duration-300
+                  hover:bg-gray-800/70 open:bg-gray-800/70 open:ring-1 open:ring-green-500/30">
+
+        <!-- Category Link -->
+        <a href="{{ category.get_absolute_url }}" 
+           class="flex items-center text-gray-300 group-hover:text-white transition-colors duration-300">
+          {% if category.image %}
+            <img src="{{ category.image.url }}" alt="{{ category.name }}" 
+                 class="inline-block h-5 w-5 object-cover rounded mr-2 align-middle shadow-sm">
+          {% endif %}
+          <span class="align-middle">{{ category.name }}</span>
+        </a>
+
+        {% if category.has_children %}
+          <!-- Toggle Button -->
+          <button type="button" 
+                  class="toggle-sub flex items-center justify-center text-gray-400 hover:text-green-400 focus:outline-none transition-colors duration-300">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4 transform transition-transform duration-300 ease-in-out"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        {% endif %}
+      </div>
+
+      {% if category.has_children %}
+        <!-- Nested Categories -->
+        <div class="sub-list overflow-hidden max-h-0 transition-[max-height] duration-300 ease-in-out mt-2 ml-4 border-l border-gray-700/60 pl-3 hidden">
+          {% include 'store/partials/category_tree.html' with categories=category.children.all %}
+        </div>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>

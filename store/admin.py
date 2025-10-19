@@ -8,7 +8,7 @@ from .models import (
 from .qikink_api import send_order_to_qikink
 from django.contrib import admin, messages
 from django.utils.translation import ngettext
-
+from mptt.admin import DraggableMPTTAdmin
 
 # --- Inlines ---
 class ProductImageInline(admin.TabularInline):
@@ -58,13 +58,12 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
         
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'parent', 'slug')
-    list_filter = ('parent',)
-    prepopulated_fields = {"slug": ("name",)}
-
-admin.site.register(Category, CategoryAdmin)
-
+@admin.register(Category)
+class CategoryAdmin(DraggableMPTTAdmin):
+    mptt_indent_field = "name"
+    list_display = ("tree_actions", "indented_title", "slug", "parent")
+    list_display_links = ("indented_title",)
+    
 # --- Variants & Images ---
 @admin.register(ProductVariant)
 class ProductVariantAdmin(admin.ModelAdmin):

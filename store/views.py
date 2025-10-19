@@ -48,33 +48,33 @@ def index(request):
     else:
         products = Product.objects.all().order_by('-id')[:6]
 
-    # ✅ Prepare product images & discount logic
+    # Prepare product images & discount logic
     for product in products:
-        if product.image_mode == "custom" and product.custom_image:
+        if getattr(product, 'image_mode', None) == "custom" and getattr(product, 'custom_image', None):
             product.first_image = product.custom_image
         else:
-            product.first_image = product.images.first()
+            product.first_image = getattr(product, 'images', None).first() if hasattr(product, 'images') else None
 
-        if product.offer_price and product.offer_price < product.price:
+        if getattr(product, 'offer_price', None) and product.offer_price < product.price:
             product.discount_percent = round(
                 ((product.price - product.offer_price) / product.price) * 100
             )
         else:
             product.discount_percent = None
 
-     # ✅ Categories
-    top_categories = Category.objects.all()  # For round categories
-    categories_with_children = Category.objects.filter(parent__isnull=True).prefetch_related('children')  # Sidebar
+    # ✅ Categories
+    top_categories = Category.objects.filter(parent__isnull=True)  # homepage circles
+    categories_with_children = Category.objects.filter(parent__isnull=True).prefetch_related('children')  # sidebar recursion
 
-    # ✅ Fetch active banners (ordered by 'order')
+    # ✅ Banners
     banners = Banner.objects.filter(active=True).order_by('order')
 
-    # ✅ Fetch wishlist product IDs for logged-in user
+    # ✅ Wishlist
     wishlist_ids = []
     if request.user.is_authenticated:
         wishlist_ids = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
 
-    # ✅ Get cart count for badge
+    # ✅ Cart count
     if request.user.is_authenticated:
         cart_data = Cart.objects.for_user_or_session(user=request.user)
     else:
@@ -83,13 +83,52 @@ def index(request):
 
     cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
 
-    # ✅ Final context for template
     return render(request, 'store/index.html', {
         'products': products,
-        'categories': top_categories,               # ✅ For round category section
+        'categories': top_categories,
         'sidebar_categories': categories_with_children,
-        'banners': banners,             # 🖼️ added dynamic banners
-        'wishlist_ids': wishlist_ids,   # ❤️ for wishlist heart
+        'banners': banners,
+        'wishlist_ids': wishlist_ids,
+        'cart_items_count': cart_items_count,
+    })
+
+def category_products(request, slug):
+    # SEO-friendly category page
+    category = get_object_or_404(Category, slug=slug)
+
+    # Get all descendant categories including the current one
+    descendants = category.get_descendants(include_self=True)
+    descendant_ids = [c.id for c in descendants]
+
+    # Fetch all products in this category or its subcategories
+    products = Product.objects.filter(category__id__in=descendant_ids).distinct()
+
+    # Handle product image + discount display
+    for product in products:
+        if getattr(product, 'image_mode', None) == "custom" and getattr(product, 'custom_image', None):
+            product.first_image = product.custom_image
+        else:
+            product.first_image = getattr(product, 'images', None).first() if hasattr(product, 'images') else None
+
+        if getattr(product, 'offer_price', None) and product.offer_price < product.price:
+            product.discount_percent = round(
+                ((product.price - product.offer_price) / product.price) * 100
+            )
+        else:
+            product.discount_percent = None
+
+    # Get cart item count
+    if request.user.is_authenticated:
+        cart_data = Cart.objects.for_user_or_session(user=request.user)
+    else:
+        session_key = get_or_create_session_key(request)
+        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+
+    cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
+
+    return render(request, 'store/category_products.html', {
+        'category': category,
+        'products': products,
         'cart_items_count': cart_items_count,
     })
 
@@ -921,35 +960,3 @@ def remove_from_cart(request, item_id):
         "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
     })
 
-def category_products(request, category_id):
-    category = get_object_or_404(Category, id=category_id)
-    products = Product.objects.filter(category=category)
-
-    # Add image + discount logic like index page
-    for product in products:
-        if product.image_mode == "custom" and product.custom_image:
-            product.first_image = product.custom_image
-        else:
-            product.first_image = product.images.first()
-
-        if product.offer_price and product.offer_price < product.price:
-            product.discount_percent = round(
-                ((product.price - product.offer_price) / product.price) * 100
-            )
-        else:
-            product.discount_percent = None
-
-    # Get cart count for badge
-    if request.user.is_authenticated:
-        cart_data = Cart.objects.for_user_or_session(user=request.user)
-    else:
-        session_key = request.session.session_key or request.session.save() or request.session.session_key
-        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
-
-    cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
-
-    return render(request, 'store/category_products.html', {
-        'category': category,
-        'products': products,
-        'cart_items_count': cart_items_count,
-    })
