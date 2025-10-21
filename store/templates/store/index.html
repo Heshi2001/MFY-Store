@@ -172,45 +172,59 @@
   </div>
 </div>
 
-<!-- Wrapper that auto-adjusts for fixed navbar -->
 <div class="pt-[var(--navbar-height,4.5rem)] md:pt-[var(--navbar-height,5rem)]">
-
   <!-- Banner Carousel -->
   <section class="relative w-full">
-    <div id="banner-carousel" class="relative w-full h-[60vh] md:h-[80vh] lg:h-[90vh] overflow-hidden">
+    <div id="banner-carousel" class="relative w-full h-[300px] md:h-[450px] overflow-hidden">
+      
       {% for banner in banners %}
-        <div class="carousel-slide absolute inset-0 bg-cover bg-center {% if forloop.first %}active{% endif %}"
-             style="background-image: url('{{ banner.image.url }}'); background-size: cover; background-position: center;">
-          <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white px-4">
-            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold">{{ banner.title }}</h2>
-            {% if banner.subtitle %}
-              <p class="mt-4 text-base sm:text-lg md:text-xl text-gray-200">{{ banner.subtitle }}</p>
-            {% endif %}
-          </div>
+      <div class="carousel-slide absolute inset-0 {% if forloop.first %}active{% endif %}">
+        
+        <!-- Desktop Banner -->
+        <img src="{{ banner.image.url }}" alt="{{ banner.title }}"
+             class="hidden md:block w-full h-full object-cover object-center" />
+
+        <!-- Mobile Banner -->
+        {% if banner.mobile_image %}
+          <img src="{{ banner.mobile_image.url }}" alt="{{ banner.title }}"
+               class="block md:hidden w-full h-full object-cover object-center" />
+        {% else %}
+          <img src="{{ banner.image.url }}" alt="{{ banner.title }}"
+               class="block md:hidden w-full h-full object-cover object-center" />
+        {% endif %}
+        
+        <!-- Overlay Text -->
+        <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-center items-center text-center text-white px-4">
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold drop-shadow-lg">{{ banner.title }}</h2>
+          {% if banner.subtitle %}
+            <p class="mt-2 text-sm sm:text-base md:text-lg text-gray-200 max-w-2xl drop-shadow">{{ banner.subtitle }}</p>
+          {% endif %}
         </div>
+      </div>
       {% empty %}
-        <div class="carousel-slide absolute inset-0 bg-gray-800 flex items-center justify-center text-center text-white active">
-          <h2 class="text-3xl font-bold">No Banners Uploaded Yet</h2>
-        </div>
+      <div class="carousel-slide absolute inset-0 bg-gray-800 flex items-center justify-center text-center text-white active">
+        <h2 class="text-2xl font-bold">No Banners Uploaded Yet</h2>
+      </div>
       {% endfor %}
 
       <!-- Navigation Buttons -->
-      <button id="prev-slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+      <button id="prev-slide"
+        class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition z-20">
         <i class="fas fa-chevron-left"></i>
       </button>
-      <button id="next-slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+      <button id="next-slide"
+        class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition z-20">
         <i class="fas fa-chevron-right"></i>
       </button>
 
       <!-- Dots -->
-      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+      <div class="absolute bottom-2 md:bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
         {% for banner in banners %}
-          <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+          <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#00C897]"></button>
         {% endfor %}
       </div>
     </div>
   </section>
-
 </div>
 
 <!-- Search Bar -->
@@ -391,16 +405,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ---------------------------
   // Auto-adjust banner padding for fixed navbar
   // ---------------------------
-  
-  const navbar = document.querySelector("nav");
+  const navbar = document.querySelector('nav');
   if (navbar) {
-    document.documentElement.style.setProperty("--navbar-height", `${navbar.offsetHeight}px`);
+    const navbarHeight = navbar.offsetHeight;
+    document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
   }
 
   // ---------------------------
   // Helper Functions
   // ---------------------------
-  
   const getCookie = name => {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {

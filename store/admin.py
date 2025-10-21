@@ -136,6 +136,7 @@ class ReviewAdmin(admin.ModelAdmin):
 class BannerAdmin(admin.ModelAdmin):
     list_display = ('title', 'active', 'order')
     list_editable = ('active', 'order')
+    fields = ('title', 'subtitle', 'image', 'mobile_image', 'order', 'active')
 
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):

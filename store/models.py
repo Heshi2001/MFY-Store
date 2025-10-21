@@ -471,7 +471,8 @@ class Coupon(models.Model):
 class Banner(models.Model):
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=300, blank=True, null=True)
-    image = models.ImageField(upload_to='banners/')  # Cloudinary or local media
+    image = models.ImageField(upload_to='banners/')  # Main desktop image
+    mobile_image = models.ImageField(upload_to='banners/mobile/', blank=True, null=True)  # Optional mobile version
     order = models.PositiveIntegerField(default=0)
     active = models.BooleanField(default=True)
 
@@ -480,3 +481,4 @@ class Banner(models.Model):
 
     class Meta:
         ordering = ['order']
+
