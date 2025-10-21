@@ -84,6 +84,9 @@
 </div>
 </nav>
 
+<!-- Overlay -->
+<div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40"></div>
+
 <!-- Sidebar -->
 <div id="sidebar" class="fixed top-0 left-0 h-full w-4/5 max-w-xs bg-gray-900 text-white transform -translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto flex flex-col">
 
@@ -169,41 +172,46 @@
   </div>
 </div>
 
-<!-- Banner Carousel -->
-<section class="relative h-[400px] overflow-hidden">
-  <div id="banner-carousel" class="relative h-full w-full">
-    {% for banner in banners %}
-      <div class="carousel-slide absolute inset-0 bg-cover bg-center {% if forloop.first %}active{% endif %}"
-           style="background-image: url('{{ banner.image.url }}');">
-        <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white">
-          <h2 class="text-4xl md:text-5xl font-bold">{{ banner.title }}</h2>
-          {% if banner.subtitle %}
-            <p class="mt-4 text-lg text-gray-200">{{ banner.subtitle }}</p>
-          {% endif %}
-        </div>
-      </div>
-    {% empty %}
-      <div class="carousel-slide absolute inset-0 bg-gray-800 flex items-center justify-center text-center text-white active">
-        <h2 class="text-3xl font-bold">No Banners Uploaded Yet</h2>
-      </div>
-    {% endfor %}
+<!-- Wrapper that auto-adjusts for fixed navbar -->
+<div class="pt-[var(--navbar-height,4.5rem)] md:pt-[var(--navbar-height,5rem)]">
 
-    <!-- Navigation Buttons -->
-    <button id="prev-slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
-      <i class="fas fa-chevron-left"></i>
-    </button>
-    <button id="next-slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
-      <i class="fas fa-chevron-right"></i>
-    </button>
-
-    <!-- Dots -->
-    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+  <!-- Banner Carousel -->
+  <section class="relative w-full">
+    <div id="banner-carousel" class="relative w-full h-[60vh] md:h-[80vh] lg:h-[90vh] overflow-hidden">
       {% for banner in banners %}
-        <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+        <div class="carousel-slide absolute inset-0 bg-cover bg-center {% if forloop.first %}active{% endif %}"
+             style="background-image: url('{{ banner.image.url }}'); background-size: cover; background-position: center;">
+          <div class="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center text-center text-white px-4">
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold">{{ banner.title }}</h2>
+            {% if banner.subtitle %}
+              <p class="mt-4 text-base sm:text-lg md:text-xl text-gray-200">{{ banner.subtitle }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="carousel-slide absolute inset-0 bg-gray-800 flex items-center justify-center text-center text-white active">
+          <h2 class="text-3xl font-bold">No Banners Uploaded Yet</h2>
+        </div>
       {% endfor %}
+
+      <!-- Navigation Buttons -->
+      <button id="prev-slide" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button id="next-slide" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+
+      <!-- Dots -->
+      <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        {% for banner in banners %}
+          <button class="carousel-dot w-3 h-3 rounded-full bg-white bg-opacity-50 hover:bg-[#006A4E]"></button>
+        {% endfor %}
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+
+</div>
 
 <!-- Search Bar -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
@@ -320,8 +328,15 @@
 <section class="bg-gray-900 py-12">
   <div class="max-w-5xl mx-auto text-center px-4">
     <h2 class="text-3xl font-bold mb-4 text-white">About Us</h2>
-    <p class="text-gray-300">We are dedicated to bringing you the best products tailored just for you. 
-    Our mission is to combine quality, affordability, and style in every item we offer.</p>
+    <p id="about-text" class="text-gray-300 transition-all duration-500 overflow-hidden max-h-24">
+      We are dedicated to bringing you the best products tailored just for you. Our mission is to combine quality, affordability, and style in every item we offer.
+      <span id="more-text" class="hidden">
+        We carefully select each item, ensuring every purchase meets the highest standards. Our dedicated team constantly seeks innovative ways to enhance your shopping experience and bring you the latest trends.
+      </span>
+    </p>
+    <a href="{% url 'about' %}" class="mt-4 text-[#00C897] hover:text-[#00A07A] font-semibold underline transition-colors duration-300">
+       Read More
+    </a>
   </div>
 </section>
 
@@ -365,43 +380,162 @@
   </div>
 </footer>
 
-<!-- Cart Toast -->
-<div id="cart-toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden z-50">
-  <span id="cart-toast-message"></span>
+<!-- Toast Notification (shared for Cart + Wishlist) -->
+<div id="cart-toast" class="hidden fixed bottom-5 right-5 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 translate-y-5 z-50">
+  <p id="cart-toast-message" class="text-sm font-medium"></p>
 </div>
 
-<!-- Scripts -->
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+
   // ---------------------------
-  // Sidebar toggle
+  // Auto-adjust banner padding for fixed navbar
+  // ---------------------------
+  
+  const navbar = document.querySelector("nav");
+  if (navbar) {
+    document.documentElement.style.setProperty("--navbar-height", `${navbar.offsetHeight}px`);
+  }
+
+  // ---------------------------
+  // Helper Functions
+  // ---------------------------
+  
+  const getCookie = name => {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(cookie => {
+        if (cookie.trim().startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
+        }
+      });
+    }
+    return cookieValue;
+  };
+
+  const openSubList = el => {
+    el.classList.remove('hidden');
+    el.style.maxHeight = el.scrollHeight + 'px';
+    el.addEventListener('transitionend', function handler() {
+      el.style.maxHeight = 'none';
+      el.removeEventListener('transitionend', handler);
+    });
+  };
+
+  const closeSubList = el => {
+    el.style.maxHeight = el.scrollHeight + 'px';
+    void el.offsetHeight;
+    el.style.maxHeight = '0px';
+    el.addEventListener('transitionend', function handler() {
+      el.classList.add('hidden');
+      el.style.maxHeight = null;
+      el.removeEventListener('transitionend', handler);
+    });
+  };
+
+  const getNodeKey = btn => btn.closest('li').querySelector('a[href]')?.getAttribute('href');
+  const saveOpenStates = () => {
+    const openNodes = Array.from(document.querySelectorAll('.sub-list:not(.hidden)'))
+      .map(el => getNodeKey(el.closest('li').querySelector('.toggle-sub')))
+      .filter(Boolean);
+    localStorage.setItem('categoryTreeOpen', JSON.stringify(openNodes));
+  };
+  const restoreOpenStates = () => {
+    const openNodes = JSON.parse(localStorage.getItem('categoryTreeOpen') || '[]');
+    openNodes.forEach(key => {
+      const btn = document.querySelector(`a[href="${key}"]`)?.closest('li')?.querySelector('.toggle-sub');
+      if (btn) {
+        const listWrapper = btn.closest('li').querySelector('.sub-list');
+        const icon = btn.querySelector('svg');
+        if (listWrapper) {
+          listWrapper.classList.remove('hidden');
+          listWrapper.style.maxHeight = 'none';
+          icon?.classList.add('rotate-90');
+        }
+      }
+    });
+  };
+
+  const closeSiblings = currentLi => {
+    const siblings = currentLi.parentElement?.querySelectorAll(':scope > li > .sub-list:not(.hidden)') || [];
+    siblings.forEach(sub => {
+      if (sub.closest('li') !== currentLi) {
+        const siblingBtn = sub.closest('li').querySelector('.toggle-sub');
+        siblingBtn?.querySelector('svg')?.classList.remove('rotate-90');
+        closeSubList(sub);
+      }
+    });
+  };
+
+  const expandParents = link => {
+    let parent = link.closest('.sub-list');
+    while (parent) {
+      const toggleBtn = parent.previousElementSibling?.querySelector('.toggle-sub');
+      const icon = toggleBtn?.querySelector('svg');
+      if (toggleBtn) {
+        parent.classList.remove('hidden');
+        parent.style.maxHeight = 'none';
+        icon?.classList.add('rotate-90');
+        toggleBtn.closest('li')?.querySelector('div')?.classList.add('open');
+      }
+      parent = parent.closest('.sub-list');
+    }
+  };
+
+  // ---------------------------
+  // Sidebar
   // ---------------------------
   const menuBtn = document.getElementById('menu-btn');
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
   const closeBtn = document.getElementById('close-btn');
 
-  function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
-  function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+  menuBtn?.addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); });
+  closeBtn?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
+  overlay?.addEventListener('click', () => { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); });
 
-  menuBtn.addEventListener('click', openSidebar);
-  closeBtn.addEventListener('click', closeSidebar);
-  overlay.addEventListener('click', closeSidebar);
-
+  // ---------------------------
   // Collapsible categories
-  document.querySelectorAll('.category-toggle').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const list = btn.nextElementSibling;
-      const icon = btn.querySelector('i');
-      list.classList.toggle('hidden');
-      icon.classList.toggle('rotate-180');
-    });
+  // ---------------------------
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.toggle-sub');
+    if (!btn) return;
+    const li = btn.closest('li');
+    const listWrapper = li.querySelector('.sub-list');
+    if (!listWrapper) return;
+
+    if (listWrapper.classList.contains('hidden')) {
+      closeSiblings(li);
+      btn.querySelector('svg')?.classList.add('rotate-90');
+      openSubList(listWrapper);
+      li.querySelector('div')?.classList.add('open');
+    } else {
+      btn.querySelector('svg')?.classList.remove('rotate-90');
+      closeSubList(listWrapper);
+      li.querySelector('div')?.classList.remove('open');
+    }
+    setTimeout(saveOpenStates, 400);
   });
+
+  // Highlight category links
+  document.addEventListener('click', e => {
+    const link = e.target.closest('.sub-list a, ul a');
+    if (!link) return;
+
+    document.querySelectorAll('.text-green-400').forEach(a => a.classList.replace('text-green-400', 'text-gray-200'));
+    link.classList.replace('text-gray-200', 'text-green-400');
+    expandParents(link);
+    setTimeout(saveOpenStates, 400);
+  });
+
+  restoreOpenStates();
+  document.querySelector('.text-green-400') && expandParents(document.querySelector('.text-green-400'));
 
   // ---------------------------
   // Mobile menu toggle
   // ---------------------------
-  document.getElementById("mobile-menu-button").addEventListener("click", () => {
-    document.getElementById("mobile-menu").classList.toggle("hidden");
+  document.getElementById("mobile-menu-button")?.addEventListener("click", () => {
+    document.getElementById("mobile-menu")?.classList.toggle("hidden");
   });
 
   // ---------------------------
@@ -412,273 +546,172 @@
   let currentSlide = 0;
   const totalSlides = slides.length;
 
-  function showSlide(index) {
+  const showSlide = index => {
     slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
     dots.forEach((dot, i) => dot.classList.toggle("bg-[#006A4E]", i === index));
-  }
+  };
 
   let slideInterval = setInterval(() => {
     currentSlide = (currentSlide + 1) % totalSlides;
     showSlide(currentSlide);
   }, 5000);
 
-  document.getElementById("next-slide").addEventListener("click", () => {
-    currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); resetInterval();
-  });
-  document.getElementById("prev-slide").addEventListener("click", () => {
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; showSlide(currentSlide); resetInterval();
-  });
+  const resetInterval = () => {
+    clearInterval(slideInterval);
+    slideInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      showSlide(currentSlide);
+    }, 5000);
+  };
+
+  document.getElementById("next-slide")?.addEventListener("click", () => { currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); resetInterval(); });
+  document.getElementById("prev-slide")?.addEventListener("click", () => { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; showSlide(currentSlide); resetInterval(); });
   dots.forEach((dot, i) => dot.addEventListener("click", () => { currentSlide = i; showSlide(currentSlide); resetInterval(); }));
-  function resetInterval() { clearInterval(slideInterval); slideInterval = setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides; showSlide(currentSlide); }, 5000); }
 
   // ---------------------------
-  // Scroll Buttons
+  // Scroll buttons
   // ---------------------------
   const scrollContainer = document.getElementById("product-scroll");
-  document.getElementById("scroll-left").addEventListener("click", () => {
-    scrollContainer.scrollBy({ left: -300, behavior: "smooth" });
-  });
-  document.getElementById("scroll-right").addEventListener("click", () => {
-    scrollContainer.scrollBy({ left: 300, behavior: "smooth" });
-  });
+  document.getElementById("scroll-left")?.addEventListener("click", () => scrollContainer?.scrollBy({ left: -300, behavior: "smooth" }));
+  document.getElementById("scroll-right")?.addEventListener("click", () => scrollContainer?.scrollBy({ left: 300, behavior: "smooth" }));
 
   // ---------------------------
-  // Wishlist AJAX Toggle
+  // Wishlist AJAX
   // ---------------------------
   document.querySelectorAll(".wishlist-btn").forEach(btn => {
-    btn.addEventListener("click", function() {
-      const productId = this.dataset.productId;
-      const icon = this.querySelector("i");
+  btn.addEventListener("click", function() {
+    const productId = this.dataset.productId;
+    const icon = this.querySelector("i");
 
-      fetch(`/add_to_wishlist/${productId}/`, {
-        method: "POST",
-        headers: { "X-CSRFToken": getCookie("csrftoken") },
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.added) {
-          icon.classList.remove("fa-regular");
-          icon.classList.add("fa-solid", "text-[#00C897]");
-          icon.classList.add("animate-heart");
-          setTimeout(() => icon.classList.remove("animate-heart"), 400);
-        } else {
-          icon.classList.remove("fa-solid", "text-[#00C897]");
-          icon.classList.add("fa-regular");
-          icon.classList.add("animate-heart");
-          setTimeout(() => icon.classList.remove("animate-heart"), 400);
-        }
-      });
+    fetch(`/add_to_wishlist/${productId}/`, {
+      method: "POST",
+      headers: { 
+        "X-CSRFToken": getCookie("csrftoken"),
+        "X-Requested-With": "XMLHttpRequest"
+      },
+    })
+    .then(async res => {
+      try {
+        return await res.json();
+      } catch {
+        throw new Error("Non-JSON response");
+      }
+    })
+    .then(data => {
+      const toast = document.getElementById("cart-toast");
+      const toastMessage = document.getElementById("cart-toast-message");
+
+      // reset background colors
+      toast.classList.remove("bg-green-500", "bg-red-500", "bg-gray-500");
+
+      if (data.added) {
+        icon.classList.replace("fa-regular", "fa-solid");
+        icon.classList.add("text-[#00C897]", "animate-heart");
+        toastMessage.innerText = "Added to wishlist ❤️";
+        toast.classList.add("bg-green-500");
+      } else {
+        icon.classList.replace("fa-solid", "fa-regular");
+        icon.classList.remove("text-[#00C897]");
+        icon.classList.add("animate-heart");
+        toastMessage.innerText = "Removed from wishlist 💔";
+        toast.classList.add("bg-red-500");
+      }
+
+      // show toast with animation
+      toast.classList.remove("hidden", "opacity-0", "translate-y-5");
+      toast.classList.add("opacity-100", "translate-y-0", "transition-all", "duration-500", "ease-out");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-5");
+        setTimeout(() => toast.classList.add("hidden"), 500);
+      }, 3000);
+
+      setTimeout(() => icon.classList.remove("animate-heart"), 400);
+    })
+    .catch(() => {
+      const toast = document.getElementById("cart-toast");
+      const toastMessage = document.getElementById("cart-toast-message");
+
+      toast.classList.remove("bg-green-500", "bg-red-500");
+      toast.classList.add("bg-gray-500");
+      toastMessage.innerText = "Something went wrong!";
+
+      toast.classList.remove("hidden", "opacity-0", "translate-y-5");
+      toast.classList.add("opacity-100", "translate-y-0", "transition-all", "duration-500", "ease-out");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-5");
+        setTimeout(() => toast.classList.add("hidden"), 500);
+      }, 3000);
     });
   });
+});
 
   // ---------------------------
   // Add-to-Cart AJAX
   // ---------------------------
-  const csrftoken = document.querySelector('meta[name="csrf-token"]').content;
+const csrftoken = document.querySelector('meta[name="csrf-token"]')?.content;
+document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const productId = btn.dataset.productId;
+    fetch("{% url 'add_to_cart' 0 %}".replace('0', productId), {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json", 
+        "X-CSRFToken": csrftoken,
+        "X-Requested-With": "XMLHttpRequest" // ✅ keep exactly as before
+      },
+      body: JSON.stringify({ product_id: productId, quantity: 1 })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const toast = document.getElementById("cart-toast");
+      const toastMessage = document.getElementById("cart-toast-message");
+      const cartBadge = document.querySelector('a[href="{% url "cart" %}"] span');
 
-  document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const productId = btn.dataset.productId;
+      toastMessage.innerText = data.message || "Added to cart!";
 
-      fetch("{% url 'add_to_cart' 0 %}".replace('0', productId), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken
-        },
-        body: JSON.stringify({ product_id: productId, quantity: 1 })
-      })
-      .then(res => res.json())
-      .then(data => {
-        // Update toast
-        const toast = document.getElementById("cart-toast");
-        document.getElementById("cart-toast-message").innerText = data.message || "Added to cart!";
-        toast.classList.remove("hidden");
-        setTimeout(() => toast.classList.add("hidden"), 3000);
+      if (cartBadge) cartBadge.innerText = data.cart_count || 0;
 
-        // Update cart badge
-        const cartBadge = document.querySelector('a[href="{% url "cart" %}"] span');
-        if (cartBadge) {
-          cartBadge.innerText = data.cart_count || 0;
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        const toast = document.getElementById("cart-toast");
-        document.getElementById("cart-toast-message").innerText = "Something went wrong!";
-        toast.classList.remove("hidden");
-        setTimeout(() => toast.classList.add("hidden"), 3000);
-      });
+      // ✅ Slide + fade animation
+      toast.classList.remove("hidden", "opacity-0", "translate-y-5");
+      toast.classList.add("opacity-100", "translate-y-0", "transition-all", "duration-500", "ease-out");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-5");
+        setTimeout(() => toast.classList.add("hidden"), 500);
+      }, 3000);
+    })
+    .catch(() => {
+      const toast = document.getElementById("cart-toast");
+      const toastMessage = document.getElementById("cart-toast-message");
+
+      toastMessage.innerText = "Something went wrong!";
+
+      toast.classList.remove("hidden", "opacity-0", "translate-y-5");
+      toast.classList.add("opacity-100", "translate-y-0", "transition-all", "duration-500", "ease-out");
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-5");
+        setTimeout(() => toast.classList.add("hidden"), 500);
+      }, 3000);
     });
   });
-
-  // ---------------------------
-  // CSRF helper function
-  // ---------------------------
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-// ---- Category Tree Expand/Collapse with Accordion + State Persistence ----
-
-// Helpers for smooth open/close
-function openSubList(el) {
-    el.classList.remove('hidden');
-    el.style.maxHeight = el.scrollHeight + 'px';
-    el.addEventListener('transitionend', function handler() {
-        el.style.maxHeight = 'none';
-        el.removeEventListener('transitionend', handler);
-    });
-}
-
-function closeSubList(el) {
-    el.style.maxHeight = el.scrollHeight + 'px';
-    void el.offsetHeight;
-    el.style.maxHeight = '0px';
-    el.addEventListener('transitionend', function handler() {
-        el.classList.add('hidden');
-        el.style.maxHeight = null;
-        el.removeEventListener('transitionend', handler);
-    });
-}
-
-// Generate a unique key for each category node (based on URL)
-function getNodeKey(btn) {
-    const link = btn.closest('li').querySelector('a[href]');
-    return link ? link.getAttribute('href') : null;
-}
-
-// Save open states in localStorage
-function saveOpenStates() {
-    const openNodes = Array.from(document.querySelectorAll('.sub-list:not(.hidden)'))
-        .map(el => getNodeKey(el.closest('li').querySelector('.toggle-sub')))
-        .filter(Boolean);
-    localStorage.setItem('categoryTreeOpen', JSON.stringify(openNodes));
-}
-
-// Restore open states on load
-function restoreOpenStates() {
-    const openNodes = JSON.parse(localStorage.getItem('categoryTreeOpen') || '[]');
-    openNodes.forEach(key => {
-        const btn = document.querySelector(`a[href="${key}"]`)?.closest('li')?.querySelector('.toggle-sub');
-        if (btn) {
-            const listWrapper = btn.closest('li').querySelector('.sub-list');
-            const icon = btn.querySelector('svg');
-            if (listWrapper) {
-                listWrapper.classList.remove('hidden');
-                listWrapper.style.maxHeight = 'none';
-                icon?.classList.add('rotate-90');
-            }
-        }
-    });
-}
-
-// Close siblings (accordion behavior)
-function closeSiblings(currentLi) {
-    const parentUl = currentLi.parentElement;
-    if (!parentUl) return;
-    const siblings = parentUl.querySelectorAll(':scope > li > .sub-list:not(.hidden)');
-    siblings.forEach(sub => {
-        if (sub.closest('li') !== currentLi) {
-            const siblingBtn = sub.closest('li').querySelector('.toggle-sub');
-            const siblingIcon = siblingBtn?.querySelector('svg');
-            if (siblingBtn) siblingIcon?.classList.remove('rotate-90');
-            closeSubList(sub);
-        }
-    });
-}
-
-// Click listener for toggling
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.toggle-sub');
-    if (!btn) return;
-
-    const li = btn.closest('li');
-    const listWrapper = li.querySelector('.sub-list');
-    const icon = btn.querySelector('svg');
-    if (!listWrapper) return;
-
-    const isHidden = listWrapper.classList.contains('hidden');
-
-    // Accordion: close other open siblings at same level
-    if (isHidden) closeSiblings(li);
-
-    if (isHidden) {
-    icon.classList.add('rotate-90');
-    openSubList(listWrapper);
-    li.querySelector('div').classList.add('open'); // highlight active
-    } else {
-    icon.classList.remove('rotate-90');
-    closeSubList(listWrapper);
-    li.querySelector('div').classList.remove('open'); // remove highlight
-    }
-    // Save open/close state
-    setTimeout(saveOpenStates, 400); // small delay for animation
 });
-// ---- Handle category link click to highlight active item ----
-document.addEventListener('click', (e) => {
-  const link = e.target.closest('.sub-list a, ul a');
-  if (!link) return;
+  const btn = document.getElementById('read-more-btn');
+  const moreText = document.getElementById('more-text');
+  const aboutText = document.getElementById('about-text');
 
-  // Remove previous active highlight
-  document.querySelectorAll('.text-green-400').forEach(a => {
-    a.classList.remove('text-green-400');
-    a.classList.add('text-gray-200');
-  });
-
-  // Highlight the clicked one
-  link.classList.remove('text-gray-200');
-  link.classList.add('text-green-400');
-
-  // Also expand parent branches
-  let parent = link.closest('.sub-list');
-  while (parent) {
-    const toggleBtn = parent.previousElementSibling?.querySelector('.toggle-sub');
-    const icon = toggleBtn?.querySelector('svg');
-    if (toggleBtn) {
-      parent.classList.remove('hidden');
-      parent.style.maxHeight = 'none';
-      icon?.classList.add('rotate-90');
-      toggleBtn.closest('li').querySelector('div').classList.add('open');
-    }
-    parent = parent.closest('.sub-list');
-  }
-
-  // Save the open state to localStorage after click
-  setTimeout(saveOpenStates, 400);
-});
-
-// Restore state on page load
-document.addEventListener('DOMContentLoaded', restoreOpenStates);
-// ---- Auto-highlight and auto-expand active category ----
-document.addEventListener('DOMContentLoaded', () => {
-  const activeLink = document.querySelector('.text-green-400');
-  if (activeLink) {
-    let parent = activeLink.closest('.sub-list');
-    while (parent) {
-      const toggleBtn = parent.previousElementSibling?.querySelector('.toggle-sub');
-      const icon = toggleBtn?.querySelector('svg');
-      if (toggleBtn) {
-        // Open the parent branch visually
-        parent.classList.remove('hidden');
-        parent.style.maxHeight = 'none';
-        icon?.classList.add('rotate-90');
-        toggleBtn.closest('li').querySelector('div').classList.add('open');
-      }
-      parent = parent.closest('.sub-list');
-    }
-  }
+  btn.addEventListener('click', () => {
+    moreText.classList.toggle('hidden');
+    aboutText.classList.toggle('max-h-24');
+    btn.innerText = moreText.classList.contains('hidden') ? 'Read More' : 'Read Less';
+  }); 
 });
 </script>
 </body>
-</html> 
+</html>
