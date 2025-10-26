@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category, Banner
+from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category, Banner, HomeSection, PromoBanner
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.utils.html import escape, format_html
 from django.contrib.auth import login
 from django.core.mail import send_mail
 from django.views.decorators.csrf import csrf_exempt
@@ -68,6 +69,48 @@ def index(request):
 
     # ✅ Banners
     banners = Banner.objects.filter(active=True).order_by('order')
+     
+    # ✅ Promo Banner
+    promo_banner = (
+    PromoBanner.objects.filter(is_active=True)
+    .filter(Q(start_date__lte=timezone.now()) | Q(start_date__isnull=True))
+    .filter(Q(end_date__gte=timezone.now()) | Q(end_date__isnull=True))
+    .order_by('-created_at')
+    .first()
+    )
+    promo_banner_text = promo_banner.message if promo_banner else ""
+    
+    # ✅ Dynamic Homepage Sections (MPTT optimized)
+    home_sections = HomeSection.objects.filter(active=True).order_by('order')
+    dynamic_sections = []
+
+    for section in home_sections:
+        if section.category:
+            # Use MPTT to include the category itself + all nested subcategories
+            section_products = Product.objects.filter(
+                category__in=section.category.get_descendants(include_self=True)
+            ).prefetch_related('images').order_by('-id')[:section.product_limit]
+        else:
+            section_products = Product.objects.all().order_by('-id')[:section.product_limit]
+
+        # Prepare image and discount details (same logic as your main product loop)
+        for product in section_products:
+            if getattr(product, 'image_mode', None) == "custom" and getattr(product, 'custom_image', None):
+                product.first_image = product.custom_image
+            else:
+                product.first_image = getattr(product, 'images', None).first() if hasattr(product, 'images') else None
+
+            if getattr(product, 'offer_price', None) and product.offer_price < product.price:
+                product.discount_percent = round(
+                    ((product.price - product.offer_price) / product.price) * 100
+                )
+            else:
+                product.discount_percent = None
+
+        dynamic_sections.append({
+            "title": section.title,
+            "products": section_products,
+        })
 
     # ✅ Wishlist
     wishlist_ids = []
@@ -82,7 +125,7 @@ def index(request):
         cart_data = Cart.objects.for_user_or_session(session_key=session_key)
 
     cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
-
+      
     return render(request, 'store/index.html', {
         'products': products,
         'categories': top_categories,
@@ -90,8 +133,9 @@ def index(request):
         'banners': banners,
         'wishlist_ids': wishlist_ids,
         'cart_items_count': cart_items_count,
+        'dynamic_sections': dynamic_sections,
+        'promo_banner_text': promo_banner_text,
     })
-
 def category_products(request, slug):
     # SEO-friendly category page
     category = get_object_or_404(Category, slug=slug)
@@ -235,9 +279,9 @@ def products_view(request):
             )
         else:
             product.discount_percent = None
-
+    
     return render(request, 'store/products.html', {
-        "products": products
+        "products": products,
     })
 
 @login_required
@@ -607,48 +651,139 @@ def contact_view(request):
 def contact_thanks(request):
     return render(request, 'store/contact_thanks.html')
 
-# Search page view
+# ---------------------------
+# Main Search Page
+# ---------------------------
 def search_view(request):
     query = request.GET.get('query', '').strip()
+    sort = request.GET.get('sort', '')
     products = []
 
     if query:
         products = Product.objects.filter(
             Q(name__icontains=query) |
             Q(description__icontains=query) |
-            Q(category__name__icontains=query)  # only if Category is related
+            Q(category__name__icontains=query)
         ).distinct()
 
-        # Assign first_image for each product
-        for product in products:
-            if product.image_mode == "custom" and product.custom_image:
-                product.first_image = product.custom_image
-            else:
-                product.first_image = product.images.first()  # fallback
+        # Sorting
+        if sort == 'price_asc':
+            products = products.order_by('offer_price')
+        elif sort == 'price_desc':
+            products = products.order_by('-offer_price')
+        elif sort == 'newest':
+            products = products.order_by('-id')
+     
+     
 
     return render(request, 'store/search_results.html', {
         'products': products,
-        'query': query
+        'query': query,
+        'sort': sort,
     })
 
-
-# AJAX search suggestions
+# ---------------------------
+# AJAX JSON Search Suggestions
+# ---------------------------
 def search_suggestions(request):
     query = request.GET.get("q", "").strip()
     results = []
 
     if query:
-        results = Product.objects.filter(name__icontains=query)[:5]
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(category__name__icontains=query)
+        ).distinct()[:6]
 
-        # Assign first_image for each product
-        for product in results:
-            if product.image_mode == "custom" and product.custom_image:
-                product.first_image = product.custom_image
-            else:
-                product.first_image = product.images.first()  # fallback
+        for p in products:
+            highlighted_name = escape(p.name)
+            q_lower = query.lower()
+            name_lower = p.name.lower()
+            start = name_lower.find(q_lower)
+            if start != -1:
+                end = start + len(query)
+                highlighted_name = format_html(
+                    '{}<span class="bg-yellow-200">{}</span>{}',
+                    p.name[:start],
+                    p.name[start:end],
+                    p.name[end:]
+                )
 
-    html = render_to_string("store/partials/search_suggestions.html", {"results": results})
-    return HttpResponse(html)
+            results.append({
+                "name": p.name,
+                "highlight": highlighted_name,
+                "url": p.get_absolute_url(),
+                "category": p.category.name if p.category else "",
+                "image": p.get_main_image_url(),
+            })
+
+    return JsonResponse(results, safe=False)
+
+# ---------------------------
+# Main Search Page
+# ---------------------------
+def search_view(request):
+    query = request.GET.get('query', '').strip()
+    sort = request.GET.get('sort', '')
+    products = []
+
+    if query:
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query) |
+            Q(category__name__icontains=query)
+        ).distinct()
+
+        # Sorting
+        if sort == 'price_asc':
+            products = products.order_by('offer_price')
+        elif sort == 'price_desc':
+            products = products.order_by('-offer_price')
+        elif sort == 'newest':
+            products = products.order_by('-id')
+
+    return render(request, 'store/search_results.html', {
+        'products': products,
+        'query': query,
+        'sort': sort,
+    })
+
+# ---------------------------
+# AJAX JSON Search Suggestions
+# ---------------------------
+def search_suggestions(request):
+    query = request.GET.get("q", "").strip()
+    results = []
+
+    if query:
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(category__name__icontains=query)
+        ).distinct()[:6]
+
+        for p in products:
+            highlighted_name = escape(p.name)
+            q_lower = query.lower()
+            name_lower = p.name.lower()
+            start = name_lower.find(q_lower)
+            if start != -1:
+                end = start + len(query)
+                highlighted_name = format_html(
+                    '{}<span class="bg-yellow-200">{}</span>{}',
+                    p.name[:start],
+                    p.name[start:end],
+                    p.name[end:]
+                )
+
+            results.append({
+                "name": p.name,
+                "highlight": highlighted_name,
+                "url": p.get_absolute_url(),
+                "category": p.category.name if p.category else "",
+                "image": p.get_main_image_url(),
+            })
+
+    return JsonResponse(results, safe=False)
 
 def faq(request):
     return render(request, 'store/faq.html')
@@ -938,7 +1073,6 @@ def update_cart(request, item_id):
         "total": cart.total_price,
         "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
     })
-
 
 @require_POST
 def remove_from_cart(request, item_id):

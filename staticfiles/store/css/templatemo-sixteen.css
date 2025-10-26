@@ -1,6 +1,5 @@
-/*
 
-TemplateMo 546 Sixteen Clothing
+/*fTemplateMo 546 Sixteen Clothing
 
 https://templatemo.com/tm-546-sixteen-clothing
 
@@ -397,25 +396,14 @@ header .navbar {
 }
 
 /* Style the logo image */
-
 .logo-img {
-  height: 45px;
-  width: 45px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 8px;
-}
-
-.brand-text {
-  font-size: 20px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #fff;
-}
-
-.brand-text em {
-  color: #00b894;   /* ✅ highlight */
-  font-style: normal;
+  background-color: #ffffff;
+  border: 2px solid #ccc;
+  margin-bottom: 4px; /* space between image and text */
 }
 
 /* Style the text below the logo */
@@ -1363,6 +1351,4 @@ footer .inner-content p a {
     font-size: 16px;
   }
 }
-
-
 

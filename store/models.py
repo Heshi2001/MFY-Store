@@ -46,7 +46,26 @@ class Category(MPTTModel):
     @property
     def has_children(self):
         return self.get_children().exists()
- 
+
+class HomeSection(models.Model):
+    title = models.CharField(max_length=100)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="If set, products will be pulled from this category."
+    )
+    product_limit = models.PositiveIntegerField(default=8)
+    order = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.title
+
 class Product(models.Model):
     DEALER_CHOICES = [
         ("Self", "Self-Fulfilled"),
@@ -101,6 +120,11 @@ class Product(models.Model):
         if fallback_image:
             return fallback_image.image.url
         return "/static/store/images/placeholder.png"
+    
+    def get_absolute_url(self):
+        """Return product detail URL for JS clicks."""
+        from django.urls import reverse
+        return reverse('product_detail', args=[self.id])
 
 class Color(models.Model):
     name = models.CharField(max_length=30)
@@ -481,4 +505,30 @@ class Banner(models.Model):
 
     class Meta:
         ordering = ['order']
+
+class PromoBanner(models.Model):
+    message = models.TextField(
+        help_text="Write promo text with emojis and HTML (e.g. 🔥 Get 10% OFF! <a href='/shop'>Shop Now</a>)"
+    )
+    is_active = models.BooleanField(default=True, help_text="Enable or disable this banner manually.")
+    start_date = models.DateTimeField(blank=True, null=True, help_text="Optional: Show banner starting from this date.")
+    end_date = models.DateTimeField(blank=True, null=True, help_text="Optional: Hide banner after this date.")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.message[:60]
+
+    @property
+    def is_currently_active(self):
+        """Check if banner is within active date range."""
+        now = timezone.now()
+        if self.start_date and self.start_date > now:
+            return False
+        if self.end_date and self.end_date < now:
+            return False
+        return self.is_active
+
 

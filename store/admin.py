@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Category, Product, ProductVariant, ProductImage, Color, Size,
     Wishlist, Cart, CartItem, Order, OrderItem, TeamMember,
-    Service, Client, Contact, Review, Address, Fulfillment, Banner
+    Service, Client, Contact, Review, Address, Fulfillment, Banner,HomeSection, PromoBanner
 )
 
 from .qikink_api import send_order_to_qikink
@@ -202,3 +202,19 @@ class OrderAdmin(admin.ModelAdmin):
         )
     
     resend_to_qikink.short_description = "Resend selected orders to Qikink"
+
+@admin.register(HomeSection)
+class HomeSectionAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "product_limit", "order", "active")
+    list_editable = ("order", "active")
+
+@admin.register(PromoBanner)
+class PromoBannerAdmin(admin.ModelAdmin):
+    list_display = ("short_message", "is_active", "start_date", "end_date", "created_at")
+    list_editable = ("is_active",)
+    search_fields = ("message",)
+    list_filter = ("is_active",)
+
+    def short_message(self, obj):
+        return obj.message[:60]
+    short_message.short_description = "Banner Message"
