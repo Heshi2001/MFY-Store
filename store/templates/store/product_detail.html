@@ -1,400 +1,536 @@
+{% extends "store/base.html" %}
 {% load static %}
 {% load reviews %}
 {% load ratings %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MFY - Product Detail</title>
-  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/product_detail.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/wishlist.css' %}">
-  <link rel="stylesheet" href="{% static 'star-ratings/css/star-ratings.css' %}">
-</head>
-<body>
 
-<!-- Header -->
-  <header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container d-flex justify-content-between align-items-center">
-        <!-- Logo + Brand -->
-         <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
-        </a>
+{% block content %}
 
-        <div class="d-lg-none cart-icon-mobile">
-         <a href="{% url 'cart' %}" class="cart-icon position-relative">
-           <i class="fa fa-shopping-cart fa-lg"></i>
-           {% if cart_items_count %}
-           <span class="cart-badge position-absolute badge rounded-pill bg-danger">
-             {{ cart_items_count }}
-           </span>
-          {% endif %}
-         </a>
-       </div>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": "{{ product.name }}",
+    "image": ["{{ product.get_main_image_url }}"],
+    "description": "{{ product.description|striptags }}",
+    "sku": "MFY-{{ product.id }}",
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "INR",
+      "price": "{{ product.display_price }}",
+      "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+    }
+  }
+  </script>
 
-   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
-          aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">           
-            <li class="nav-item active">
-              <a class="nav-link" href="{% url 'index'%}">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'products' %}">Our Products
-                <span class="sr-only">(current)</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'about' %}">About Us</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'contact'  %}">Contact Us</a>
-          </ul>
-        </div>
-         <div class="d-none d-lg-block cart-icon-desktop">
-        <a href="{% url 'cart' %}" class="cart-icon position-relative">
-          <i class="fa fa-shopping-cart fa-lg"></i>
-          {% if cart_items_count %}
-          <span class="cart-badge position-absolute badge rounded-pill bg-danger">
-            {{ cart_items_count }}
-          </span>
-          {% endif %}
-        </a>
-       </div>
-      </div>
-    </nav>
-  </header>
-  
-<div class="product-detail-wrapper">
-  <div class="product-detail-container">
-    <div class="row">
-     <div class="product-image-wrapper">
+<style>
+.color-box {
+  background-color: var(--color-value);
+}
+.mobile-nav{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,0.6);
+  color:white;
+  width:40px;
+  height:40px;
+  border-radius:999px;
+  font-size:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+}
 
-<!-- Desktop Thumbnails -->
-<div class="row justify-content-center">
-  <!-- Left Column: Image Gallery -->
-  <div class="col-md-4 d-flex">
-    <div class="desktop-gallery d-none d-md-flex">
-      <div class="thumbnail-column">
-        {% if images %}
-         {% for img in images %}
-          <img src="{{ img.image.url }}" class="thumb-img" alt="Thumbnail" />
-         {% endfor %}
-       {% else %}
-         <img src="{{ product.get_main_image_url }}" class="thumb-img" alt="Placeholder" />
-       {% endif %}
-     </div>
-     <div class="main-image-column">
-       <img id="main-product-image"
-         src="{{ images.0.image.url|default:product.get_main_image_url }}"
-         alt="Main Product Image" />
-     </div>
-    </div>
-     <!-- Mobile Carousel -->
-     <div class="carousel-container d-block d-md-none">
-      {% if images %}
-        {% for img in images %}
-          <img src="{{ img.image.url }}" class="carousel-image {% if forloop.first %}active{% endif %}" alt="Product Image" />
-        {% endfor %}
-      {% else %}
-        <img src="{{ product.get_main_image_url }}" class="carousel-image active" alt="Placeholder Image" />
-      {% endif %}
-      <span class="carousel-nav prev">&#10094;</span>
-      <span class="carousel-nav next">&#10095;</span>
-    </div>
+.mobile-nav.prev{ left:12px; }
+.mobile-nav.next{ right:12px; }
+
+/* 🔥 Main image fade */
+.main-image {
+  transition: opacity 0.35s ease-in-out, transform 0.35s ease-in-out;
+}
+.main-image.fade-out {
+  opacity: 0;
+}
+
+/* ===============================
+   IMAGE ZOOM (DESKTOP + MOBILE)
+================================ */
+
+/* Desktop hover zoom */
+@media (min-width: 768px) {
+  #main-product-image {
+    transition: transform 0.35s ease, opacity 0.35s ease;
+  }
+
+  #main-product-image:hover {
+    transform: scale(1.15);
+  }
+}
+
+/* Mobile double-tap zoom */
+.mobile-slide {
+  transition: transform 0.35s ease, opacity 0.35s ease;
+  transform-origin: center center;
+}
+
+.mobile-slide.zoomed {
+  transform: scale(2);
+  z-index: 30;
+}
+
+</style>
+
+<section class="bg-[#020617] text-gray-300 min-h-screen animate-fadeIn pt-32 md:pt-36">
+
+  <nav class="max-w-7xl mx-auto px-4 pt-6 text-sm" aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-gray-400">
+      <li><a href="{% url 'index' %}" class="hover:text-emerald-400 transition">Home</a></li>
+      <li>/</li>
+      <li><a href="{% url 'products' %}" class="hover:text-emerald-400 transition">Products</a></li>
+      <li>/</li>
+      <li class="text-gray-200 truncate">{{ product.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+
+<div class="relative">
+
+  <div class="hidden md:flex gap-4">
+  <div class="flex flex-col gap-3">
+    {% if images %}
+      {% for img in images %}
+        <img src="{{ img.image.url }}"
+             data-thumb="{{ img.image.url }}"
+             alt="{{ product.name }} thumbnail"
+             class="main-image thumb-img w-20 h-24 object-contain bg-black/30 p-1 rounded-xl cursor-pointer
+                   border border-white/10 hover:border-emerald-400 transition" />
+      {% endfor %}
+    {% else %}
+      <img src="{{ product.get_main_image_url }}"
+           class="thumb-img w-20 h-24 object-contain bg-black/30 p-1 rounded-xl"
+           alt="Placeholder" />
+    {% endif %}
   </div>
 
-      <div class="col-md-7 offset-md-1 product-info">
-        <h2 class="product-name">{{ product.name }}</h2>
-        <p class="product-description">{{ product.description }}</p>
-        {% if product.offer_price %}
-          <p class="price">
-            <span class="original-price">₹{{ product.price }}</span>
-            <span class="offer-price">₹{{ product.offer_price }}</span>
-          </p>
-        {% else %}
-          <p class="price-only">₹{{ product.price }}</p>
-        {% endif %}
-
-        <p><strong>Material:</strong> {{ product.material }}</p>
-
-        <form class="variant-form" method="POST" action="{% url 'add_to_cart' product.id %}">
-          {% csrf_token %}
-            <label>Size:</label>
-            <div class="size-options">
-              {% for size in sizes %}
-                <label class="size-label">
-                  <input type="radio" name="size" value="{{ size }}" class="size-radio" required>
-                  <span class="size-box">{{ size }}</span>
-                </label>
-              {% endfor %}
-            </div>
-
-          <label>Color:</label>
-            <div class="color-options">
-              {% for variant in variants %}
-       {% if variant.color %}
-    <label class="color-label">
-      <input type="radio" name="color" value="{{ variant.color.id }}" class="color-radio" required>
-      {% if variant.image %}
-        <img src="{{ variant.image.url }}" alt="{{ variant.color.name }}" class="color-thumbnail">
-      {% else %}
-        <img src="{{ product.get_main_image_url }}" alt="{{ variant.color.name }}" class="color-thumbnail">
-      {% endif %}
-      <span class="color-box"
-            data-color-id="{{ variant.color.id }}"
-            style="--color-value: {{ variant.color.hex_code }};">
-      </span>
-      <div class="color-name">{{ variant.color.name }}</div>
-    </label>
-         {% endif %}
-        {% endfor %}
-      </div>
-
-        <div class="product-buttons">
-          <form method="POST" action="{% url 'add_to_cart' product.id %}">
-            {% csrf_token %}
-            <button type="submit" class="add-to-cart-btn">Add to Cart</button>
-         </form>
-
-         {% if product.id in wishlist_product_ids %}
-           <div class="wishlist-info">
-             <p>This product is in your wishlist ❤️</p>
-           </div>
-         {% else %}
-           <form method="POST" action="{% url 'add_to_wishlist' product.id %}">
-             {% csrf_token %}
-            <button type="submit" class="wishlist-btn">
-              <i class="fas fa-heart"></i> Add to Wishlist
-            </button>
-           </form>
-         {% endif %}
-        </div>
-      </div>
-        <!-- Desktop-only Rating and Review Section below image -->
-        <div class="mt-4 d-none d-md-block rating-review-box">
-          <!-- Rating -->
-          <div class="product-rating mt-4">
-            <h5>Rate This Product:</h5>
-            {% ratings product %}
-          </div>
-
-           <!-- Reviews -->
-          <div class="reviews mt-4">
-            <h4>Customer Reviews</h4>
-            {% for review in review_list %}
-              <div class="single-review">
-                <strong>{{ review.user.username }}</strong>
-                <div class="review-rating">
-                  {% for i in "12345" %}
-                    {% with forloop.counter as star %}
-                      {% if star <= review.rating %}
-                        ⭐
-                      {% else %}
-                        ☆
-                      {% endif %}
-                    {% endwith %}
-                  {% endfor %}
-                </div>
-                <p>{{ review.comment }}</p>
-              </div>
-            {% empty %}
-              <p>No reviews yet.</p>
-            {% endfor %}
-
-             <div class="review-form mt-3">
-                <h5>Leave a Comment</h5>
-                <form method="POST" action="{% url 'submit_review' product.id %}">
-                  {% csrf_token %}
-                  <label for="comment">Comment:</label>
-                  <textarea name="comment" required></textarea>
-                  <button type="submit">Submit Review</button>
-                </form>
-              </div>
-          </div>
-        </div>
-
-        <!-- Mobile-only Rating and Review Section -->
-        <div class="product-rating mt-4 d-block d-md-none">
-          <h5>Rate This Product:</h5>
-          {% ratings product %}
-        </div>
-
-        <div class="reviews mt-4 d-block d-md-none">
-          <h4>Customer Reviews</h4>
-          {% for review in review_list %}
-            <div class="single-review">
-              <strong>{{ review.user.username }}</strong>
-              <div class="review-rating">
-                {% for i in "12345" %}
-                  {% with forloop.counter as star %}
-                    {% if star <= review.rating %}
-                      ⭐
-                    {% else %}
-                      ☆
-                    {% endif %}
-                  {% endwith %}
-                {% endfor %}
-              </div>
-              <p>{{ review.comment }}</p>
-            </div>
-          {% empty %}
-            <p>No reviews yet.</p>
-          {% endfor %}
-
-            <div class="review-form mt-3">
-              <h5>Leave a Comment</h5>
-              <form method="POST" action="{% url 'submit_review' product.id %}">
-                {% csrf_token %}
-                <label for="comment">Comment:</label>
-                <textarea name="comment" required></textarea>
-                <button type="submit">Submit Review</button>
-              </form>
-            </div>
-            </div>
-
-        <div class="recommendations mt-4">
-          <h4>You May Also Like</h4>
-          <div class="rec-products">
-            {% for item in recommended_products %}
-              <div class="rec-product">
-                <a href="{% url 'product_detail' item.id %}">
-                  <img src="{{ item.variants.first.image.url }}" alt="{{ item.name }}">
-                  <p>{{ item.name }}</p>
-                  <p>₹{{ item.offer_price|default:item.price }}</p>
-                </a>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="flex-1 bg-black/40 rounded-2xl shadow-lg shadow-emerald-500/10 flex items-center justify-center">
+    <img id="main-product-image"
+         src="{{ images.0.image.url|default:product.get_main_image_url }}"
+         alt="{{ product.name }}"
+         class="w-full h-[520px] object-contain transition-transform duration-500 hover:scale-[1.02]" />
   </div>
 </div>
 
-<footer>
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="inner-content">
-          <p>Copyright &copy; 2025 MFY.</p>
+<!-- 📱 Mobile Carousel (FIXED) -->
+<div class="md:hidden relative bg-black/40 rounded-2xl overflow-hidden">
+
+  <div class="relative w-full h-[420px]" id="mobile-carousel">
+    {% if images %}
+      {% for img in images %}
+        <img src="{{ img.image.url }}"
+             alt="{{ product.name }}"
+             class="mobile-slide absolute inset-0 w-full h-full
+                    object-contain transition-opacity duration-300
+                    {% if forloop.first %}opacity-100{% else %}opacity-0{% endif %}">
+      {% endfor %}
+    {% else %}
+      <img src="{{ product.get_main_image_url }}"
+           class="mobile-slide absolute inset-0 w-full h-full object-contain opacity-100"
+           alt="Placeholder">
+    {% endif %}
+  </div>
+
+  <button class="mobile-nav prev">‹</button>
+  <button class="mobile-nav next">›</button>
+
+</div>
+</div>
+
+<!-- RIGHT : Product Info -->
+<div class="space-y-6">
+
+  <h1 class="text-3xl font-semibold text-white">{{ product.name }}</h1>
+  <p class="text-gray-400 leading-relaxed">{{ product.description }}</p>
+
+  <div class="flex items-center gap-4" id="price-block">
+  {% if base_variant and base_variant.offer_price %}
+    <span class="text-gray-500 line-through" id="base-price">
+      ₹{{ base_variant.price }}
+    </span>
+    <span class="text-3xl font-bold text-emerald-400" id="current-price">
+      ₹{{ base_variant.offer_price }}
+    </span>
+  {% elif base_variant %}
+    <span class="text-3xl font-bold text-white" id="current-price">
+      ₹{{ base_variant.price }}
+    </span>
+  {% endif %}
+</div>
+
+  <div class="flex flex-wrap gap-4 text-sm">
+    <span class="flex items-center gap-2">🔒 Secure Payment</span>
+    <span class="flex items-center gap-2">🚚 Ships in 24–48 hrs</span>
+    <span class="flex items-center gap-2">✔ In Stock</span>
+  </div>
+
+  <!-- COLORS -->
+  {% if variants %}
+  <div class="mt-6">
+    <p class="text-sm text-gray-400 mb-2">Color</p>
+    <div class="flex gap-4">
+      {% for variant in variants %}
+        <div class="text-center">
+          <span class="color-box w-10 h-10 rounded-full border-2 border-white/20 inline-block"
+                data-color-id="{{ variant.color.id }}"
+                style="--color-value: {{ variant.color.hex_code }};"></span>
+          <div class="text-xs mt-1">{{ variant.color.name }}</div>
         </div>
-      </div>
+      {% endfor %}
     </div>
   </div>
-</footer>
+  {% endif %}
 
-<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+  <!-- CTA -->
+  <div class="pt-6 flex gap-4">
+    <button class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black py-3 rounded-xl font-semibold">
+      Add to Cart
+    </button>
+    <button id="wishlist-btn" type="button" class="relative w-14 h-14 border border-white/20 rounded-xl flex items-center justify-center">
 
-<script id="product-variants-data" type="application/json">
-  {{ variant_map|default:"[]"|safe }}
-</script>
+<span id="heart" class="text-xl transition-transform">♡</span> </button> </div>
 
-<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-<script src="{% static 'star-ratings/js/dist/star-ratings.min.js' %}"></script>
+</div>
 
+  </div>
+<!-- 🔽 Accordions -->
+<section class="max-w-7xl mx-auto px-4 pb-20">
+  <div class="space-y-3">
+    <details class="bg-white/5 rounded-xl p-4"><summary class="cursor-pointer text-white">Fabric Care</summary><p class="text-gray-400 mt-2 text-sm">Machine wash cold. Do not bleach.</p></details>
+    <details class="bg-white/5 rounded-xl p-4"><summary class="cursor-pointer text-white">Shipping</summary><p class="text-gray-400 mt-2 text-sm">Ships within 24–48 hours.</p></details>
+    <details class="bg-white/5 rounded-xl p-4"><summary class="cursor-pointer text-white">Returns</summary><p class="text-gray-400 mt-2 text-sm">7-day easy returns.</p></details>
+  </div>
+
+  <!-- 🕘 Recently Viewed -->
+
+  <div class="mt-12">
+    <h2 class="text-xl text-white mb-4">Recently Viewed</h2>
+    <div id="recentlyViewed" class="flex gap-4 overflow-x-auto"></div>
+  </div>
+</section>
+</section>
+
+<!-- 🕒 Recently Viewed Products -->
+
+<section class="max-w-7xl mx-auto px-4 pb-16" id="recently-viewed" hidden>
+  <h2 class="text-xl text-white mb-4">Recently Viewed</h2>
+  <div class="flex gap-4 overflow-x-auto"></div>
+</section>
+
+<style>
+  .color-box { background-color: var(--color-value); }
+</style>
+
+<!-- 🔥 Mobile Sidebar CTA -->
+<div class="sticky bottom-0 bg-black/90 backdrop-blur border-t border-white/10">
+  <form method="POST"
+        action="{% url 'add_to_cart' product.id %}"
+        class="flex items-center gap-3 p-3">
+    {% csrf_token %}
+
+    <span
+      id="mobile-current-price"
+      class="text-white font-semibold flex-1"
+    ></span>
+
+    <button
+      type="submit"
+      class="bg-emerald-500 text-black font-semibold px-6 py-3 rounded-xl"
+    >
+      Add to Cart
+    </button>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block page_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const mainImage = document.getElementById("main-product-image");
-  const carouselImages = document.querySelectorAll(".carousel-image");
-  const thumbnails = document.querySelectorAll(".thumb-img");
-  const colorBoxes = document.querySelectorAll(".color-box");
-  const colorThumbnails = document.querySelectorAll(".color-thumbnail");
+(function () {
+  /* ======================================================
+     CONFIG (SAFE DJANGO → JS)
+  ====================================================== */
+  const PRODUCT_ID = Number("{{ product.id }}");
+  const PRODUCT_NAME = "{{ product.name|escapejs }}";
+  const BASE_PRICE = {{ base_price_data|safe }};
+  const VARIANTS = {{ variant_map|safe }};
+  const RV_KEY = "mfy_recently_viewed";
 
-  let currentIndex = 0;
-  let selectedColor = null;
+  /* ======================================================
+     DOM REFERENCES
+  ====================================================== */
+  const mainImage =
+    document.querySelector('[data-main-image]') ||
+    document.getElementById('main-product-image');
 
-  // Parse variant map from hidden JSON script
-  let variantData = [];
-  try {
-    const raw = document.getElementById("product-variants-data")?.textContent;
-    if (raw?.trim()) {
-      variantData = JSON.parse(raw);
+  const colorBoxes = document.querySelectorAll('.color-box');
+
+  /* ======================================================
+     PRICE RENDER (SINGLE SOURCE OF TRUTH)
+  ====================================================== */
+  function renderPrice(price, offerPrice) {
+  const priceBlock = document.getElementById("price-block");
+  const mobilePriceEl = document.getElementById("mobile-current-price");
+
+  if (price == null) return;
+
+  // Desktop price
+  if (priceBlock) {
+    if (offerPrice && offerPrice < price) {
+      priceBlock.innerHTML = `
+        <span class="text-gray-500 line-through" id="base-price">₹${price}</span>
+        <span class="text-3xl font-bold text-emerald-400" id="current-price">₹${offerPrice}</span>
+      `;
+    } else {
+      priceBlock.innerHTML = `
+        <span class="text-3xl font-bold text-white" id="current-price">₹${price}</span>
+      `;
     }
-  } catch (e) {
-    console.error("Invalid variant map JSON:", e);
   }
 
- function showCarouselImage(index) {
-    carouselImages.forEach((img, i) => {
-      img.classList.toggle("active", i === index);
-    });
-  }
-
-  function updateMainImageByColor(colorId) {
-    const matched = variantData.find(v => String(v.color) === String(colorId));
-    if (matched && matched.image_url) {
-      if (mainImage) {
-        mainImage.src = matched.image_url;
-      }
-
-      // Update carousel image if it exists
-      const matchCarousel = Array.from(carouselImages).find(img => img.src === matched.image_url);
-
-      if (matchCarousel) {
-        carouselImages.forEach(img => img.classList.remove("active"));
-        matchCarousel.classList.add("active");
-        currentIndex = Array.from(carouselImages).indexOf(matchCarousel);
-      } else {
-       if (carouselImages.length > 0) {
-          carouselImages.forEach(img => img.classList.remove("active"));
-          carouselImages[0].src = matched.image_url;
-          carouselImages[0].classList.add("active");
-          currentIndex = 0;
-    }
-   }
+  // 📱 Mobile sticky CTA price (ALWAYS final price)
+  if (mobilePriceEl) {
+    mobilePriceEl.textContent = `₹${offerPrice && offerPrice < price ? offerPrice : price}`;
   }
 }
-  function handleColorSelection(box) {
-    document.querySelectorAll(".color-box").forEach(el => el.classList.remove("selected"));
-    box.classList.add("selected");
-    selectedColor = box.dataset.colorId;
-    updateMainImageByColor(selectedColor);
+
+  /* ======================================================
+     INITIAL LOAD → BASE VARIANT PRICE
+  ====================================================== */
+  renderPrice(BASE_PRICE.price, BASE_PRICE.offer_price);
+
+  /* ======================================================
+     1️⃣ COLOR IMAGE + PRICE (HOVER + CLICK)
+  ====================================================== */
+  colorBoxes.forEach(box => {
+    const colorId = box.dataset.colorId;
+    const variant = VARIANTS.find(v => String(v.color) === String(colorId));
+    if (!variant) return;
+
+    const updateUI = () => {
+      /* 🖼 IMAGE UPDATE */
+      if (variant.images && variant.images.length > 0) {
+        // Desktop
+        if (mainImage) {
+          mainImage.src = variant.images[0];
+        }
+
+        // Mobile
+        const mobileSlides = document.querySelectorAll('.mobile-slide');
+        mobileSlides.forEach(slide => {
+          slide.classList.remove('opacity-100');
+          slide.classList.add('opacity-0');
+        });
+
+        if (mobileSlides[0]) {
+          mobileSlides[0].src = variant.images[0];
+          mobileSlides[0].classList.remove('opacity-0');
+          mobileSlides[0].classList.add('opacity-100');
+        }
+      }
+
+      /* 💰 PRICE UPDATE (ONLY IF DIFFERENT) */
+      if (
+        variant.price !== BASE_PRICE.price ||
+        variant.offer_price !== BASE_PRICE.offer_price
+      ) {
+        renderPrice(variant.price, variant.offer_price);
+      } else {
+        renderPrice(BASE_PRICE.price, BASE_PRICE.offer_price);
+      }
+
+      /* ✨ UI GLOW */
+      colorBoxes.forEach(b =>
+        b.classList.remove('ring-4', 'ring-emerald-400', 'scale-110')
+      );
+
+      box.classList.add('ring-4', 'ring-emerald-400', 'scale-110');
+      setTimeout(() => box.classList.remove('scale-110'), 200);
+    };
+
+    box.addEventListener('mouseenter', updateUI);
+    box.addEventListener('click', updateUI);
+  });
+
+  /* ======================================================
+     2️⃣ RECENTLY VIEWED (SESSION)
+  ====================================================== */
+  let viewed = JSON.parse(sessionStorage.getItem(RV_KEY) || '[]');
+
+  viewed = viewed.filter(p => p.id !== PRODUCT_ID);
+  viewed.unshift({
+    id: PRODUCT_ID,
+    name: PRODUCT_NAME,
+    price: BASE_PRICE.offer_price || BASE_PRICE.price
+  });
+
+  viewed = viewed.slice(0, 6);
+  sessionStorage.setItem(RV_KEY, JSON.stringify(viewed));
+
+  const rvContainer = document.getElementById('recently-viewed');
+  if (rvContainer && viewed.length > 1) {
+    rvContainer.innerHTML = '';
+    viewed.slice(1).forEach(p => {
+      rvContainer.innerHTML += `
+        <div class="min-w-[160px] bg-white/5 rounded-xl p-3">
+          <p class="text-sm text-white">${p.name}</p>
+          <p class="text-emerald-400 text-sm">₹${p.price}</p>
+        </div>
+      `;
+    });
   }
 
-  // Color click (circle or thumbnail)
-  document.querySelectorAll(".color-label").forEach(label => {
-    label.addEventListener("click", function () {
-      const box = label.querySelector(".color-box");
-      handleColorSelection(box);
+  /* ======================================================
+     3️⃣ GA4 + META VIEW EVENT
+  ====================================================== */
+  window.addEventListener('load', () => {
+    const trackPrice = BASE_PRICE.offer_price || BASE_PRICE.price;
+
+    if (window.gtag) {
+      gtag('event', 'view_item', {
+        currency: 'INR',
+        value: trackPrice,
+        items: [{
+          item_id: PRODUCT_ID,
+          item_name: PRODUCT_NAME
+        }]
+      });
+    }
+
+    if (window.fbq) {
+      fbq('track', 'ViewContent', {
+        content_ids: [PRODUCT_ID],
+        content_name: PRODUCT_NAME,
+        value: trackPrice,
+        currency: 'INR'
+      });
+    }
+  });
+
+  /* ======================================================
+     4️⃣ ADD TO CART EVENTS
+  ====================================================== */
+  document
+    .querySelectorAll('form[action*="add_to_cart"]')
+    .forEach(form => {
+      form.addEventListener('submit', () => {
+        const trackPrice = BASE_PRICE.offer_price || BASE_PRICE.price;
+
+        if (window.gtag) {
+          gtag('event', 'add_to_cart', {
+            currency: 'INR',
+            value: trackPrice,
+            items: [{
+              item_id: PRODUCT_ID,
+              item_name: PRODUCT_NAME
+            }]
+          });
+        }
+
+        if (window.fbq) {
+          fbq('track', 'AddToCart', {
+            value: trackPrice,
+            currency: 'INR'
+          });
+        }
+      });
+    });
+
+  /* ======================================================
+     5️⃣ WISHLIST HEART ANIMATION
+  ====================================================== */
+  const wishlistBtn = document.getElementById('wishlist-btn');
+  const heart = document.getElementById('heart');
+
+  wishlistBtn?.addEventListener('click', () => {
+    if (!heart) return;
+    heart.textContent = heart.textContent === '♡' ? '❤️' : '♡';
+    heart.classList.add('scale-125');
+    setTimeout(() => heart.classList.remove('scale-125'), 200);
+  });
+
+  /* ======================================================
+     6️⃣ DESKTOP THUMBNAIL → MAIN IMAGE
+  ====================================================== */
+  const thumbImages = document.querySelectorAll('.thumb-img');
+
+  thumbImages.forEach(thumb => {
+    thumb.addEventListener('click', () => {
+      const newSrc = thumb.dataset.thumb;
+      if (!newSrc || !mainImage) return;
+
+      mainImage.src = newSrc;
+
+      thumbImages.forEach(t =>
+        t.classList.remove('ring-2', 'ring-emerald-400', 'opacity-100')
+      );
+
+      thumb.classList.add('ring-2', 'ring-emerald-400', 'opacity-100');
     });
   });
 
-  // Desktop thumbnails
-  thumbnails.forEach(thumb => {
-    thumb.addEventListener("click", function () {
-      mainImage.src = this.src;
-      thumbnails.forEach(t => t.classList.remove("selected"));
-      this.classList.add("selected");
+  /* ======================================================
+     7️⃣ MOBILE IMAGE CAROUSEL
+  ====================================================== */
+  const slides = document.querySelectorAll(".mobile-slide");
+  const nextBtn = document.querySelector(".mobile-nav.next");
+  const prevBtn = document.querySelector(".mobile-nav.prev");
+
+  if (slides.length) {
+    let index = 0;
+
+    const showSlide = (i) => {
+      slides.forEach(slide => {
+        slide.classList.remove("opacity-100");
+        slide.classList.add("opacity-0");
+      });
+      slides[i].classList.remove("opacity-0");
+      slides[i].classList.add("opacity-100");
+    };
+
+    nextBtn?.addEventListener("click", () => {
+      index = (index + 1) % slides.length;
+      showSlide(index);
+    });
+
+    prevBtn?.addEventListener("click", () => {
+      index = (index - 1 + slides.length) % slides.length;
+      showSlide(index);
+    });
+  }
+
+  /* ======================================================
+     8️⃣ MOBILE DOUBLE TAP ZOOM
+  ====================================================== */
+  let lastTap = 0;
+
+  document.querySelectorAll('.mobile-slide').forEach(slide => {
+    slide.addEventListener('touchend', () => {
+      const now = Date.now();
+      const delta = now - lastTap;
+
+      if (delta < 300 && delta > 0) {
+        document
+          .querySelectorAll('.mobile-slide')
+          .forEach(s => s.classList.remove('zoomed'));
+
+        slide.classList.toggle('zoomed');
+      }
+
+      lastTap = now;
     });
   });
 
-  // Mobile carousel navigation
-  document.querySelector(".carousel-nav.next")?.addEventListener("click", () => {
-    console.log("Next clicked");
-    currentIndex = (currentIndex + 1) % carouselImages.length;
-    showCarouselImage(currentIndex);
-  });
-
-  document.querySelector(".carousel-nav.prev")?.addEventListener("click", () => {
-    console.log("Next clicked");
-    currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
-    showCarouselImage(currentIndex);
-  });
-
-  
-});
+})();
 </script>
-</body>
-</html> 
+{% endblock %}

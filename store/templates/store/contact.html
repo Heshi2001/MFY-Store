@@ -1,173 +1,266 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
 
-  <title>MFY - Contact</title>
+{% block title %}Contact Us | MFY{% endblock %}
 
-  <!-- Bootstrap core CSS -->
-  <link href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+{% block content %}
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}">
-</head>
-<body>
+<!-- HEADER -->
+<section class="relative bg-gradient-to-b from-black via-gray-900 to-black pt-[calc(var(--navbar-height,4.5rem)+2rem)] pb-2 text-center overflow-hidden">
+  <h1 class="text-4xl sm:text-5xl font-extrabold text-white drop-shadow-xl animate-pulse">Let’s Talk! ✨</h1>
+  <p class="text-gray-400 mt-4 text-lg max-w-2xl mx-auto">We’d love to hear from you — reach out anytime 💬</p>
+</section>
 
-  <!-- Header Start -->
-  <header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-         <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
-        </a>
-        <!-- NavBar Toggler -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
-          aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- NavBar Items -->
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'products' %}">Our Products</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
-            <li class="nav-item active"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-  </header>
-  <!-- Header End -->
+<!-- CONTACT MAIN SECTION -->
+<section class="bg-black py-20">
+  <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-3 gap-12">
 
-  <!-- Page Heading -->
-  <div class="page-heading contact-heading header-text">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="text-content">
-            <h4>contact us</h4>
-            <h2>let’s get in touch</h2>
+    <!-- CONTACT INFO -->
+    <div class="space-y-8">
+      {% for info in infos %}
+      <div class="info-card bg-gray-900/60 border border-gray-800 rounded-2xl p-6 shadow-lg transition-all duration-300 hover:shadow-green-600/20 hover:scale-[1.02] opacity-0 translate-y-8">
+        <div class="flex items-center space-x-4">
+          <span class="text-green-400 bg-green-500/20 p-4 rounded-xl text-2xl">
+            <i class="fas {{ info.icon }}"></i>
+          </span>
+          <div>
+            <h4 class="text-white font-semibold">{{ info.title }}</h4>
+            <p class="text-gray-400 text-sm">{{ info.desc }}</p>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  
-       <div class="find-us">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="section-heading">
-              <h2>Find us on Maps</h2>
-            </div>
-          </div>
-          <div class="col-md-8">
-            <div id="map">
-              <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3949.2838930955086!2d77.24850049999999!3d8.174128500000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b04fc36e531bc8d%3A0xf8763500083ab253!2sOur%20Lady%20of%20Presentation%20Church!5e0!3m2!1sen!2sin!4v1747218219790!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"  width="100%" height="330px" frameborder="0" style="border:0" allowfullscreen></iframe>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="left-content">
-              <h4>About our office</h4>
-              <p>Lorem ipsum dolor sit amet, consectetur adipisic elit. Sed voluptate nihil eumester consectetur similiqu consectetur.<br><br>"Every piece is crafted just for you – because you deserve the best."</p>
-              <ul class="social-icons">
-                <li><a href="https://www.facebook.com"><i class="fa fa-facebook"></i></a></li>
-                <li><a href="https://www.instagram.com" target="_blank"><i class="fa fa-instagram"></i></a></li>
-                <li><a href="mailto:example@gmail.com"><i class="fa fa-envelope"></i></a></li>
-                <li><a href="https://wa.me/919876543210" target="_blank"><i class="fa fa-whatsapp"></i></a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
+      {% endfor %}
+
+      <!-- SOCIAL -->
+      <div class="flex space-x-5 pt-6 opacity-0 translate-y-8">
+        <a href="#" class="text-2xl text-gray-400 hover:text-green-400 transition"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="text-2xl text-gray-400 hover:text-green-400 transition"><i class="fab fa-facebook"></i></a>
+        <a href="#" class="text-2xl text-gray-400 hover:text-green-400 transition"><i class="fab fa-whatsapp"></i></a>
       </div>
     </div>
 
-  <!-- Contact Form Section -->
-  <div class="send-message">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="section-heading">
-              <h2>Send us a Message</h2>
-            </div>
-           {% if messages %}
-           {% for message in messages %}
-          <div class="alert alert-success">{{ message }}</div>
-          {% endfor %}
-          {% endif %}
+  <!-- CONTACT FORM -->
+<div class="lg:col-span-2 bg-gray-900/60 border border-gray-800 rounded-2xl p-10 shadow-2xl opacity-0 translate-y-8">
+  <h2 class="text-3xl font-bold text-white mb-8 flex items-center gap-2">
+     Send a Message 💌
+  </h2>
 
-        <div class="row">
-         <div class="col-md-8">
-          <div class="contact-form mb-4">
-            <form id="contact" method="post">
-              {% csrf_token %}
-              <div class="row">
-                <div class="col-md-6">
-                  {{ form.name.label_tag }}
-                  {{ form.name }}
-                </div>
-                <div class="col-md-6">
-                  {{ form.email.label_tag }}
-                  {{ form.email }}
-                </div>
-                <div class="col-md-12">
-                  {{ form.subject.label_tag }}
-                  {{ form.subject }}
-                </div>
-                <div class="col-md-12">
-                  {{ form.message.label_tag }}
-                  {{ form.message }}
-                </div>
-                <div class="col-md-12">
-                  <button type="submit" class="filled-button">Send Message</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      
-    <div class="col-md-4">
-      <div class="quick-help p-3">
-       <h4>Need Help?</h4>
-       <p>
-        Check our <a href="{% url 'faq' %}">FAQ page</a> or send us a message.
-        We’re here to help you with orders, sizing, and shipping questions.
-      </p>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="bg-green-600 text-white py-3 px-4 rounded-lg mb-4 animate-fade-in">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form id="contactForm" method="POST" class="space-y-6 relative">
+    {% csrf_token %}
+
+    <!-- NAME + EMAIL -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="relative form-group">
+        <i class="fas fa-user form-icon"></i>
+        {{ form.name }}
+        <label class="floating-label">Your Name</label>
+      </div>
+
+      <div class="relative form-group">
+        <i class="fas fa-envelope form-icon"></i>
+        {{ form.email }}
+        <label class="floating-label">Email Address</label>
+      </div>
     </div>
-  </div>
+
+    <!-- SUBJECT -->
+    <div class="relative form-group">
+      <i class="fas fa-tag form-icon"></i>
+      {{ form.subject }}
+      <label class="floating-label">Subject</label>
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="relative form-group">
+      <i class="fas fa-message form-icon"></i>
+      {{ form.message }}
+      <label class="floating-label">Message</label>
+      <ul id="faq-suggestions" class="hidden absolute z-10 mt-2 bg-gray-900 border border-gray-800 rounded-lg w-full text-sm text-gray-300 shadow-lg"></ul>
+    </div>
+
+    <!-- SUBMIT -->
+    <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-[0_0_20px_rgba(34,197,94,0.6)] text-white py-4 rounded-xl font-semibold text-lg transition-all duration-300">
+      Send Message 🚀
+    </button>
+  </form>
 </div>
-   <!-- Footer Start -->
-   <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <p>Copyright &copy; 2025 MFY.</p>
-          </div>
-        </div>
-      </div>
+  
+<!-- MAP --> 
+<section class="bg-black pb-20">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="rounded-2xl overflow-hidden border border-gray-800 shadow-lg opacity-0 translate-y-8">
+      <iframe class="w-full h-[350px] md:h-[450px]" loading="lazy"
+        src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d505498.7850329221!2d77.25200955!3d8.18166325!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sOur%20Lady%20of%20Presentation%20Church!5e0!3m2!1sen!2sin!4v1762416718995!5m2!1sen!2sin" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
     </div>
-  </footer>
+  </div>
+</section>
 
-  <!-- Footer End -->
+<!-- WHATSAPP BUTTON -->
+<a href="https://wa.me/919876543210" target="_blank"
+  class="fixed bottom-6 right-6 bg-green-600 hover:bg-green-500 text-white p-4 rounded-full shadow-lg hover:scale-105 transition-all duration-300 z-50">
+  <i class="fab fa-whatsapp text-2xl"></i>
+</a>
 
-  <!-- Scripts -->
+<!-- SUCCESS TOAST -->
+<div id="toast"
+  class="hidden fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
+  ✅ Message Sent Successfully!
+</div>
 
-  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
-  <script src="{% static 'store/js/custom.js' %}"></script>
-  <script src="{% static 'store/js/owl.js' %}"></script>
-  <script src="{% static 'store/js/slick.js' %}"></script>
-  <script src="{% static 'store/js/isotope.js' %}"></script>
-  <script src="{% static 'store/js/accordions.js' %}"></script>
+<!-- STYLE -->
+<style>
+:root {
+  --navbar-height: 4.5rem;
+}
 
-</body>
-</html>
+.floating-label {
+  position: absolute;
+  left: 44px;
+  top: 14px;
+  color: #9CA3AF;
+  transition: .25s;
+  pointer-events: none;
+  background: #101010;
+  padding: 0 4px;
+}
+
+input, textarea {
+  width: 100%;
+  background: #101010;
+  border: 1px solid #2e2e2e;
+  padding: 14px 14px 14px 44px;
+  color: white;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color .3s, box-shadow .3s;
+}
+
+/* Focus styling */
+input:focus, textarea:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 10px rgba(34,197,94,0.3);
+}
+
+/* Floating label when focus or has value */
+input:focus + .floating-label,
+textarea:focus + .floating-label,
+input.has-value + .floating-label,
+textarea.has-value + .floating-label {
+  top: -8px;
+  left: 38px;
+  font-size: 12px;
+  color: #22c55e;
+}
+
+/* Icons inside input */
+.form-icon {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  color: #9CA3AF;
+  transition: color .3s;
+}
+
+.form-group:focus-within .form-icon {
+  color: #22c55e;
+}
+
+textarea {
+  min-height: 120px;
+  resize: none;
+}
+
+.animate-fade-in {
+  animation: fadeIn .5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<!-- SCRIPT -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Reveal animation
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.remove("opacity-0", "translate-y-8");
+        entry.target.classList.add("animate-fade-in");
+      }
+    });
+  });
+  document.querySelectorAll(".opacity-0").forEach(el => observer.observe(el));
+
+  // Dynamic FAQ suggestions
+  const messageInput = document.querySelector("textarea");
+  const suggestionBox = document.getElementById("faq-suggestions");
+  let timeout = null;
+  messageInput.addEventListener("input", () => {
+    clearTimeout(timeout);
+    const query = messageInput.value.trim();
+    if (query.length < 2) {
+      suggestionBox.classList.add("hidden");
+      return;
+    }
+    timeout = setTimeout(() => {
+      fetch(`/faq/search/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+          suggestionBox.innerHTML = data.results.length
+            ? data.results.map(f => `
+              <li class='p-2 hover:bg-gray-800 cursor-pointer flex justify-between items-center'>
+                <span>${f.question}</span>
+                <a href="/faq/?q=${encodeURIComponent(f.slug)}"
+                  class="text-green-500 hover:text-green-400 text-xs ml-2 underline">View FAQ</a>
+              </li>`).join("")
+            : "<li class='p-2 text-gray-500'>No related FAQs</li>";
+          suggestionBox.classList.remove("hidden");
+        });
+    }, 300);
+  });
+
+  // Toast
+  const form = document.getElementById("contactForm");
+  const toast = document.getElementById("toast");
+  form.addEventListener("submit", () => {
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 3000);
+  });
+
+  // Adjust for navbar height
+  const navbar = document.querySelector("nav");
+  if (navbar) {
+    document.documentElement.style.setProperty("--navbar-height", `${navbar.offsetHeight}px`);
+  }
+  /* ---------- FLOATING LABEL FIX ---------- */
+  document.querySelectorAll("input, textarea").forEach(el => {
+    // Ensure placeholder exists
+    if (!el.placeholder) el.placeholder = " ";
+
+    // Apply has-value on load (for prefilled forms)
+    if (el.value.trim() !== "") {
+      el.classList.add("has-value");
+    }
+
+    // Live update
+    el.addEventListener("input", () => {
+      if (el.value.trim() !== "") {
+        el.classList.add("has-value");
+      } else {
+        el.classList.remove("has-value");
+      }
+    });
+  });
+});
+</script>
+
+{% endblock %}

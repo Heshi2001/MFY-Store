@@ -1,0 +1,4 @@
+{
+    "prettier.vueIndentScriptAndStyle": false,
+    "terminal.integrated.localEchoStyle": "dim"
+}

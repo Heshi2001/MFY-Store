@@ -1,0 +1,336 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Offers | MFY Store{% endblock %}
+{% block meta_description %}Save big on your favourite MFY Store products with today's exclusive offers at MFY Store — limited time deals, free delivery, secure checkout.{% endblock %}
+
+{% block content %}
+
+<!-- Page-level styles / keyframes (kept local so no base changes required) -->
+
+<style>
+  /* subtle animated gradient background */
+  @keyframes animatedGradient {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+  }
+
+  /* fade up for scroll reveal */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-up { animation: fadeInUp .6s ease forwards; opacity: 0; }
+  .bg-animated-gradient {
+    background: linear-gradient(120deg, rgba(0,255,127,0.03), rgba(0,230,118,0.02) 30%, rgba(0,0,0,0));
+    background-size: 200% 200%;
+    animation: animatedGradient 8s ease infinite;
+  }
+
+  /* neon glow */
+  .neon {
+    text-shadow: 0 0 8px rgba(0,255,127,0.12), 0 0 16px rgba(0,230,118,0.06);
+  }
+
+  /* skeleton animation */
+  @keyframes pulseSkeleton {
+    0% { opacity: 1; }
+    50% { opacity: 0.45; }
+    100% { opacity: 1; }
+  }
+  .skeleton { background: linear-gradient(90deg,#111,#0a0a0a,#111); animation: pulseSkeleton 1.4s ease-in-out infinite; }
+
+  /* small utility for glow hover on buttons */
+  .glow-hover:hover { box-shadow: 0 6px 24px rgba(0,255,127,0.12), 0 1px 0 rgba(0,255,127,0.06) inset; transform: translateY(-2px); }
+
+  /* Offer tag animation */
+  .offer-tag { transform-origin: left center; animation: offerTagPop .9s cubic-bezier(.2,.9,.2,1) both; }
+  @keyframes offerTagPop { from { transform: scale(.9) translateX(-6px); opacity: 0 } to { transform: scale(1) translateX(0); opacity: 1 } }
+
+  /* Visually-hidden for accessibility */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  .offer-card {
+    will-change: transform;
+    animation-delay: calc(0.04s * var(--delay));
+  }
+  .progress-bar {
+    width: var(--claimed);
+  }
+</style>
+
+<!-- Structured data (basic Breadcrumb + WebPage + Organization). Uses site defaults; lightweight. -->
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Offers — MFY Store",
+  "description": "Save big on your favourite MFY Store products with today's exclusive offers.",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "{{ request.scheme }}://{{ request.get_host }}/" },
+      { "@type": "ListItem", "position": 2, "name": "Offers", "item": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" }
+    ]
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "MFY Store"
+  }
+}
+</script>
+
+<section class="min-h-screen bg-black pt-[6rem] pb-20 text-white"> 
+  <!-- Page banner -->
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+    <nav class="text-sm mb-6" aria-label="Breadcrumb">
+      <ol class="list-reset flex text-gray-400">
+        <li><a href="/" class="hover:underline hover:text-gray-200">Home</a></li>
+        <li><span class="mx-2">/</span></li>
+        <li class="text-gray-200" aria-current="page">Offers</li>
+      </ol>
+    </nav>
+
+<header class="rounded-2xl p-6 mb-8 bg-clip-padding bg-animated-gradient border border-green-800/10 backdrop-blur-sm">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold neon tracking-tight flex items-center gap-3">
+        <span class="inline-block text-2xl">🔥</span>
+        <span>Today’s Exclusive Offers</span>
+      </h1>
+      <p class="mt-2 text-gray-300 max-w-xl">Save big on your favourite MFY Store products.</p>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="rounded-lg px-3 py-2 bg-gray-900/40 border border-green-800/10 text-sm neon">
+        <strong class="text-green-300">⚡ Limited Stock</strong>
+        <span class="text-gray-400 ml-2">• Deals refresh daily</span>
+      </div>
+      <a href="{% url 'account_dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-br from-green-700/10 to-transparent border border-green-700/20 glow-hover transition-transform transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-green-500/30" aria-label="Back to Dashboard">
+        <svg class="w-4 h-4 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/></svg>
+        <span class="text-sm text-green-200">Back to Dashboard</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+{# Promotional strip #}
+<div class="mb-8">
+  <div class="w-full rounded-xl p-3 bg-gradient-to-r from-green-900/10 via-transparent to-green-900/4 border border-green-800/8 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-green-800/20 to-green-600/10 neon">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2a1 1 0 00-1 1v2H3a1 1 0 000 2h2v2a1 1 0 001 1h2v2a1 1 0 001 1h2v2a1 1 0 001 1h2v-2a1 1 0 00-1-1h-2v-2a1 1 0 00-1-1H9V9H7V7h6V4a1 1 0 00-1-1H6z"/></svg>
+      </span>
+      <div>
+        <div class="text-sm text-green-300 font-semibold">⚡ Limited Stock</div>
+        <div class="text-xs text-gray-400">Deals refresh daily • Hurry, offers end soon</div>
+      </div>
+    </div>
+    <div class="text-xs text-gray-300 hidden sm:block">Tip: Click “Grab Offer” to view coupon details & redeem at checkout.</div>
+  </div>
+</div>
+
+{# Offers grid - keep Django logic intact #}
+<main>
+  <!-- Heading -->
+  <div class="mb-8 text-center">
+    <h1 class="text-2xl sm:text-3xl font-bold text-green-300 neon">
+      Coupons
+    </h1>
+    <p class="text-sm text-gray-400 mt-1">
+      Apply these coupon codes at checkout to save instantly.
+    </p>
+  </div>
+
+  {% if coupons %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {# Iterate coupons - preserved exactly #}
+      {% for coupon in coupons %}
+        <article 
+          class="relative rounded-2xl overflow-hidden border border-green-800/8 bg-gradient-to-b from-black/60 to-black/40 p-4 shadow-lg transform transition-all hover:scale-[1.01] focus-within:scale-[1.01] animate-fade-up offer-card"
+          style="--delay: {{ forloop.counter0 }};"
+          aria-labelledby="offer-{{ forloop.counter }}">
+
+          {# Offer animated tag & percentage #}
+          <div class="absolute top-4 left-4 offer-tag">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-green-700/20 to-green-700/10 border border-green-700/20 text-xs font-semibold text-green-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M12 8v4l3 3"/></svg>
+              <span>{{ coupon.discount_percent }}% OFF</span>
+            </span>
+          </div>
+
+          <div class="absolute top-4 right-4">
+            <span class="inline-flex items-center px-2 py-1 rounded-xl bg-black/60 border border-green-700/20 text-xs font-bold text-green-200 glow-hover">
+              Price Drop
+            </span>
+          </div>
+
+          {# Product image + skeleton fallback #}
+          <div class="h-44 sm:h-48 md:h-36 mb-4 rounded-xl overflow-hidden relative bg-gradient-to-br from-gray-900/40 to-black/30 flex items-center justify-center">
+            {# If coupon has image attribute, show it; else show placeholder. This does not change backend logic. #}
+            {% if coupon.image %}
+              <img src="{{ coupon.image.url }}" alt="{{ coupon.code }} image" class="object-contain w-full h-full transition-transform duration-300 hover:scale-105" />
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center skeleton">
+                <img src="{% static 'images/offer-placeholder.png' %}" alt="Offer placeholder" class="object-contain w-1/2 opacity-60" />
+              </div>
+            {% endif %}
+          </div>
+
+          {# Offer content #}
+          <div class="space-y-3">
+            <h2 id="offer-{{ forloop.counter }}" class="text-lg font-semibold text-gray-100 neon">{{ coupon.code }}</h2>
+            <p class="text-sm text-gray-300 line-clamp-2">{{ coupon.description }}</p>
+
+            {# Discount progress bar (uses optional coupon.claimed_percent else default 87) #}
+            <div class="mt-3">
+              <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+                <span>Claimed</span>
+                <span class="font-semibold text-gray-200">{{ coupon.claimed_percent|default:"87" }}% claimed</span>
+              </div>
+              <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ coupon.claimed_percent|default:"87" }}">
+                <div 
+                  class="h-full bg-gradient-to-r from-green-500 to-green-300 progress-bar" 
+                  style="--claimed: {{ coupon.claimed_percent|default:'87' }}%;">
+                </div>
+              </div>
+            </div>
+
+            {# Countdown timer UI placeholder (no JS logic required) #}
+            <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 items-center">
+              <div class="col-span-2 sm:col-span-3">
+                <div class="text-xs text-gray-400 mb-1">Ends in</div>
+                <div class="inline-flex items-center gap-2 text-sm font-medium">
+                  <span class="px-2 py-1 rounded-md bg-black/60 border border-green-800/10 text-green-300">{{ coupon.hh|default:"00"}}</span>
+                  <span class="px-2 py-1 rounded-md bg-black/60 border border-green-800/10 text-green-300">{{ coupon.mm|default:"00" }}</span>
+                  <span class="px-2 py-1 rounded-md bg-black/60 border border-green-800/10 text-green-300">{{ coupon.ss|default:"00" }}</span>
+                  <span class="text-xs text-gray-400 ml-2">hh mm ss</span>
+                </div>
+              </div>
+
+              <div class="col-span-2 flex justify-end">
+                <a href="{% url 'grab_offer' coupon.id %}"
+                  class="grab-offer-btn inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-br from-green-600/10 to-green-700/8 border border-green-700/20 text-green-200 text-sm font-semibold glow-hover transition-all focus:outline-none focus:ring-2 focus:ring-green-500/30">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.3" d="M12 6v6l4 2"/></svg>
+                    Grab Offer
+                </a>
+              </div>
+            </div>
+
+            {# Validity text & skeleton accessibility #}
+            <div class="mt-3 text-xs text-gray-400">
+              Valid: {{ coupon.valid_from|date:"M d, Y" }} → {{ coupon.valid_to|date:"M d, Y" }}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    {# No coupons available - maintain original message but in dark-styled card #}
+    <div class="rounded-2xl p-8 mt-6 border border-green-800/8 bg-gradient-to-br from-black/80 to-gray-900/60 text-center">
+      <h3 class="text-xl font-semibold text-gray-200">No active coupons available right now 🎁</h3>
+      <p class="mt-2 text-sm text-gray-400">Check back soon — great deals are added regularly.</p>
+    </div>
+  {% endif %}
+</main>
+
+{# "Why shop with us?" section #}
+<section class="mt-12 rounded-2xl p-6 bg-gradient-to-r from-black/60 to-black/50 border border-green-800/8">
+  <h3 class="text-2xl font-semibold neon mb-4">Why shop with us?</h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-gray-900/30 border border-green-800/6">
+      <div class="p-2 rounded-lg bg-green-900/10 inline-flex items-center justify-center">
+        <svg class="w-6 h-6 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M3 12h18M3 17h18"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-200">Free delivery</div>
+        <div class="text-sm text-gray-400">On orders over ₹999</div>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-gray-900/30 border border-green-800/6">
+      <div class="p-2 rounded-lg bg-green-900/10 inline-flex items-center justify-center">
+        <svg class="w-6 h-6 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c2.21 0 4-1.79 4-4S14.21 3 12 3 8 4.79 8 7s1.79 4 4 4zM6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-200">Secure checkout</div>
+        <div class="text-sm text-gray-400">Trusted & encrypted payments</div>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-gray-900/30 border border-green-800/6">
+      <div class="p-2 rounded-lg bg-green-900/10 inline-flex items-center justify-center">
+        <svg class="w-6 h-6 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0zM12 14v7"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-200">24/7 support</div>
+        <div class="text-sm text-gray-400">We're here to help anytime</div>
+      </div>
+    </div>
+
+    <div class="flex items-start gap-3 p-4 rounded-xl bg-gray-900/30 border border-green-800/6">
+      <div class="p-2 rounded-lg bg-green-900/10 inline-flex items-center justify-center">
+        <svg class="w-6 h-6 text-green-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <div>
+        <div class="font-semibold text-gray-200">Authentic products</div>
+        <div class="text-sm text-gray-400">Verified & genuine</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# CTA Footer #}
+<div class="mt-10 flex items-center justify-between gap-4">
+  <div>
+    <h4 class="text-lg font-semibold neon">Missed something?</h4>
+    <p class="text-sm text-gray-400">Subscribe for alerts when new offers drop.</p>
+  </div>
+  <form action="{% url 'subscribe_newsletter' %}" method="post" class="flex items-center gap-3">
+  {% csrf_token %}
+  <label for="newsletter-email" class="sr-only">Email address</label>
+  <input
+    id="newsletter-email"
+    name="email"
+    type="email"
+    placeholder="you@domain.com"
+    required
+    class="rounded-2xl px-4 py-2 bg-gray-900/40 border border-green-800/6
+           placeholder-gray-500 text-sm focus:outline-none
+           focus:ring-2 focus:ring-green-600/25"
+  />
+  <button
+    type="submit"
+    class="px-4 py-2 rounded-2xl text-sm font-semibold
+           bg-gradient-to-br from-green-600 to-green-400
+           text-black hover:opacity-95 focus:outline-none
+           focus:ring-2 focus:ring-green-500/30">
+    Subscribe
+  </button>
+</form>
+</div>
+</div>
+</section>
+
+<script>
+  // Scroll-based reveal: adds class to elements with .animate-fade-up when in viewport
+  (function(){
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = 1;
+          entry.target.classList.add('animate-fade-up');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('article').forEach(el => observer.observe(el));
+  })();
+</script>
+
+{% endblock %}

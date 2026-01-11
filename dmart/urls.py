@@ -36,8 +36,8 @@ urlpatterns = [
     path("__reload__/", include("django_browser_reload.urls")),
     path("api/", include(router.urls)),
     path('accounts/', include('allauth.urls')),
-    path('', include('pages.urls')),
     path('', include('store.urls')),
+    path('', include('pages.urls')),
 ]
 # Serve static and media files in development
 if settings.DEBUG:

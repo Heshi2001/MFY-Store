@@ -1,72 +1,406 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MFY - FAQ</title>
-  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/wishlist.css' %}">
-</head>
-<body>
 
-<!-- Header -->
-<header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
-        </a>
-      </div>
-    </nav>
-  </header>
+{% block title %}Your Wishlist 💚 | MFY Store{% endblock %}
 
-<div class="wishlist-container">
-    <h2>Your Wishlist</h2>
+{% block content %}
+<main class="pt-[var(--navbar-height,4.5rem)] bg-gradient-to-b from-gray-950 via-black to-gray-900 text-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
+
+    <!-- Page Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-4xl sm:text-5xl font-bold text-white flex items-center justify-center gap-2">
+        Your Favorites 
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 
+                   4.42 3 7.5 3c1.74 0 3.41.81 
+                   4.5 2.09A6.507 6.507 0 0 1 
+                   16.5 3C19.58 3 22 5.42 22 
+                   8.5c0 3.78-3.4 6.86-8.55 
+                   11.54L12 21.35z"/>
+        </svg>
+      </h1>
+      <p class="text-gray-400 mt-2">All your saved favorites, ready when you are.</p>
+    </div>
+    
+<!-- 🧭 Sort & Filter Bar -->
+<div class="w-full flex flex-row justify-between items-center flex-wrap gap-4 mb-10 bg-gray-900/60 border border-gray-800 rounded-2xl px-4 py-3 backdrop-blur-md shadow-lg animate-fade-in">
+
+  <!-- Left: Sort By -->
+  <div class="flex items-center gap-2 text-gray-300 flex-1 min-w-[150px]">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+        d="M3 4h13M3 10h9m-9 6h5m8-6l4 4m0 0l-4 4m4-4H10" />
+    </svg>
+    <label for="sort" class="text-sm font-medium">Sort:</label>
+    <select id="sort"
+      class="bg-gray-800/80 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 hover:ring-emerald-400 transition cursor-pointer">
+      <option value="recent">Recently Added</option>
+      <option value="low">Lowest Price</option>
+      <option value="high">Highest Price</option>
+    </select>
+  </div>
+
+  <!-- Right: Filter By -->
+  <div class="flex items-center gap-2 text-gray-300 justify-end flex-1 min-w-[150px]">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zm0 4h18v2H3V8zm0 4h12v2H3v-2zm0 4h8v2H3v-2z" />
+    </svg>
+    <label for="filter" class="text-sm font-medium">Filter:</label>
+    <select id="filter"
+      class="bg-gray-800/80 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 hover:ring-emerald-400 transition cursor-pointer">
+      <option value="all">All</option>
+      <option value="in-stock">In Stock</option>
+      <option value="on-sale">On Sale</option>
+    </select>
+  </div>
+
+</div>
 
     {% if wishlist_items %}
-        <div class="wishlist-grid">
-            {% for item in wishlist_items %}
-                <div class="wishlist-card">
-                    <div class="wishlist-image-wrapper">
-                        <img src="{{ item.product.variants.first.image.url }}" alt="{{ item.product.name }}">
-                    </div>
-                    <div class="wishlist-details">
-                        <h4>{{ item.product.name }}</h4>
-                        <p class="wishlist-price">${{ item.product.price }}</p>
-                        <div class="wishlist-actions">
-                            <a href="{% url 'product_detail' item.product.id %}" class="btn btn-view">View</a>
-                            <form method="POST" action="{% url 'remove_from_wishlist' item.product.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-remove">Remove</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <p class="empty-msg">Your wishlist is empty.</p>
-    {% endif %}
-</div>
-<!-- Footer -->
- <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <p>Copyright &copy; 2025 MFY.</p>
+    <!-- Wishlist Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+      {% for item in wishlist_items %}
+      {% with product=item.product %}
+      <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-green-500/10 transition-all duration-300 relative {% if not product.in_stock %}opacity-60{% endif %}">
+
+        <!-- Product Image -->
+        <div class="relative w-full h-56 bg-gray-800 overflow-hidden rounded-t-2xl">
+          <img src="{{ product.get_main_image_url }}"
+               alt="{{ product.name }}"
+               class="w-full h-full object-cover {% if product.in_stock %}group-hover:scale-105{% endif %} transition-transform duration-500">
+
+          {% if product.in_stock %}
+          <!-- Floating Action Buttons -->
+          <div class="absolute top-3 right-3 flex flex-col items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+
+            <!-- Move to Cart -->
+            <form method="POST" action="{% url 'add_to_cart' product.id %}" class="move-to-cart-form">
+              {% csrf_token %}
+              <button type="submit"
+                class="p-2 bg-white/10 hover:bg-purple-600/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105"
+                title="Move to Cart">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.5 7h11M7 13L5.4 5M10 21a1 1 0 100-2 1 1 0 000 2zm7 0a1 1 0 100-2 1 1 0 000 2z" />
+                </svg>
+              </button>
+            </form>
+
+            <!-- Price Drop Alert -->
+            <form method="POST" action="{% url 'toggle_price_alert' product.id %}" class="price-alert-form">
+              {% csrf_token %}
+              <button type="submit"
+                   class="p-2 {% if item.alert_enabled %}bg-yellow-500/90{% else %}bg-white/10{% endif %} hover:bg-yellow-400/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105"
+                    title="Price Drop Alert">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3c0 .528-.214 1.04-.595 1.405L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              </button>
+           </form>
+
+            <!-- View Product -->
+            <a href="{% url 'product_detail' product.id %}"
+               class="p-2 bg-white/10 hover:bg-green-600/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105 view-product-btn"
+               title="View Product"
+               data-product-name="{{ product.name }}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </a>
+
+            <!-- Remove -->
+            <form method="POST" action="{% url 'remove_from_wishlist' product.id %}" class="remove-form">
+              {% csrf_token %}
+              <button type="submit"
+                      class="p-2 bg-white/10 hover:bg-red-600/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105"
+                      title="Remove">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </form>
           </div>
+          {% else %}
+          <!-- Out of Stock -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm text-center">
+            <p class="text-gray-300 font-semibold mb-3">Out of Stock</p>
+            <form method="POST" action="{% url 'notify_me_stock' product.id %}">
+              {% csrf_token %}
+              <button type="submit"
+                  class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg">
+                🔔 Notify me when back in stock
+              </button>
+            </form>
+          </div>
+          {% endif %}
         </div>
-      </div>
+        
+<!-- Product Info -->
+<div class="p-4 text-center relative">
+  <!-- 💸 Offer + Actual Price -->
+  <h3 class="text-lg font-semibold text-white truncate">{{ product.name }}</h3>
+
+<!-- 💸 Price -->
+{% if product.display_price %}
+  {% if product.offer_price %}
+    <p class="mt-1">
+      <span class="text-gray-400 line-through text-sm">
+        ₹{{ product.original_price }}
+      </span>
+      <span class="text-[#00C897] font-bold ml-2 text-lg">
+        ₹{{ product.offer_price }}
+      </span>
+    </p>
+  {% else %}
+    <p class="text-green-400 mt-1 font-medium text-lg">
+      ₹{{ product.display_price }}
+    </p>
+  {% endif %}
+{% else %}
+  <p class="text-gray-500 text-sm mt-1">Price unavailable</p>
+{% endif %}
+
+  {% if product.in_stock %}
+  <div class="mt-5">
+    <a href="{% url 'product_detail' product.id %}"
+      class="relative inline-flex items-center justify-center px-5 py-2.5 overflow-hidden font-semibold text-white transition-all duration-300 ease-out rounded-xl group bg-gradient-to-r from-green-600 via-emerald-500 to-lime-500 hover:shadow-[0_0_15px_rgba(34,197,94,0.7)] view-product-btn"
+      data-product-name="{{ product.name }}">
+      <span class="absolute inset-0 w-full h-full bg-gradient-to-br from-purple-400/20 via-transparent to-indigo-700/40 opacity-0 group-hover:opacity-100 transition-all duration-500"></span>
+      <span class="relative z-10 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+        View Details
+      </span>
+    </a>
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endwith %}
+{% endfor %}
+</div>
+
+    <!-- 🟣 Share Wishlist Button -->
+    <div class="flex justify-center mt-10">
+      <button onclick="openShareModal()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-fuchsia-500 hover:opacity-90 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 shadow-lg hover:shadow-purple-500/30">
+        <i class="fa-solid fa-share-nodes"></i> Share Wishlist
+      </button>
     </div>
-  </footer>
-  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-</body>
-</html>
+
+{% else %}
+<!-- 🎈 Empty State -->
+<div class="text-center mt-8 animate-fade-in">
+  <div class="flex flex-col items-center justify-center space-y-2">
+    <!-- Image + Caption -->
+    <div class="relative">
+      <img src="{% static 'store/images/empty-wishlist.svg.png' %}" 
+           alt="Empty Wishlist" 
+           class="w-36 h-36 mx-auto opacity-90 animate-float">
+      <p class="text-green-400 text-sm mt-1 font-medium drop-shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse">
+        Empty Wishlist
+      </p>
+    </div>
+
+    <!-- Headline -->
+    <h3 class="text-lg sm:text-2xl font-semibold text-white mt-2">
+      Your wishlist is feeling lonely 😢
+    </h3>
+
+    <!-- Subtext -->
+    <p class="text-gray-400 text-sm sm:text-base -mt-1">
+      Add something you love and make it happy again!
+    </p>
+
+    <!-- Button -->
+    <a href="{% url 'products' %}" 
+       class="mt-3 bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-lg hover:shadow-green-500/30 transition-all duration-300">
+      Browse Products
+    </a>
+  </div>
+</div>
+{% endif %}
+</div>
+</main>
+
+<!-- 🟣 Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 transition-all duration-300">
+  <div class="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl relative animate-fade-in">
+    <button onclick="closeShareModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white transition">
+      <i class="fa-solid fa-xmark text-lg"></i>
+    </button>
+    <h2 class="text-2xl font-bold mb-2 text-white">Share Your Wishlist</h2>
+    <p class="text-gray-400 mb-6 text-sm">Let friends see your favorites or plan together!</p>
+
+    <div class="flex flex-col gap-3">
+      <button onclick="shareWishlist('whatsapp')" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-green-600 hover:bg-green-700 rounded-lg transition-all shadow-lg hover:shadow-green-500/30">
+        <i class="fa-brands fa-whatsapp text-lg"></i> Share via WhatsApp
+      </button>
+      <button onclick="shareWishlist('link')" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-700 hover:bg-gray-800 rounded-lg transition-all shadow-lg hover:shadow-gray-500/30">
+        <i class="fa-solid fa-link text-lg"></i> Copy Wishlist Link
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast"
+     class="fixed bottom-6 right-6 hidden px-5 py-3 rounded-lg shadow-lg bg-gray-900 text-white text-sm font-medium transition-all duration-500 transform translate-y-4 opacity-0 z-50">
+  <span id="toast-message">Action complete</span>
+</div>
+
+<script>
+function openShareModal() {
+  const modal = document.getElementById("shareModal");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeShareModal() {
+  const modal = document.getElementById("shareModal");
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+}
+
+function shareWishlist(type) {
+  const url = window.location.href;
+  if (type === "whatsapp") {
+    window.open(`https://wa.me/?text=💖 Check out my wishlist on MFY Store: ${url}`, "_blank");
+  } else {
+    navigator.clipboard.writeText(url);
+    showToast("✅ Wishlist link copied!");
+  }
+  closeShareModal();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const toast = document.getElementById("toast");
+  const toastMsg = document.getElementById("toast-message");
+
+  // -----------------------------
+  // 🗑️ Wishlist Item Remove Logic
+  // -----------------------------
+  document.querySelectorAll(".remove-form").forEach(form => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
+      });
+
+      if (response.ok) {
+        showToast("💔 Removed from wishlist");
+        form.closest(".group").classList.add("opacity-0", "scale-90");
+        setTimeout(() => form.closest(".group").remove(), 300);
+      } else {
+        showToast("⚠️ Something went wrong", "error");
+      }
+    });
+  });
+
+  // ❤️ Heart animation on remove/add
+  document.querySelectorAll(".heart-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.add("heart-animate");
+      setTimeout(() => btn.classList.remove("heart-animate"), 600);
+    });
+  });
+
+  // -----------------------------
+  // 🌈 Sort & Filter Enhancement
+  // -----------------------------
+  const sortSelect = document.getElementById("sort");
+  const filterSelect = document.getElementById("filter");
+  const grid = document.querySelector(".grid");
+
+  if (sortSelect && filterSelect && grid) {
+    const products = Array.from(grid.children);
+
+    function updateGrid() {
+      let sorted = [...products];
+      const filter = filterSelect.value;
+
+      // 🎯 Apply Filter
+      if (filter === "in-stock") {
+        sorted = sorted.filter(card => !card.classList.contains("opacity-60"));
+      } else if (filter === "on-sale") {
+        sorted = sorted.filter(card => {
+          const price = parseFloat(card.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
+          return price < 500; // Adjust sale threshold if needed
+        });
+      }
+
+      // 🔽 Apply Sort
+      const sort = sortSelect.value;
+      sorted.sort((a, b) => {
+        const priceA = parseFloat(a.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
+        const priceB = parseFloat(b.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
+
+        if (sort === "low") return priceA - priceB;
+        if (sort === "high") return priceB - priceA;
+        return 0;
+      });
+
+      // ✨ Animate & Replace
+      grid.classList.add("opacity-0", "transition", "duration-300");
+      setTimeout(() => {
+        grid.innerHTML = "";
+        sorted.forEach(card => grid.appendChild(card));
+        grid.classList.remove("opacity-0");
+      }, 200);
+    }
+
+    sortSelect.addEventListener("change", updateGrid);
+    filterSelect.addEventListener("change", updateGrid);
+  }
+
+  // -----------------------------
+  // ✅ Toast Notification Utility
+  // -----------------------------
+  function showToast(msg, type = "success") {
+    toastMsg.textContent = msg;
+    toast.classList.remove("hidden", "translate-y-4", "opacity-0");
+    toast.classList.toggle("bg-red-600", type === "error");
+    toast.classList.toggle("bg-green-600", type !== "error");
+    setTimeout(() => {
+      toast.classList.add("translate-y-4", "opacity-0");
+      setTimeout(() => toast.classList.add("hidden"), 400);
+    }, 2000);
+  }
+});
+
+</script>
+
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in { animation: fade-in 0.3s ease-out; }
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+@keyframes pulseHeart {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+.heart-animate {
+  animation: pulseHeart 0.6s ease-in-out;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-float { animation: float 3s ease-in-out infinite; }
+</style>
+{% endblock %}

@@ -47,8 +47,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
     'allauth.socialaccount.providers.apple',
-
-    'store',
+    
+    'store.apps.StoreConfig',
     'reviews',
     'star_ratings',
     'cloudinary',
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django_browser_reload',  
     'theme',
     'pages',
+    
 ]
 
 TAILWIND_APP_NAME = "theme"
@@ -102,6 +103,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'store.context_processors.sidebar_categories',
+                'store.context_processors.global_cart_and_wishlist_counts',
                 'store.context_processors.promo_banner',
             ],
         },
@@ -195,6 +198,9 @@ ACCOUNT_SIGNUP_FIELDS = ["username", "email", "password1", "password2"]
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = True  # since username is part of signup
+
+ACCOUNT_SIGNUP_REDIRECT_URL = "/account/dashboard/"
+ACCOUNT_DEFAULT_REDIRECT_URL = "/account/dashboard/"
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {

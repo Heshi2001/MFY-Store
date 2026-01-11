@@ -1,0 +1,42 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Return Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<section class="pt-44 pb-20 bg-black text-white">
+
+  <div class="max-w-3xl mx-auto px-6">
+
+    <h1 class="text-3xl font-extrabold mb-8">Request Return</h1>
+
+    <form method="POST" class="space-y-6 bg-black/40 p-8 rounded-2xl border border-gray-800">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-sm mb-2">Reason for Return</label>
+        <select name="reason" required
+          class="w-full p-3 rounded-xl bg-black border border-gray-700">
+          <option value="">Select reason</option>
+          <option>Wrong item received</option>
+          <option>Product damaged</option>
+          <option>Not satisfied with quality</option>
+          <option>Size/fit issue</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-2">Additional Details (optional)</label>
+        <textarea name="details" rows="3"
+          class="w-full p-3 rounded-xl bg-black border border-gray-700"></textarea>
+      </div>
+
+      <button class="w-full py-3 bg-red-600 hover:bg-red-700 rounded-xl font-bold">
+        Submit Return Request
+      </button>
+
+    </form>
+
+  </div>
+</section>
+{% endblock %}

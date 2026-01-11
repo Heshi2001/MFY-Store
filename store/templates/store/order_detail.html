@@ -1,0 +1,219 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Order #{{ order.id }} | MFY Store{% endblock %}
+{% block meta_description %}Track and manage your MFY Store order #{{ order.id }} including delivery updates, invoice, and return options.{% endblock %}
+
+{% block content %}
+<section class="pt-44 pb-20 bg-black text-white">
+
+  <div class="max-w-6xl mx-auto px-6">
+
+    <!-- HEADER -->
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-10">
+      <div>
+        <h1 class="text-3xl font-extrabold">Order #{{ order.id }}</h1>
+        <p class="text-gray-400 text-sm mt-1">Placed on {{ order.created_at|date:"M d, Y, H:i" }}</p>
+      </div>
+
+      <div class="flex items-center gap-3 mt-4 md:mt-0">
+
+        <!-- Track Order -->
+        <a href="{% url 'track_order' order.id %}"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold shadow flex items-center gap-2">
+          <i class="fa-solid fa-truck"></i> Track
+        </a>
+
+        <!-- Download Invoice -->
+        <a href="{% url 'download_invoice' order.id %}"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-xl font-semibold shadow flex items-center gap-2">
+          <i class="fa-solid fa-file-invoice"></i> Invoice
+        </a>
+
+        <!-- Request Return -->
+        {% if order.status == "Delivered" %}
+        <a href="{% url 'request_return' order.id %}"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl font-semibold shadow flex items-center gap-2">
+          <i class="fa-solid fa-rotate-left"></i> Return
+        </a>
+        {% endif %}
+
+      </div>
+    </div>
+
+<!-- STATUS TRACK BAR -->
+<div class="bg-black/40 border border-gray-800 p-6 rounded-2xl mb-10 shadow">
+  <h2 class="font-semibold text-lg mb-6">Order Status</h2>
+
+<div class="flex items-center justify-between py-2">
+   
+  {% if order.delivery_progress >= 5 %}
+      {% include "store/partials/_tracking_step.html" with name="Placed" active=True %}
+    {% else %}
+      {% include "store/partials/_tracking_step.html" with name="Placed" active=False %}
+    {% endif %}
+
+    {% if order.delivery_progress >= 40 %}
+      {% include "store/partials/_tracking_step.html" with name="Processing" active=True %}
+    {% else %}
+      {% include "store/partials/_tracking_step.html" with name="Processing" active=False %}
+    {% endif %}
+
+    {% if order.delivery_progress >= 60 %}
+      {% include "store/partials/_tracking_step.html" with name="Shipped" active=True %}
+    {% else %}
+      {% include "store/partials/_tracking_step.html" with name="Shipped" active=False %}
+    {% endif %}
+
+    {% if order.delivery_progress >= 85 %}
+      {% include "store/partials/_tracking_step.html" with name="Out for Delivery" active=True %}
+    {% else %}
+      {% include "store/partials/_tracking_step.html" with name="Out for Delivery" active=False %}
+    {% endif %}
+
+    {% if order.delivery_progress >= 100 %}
+      {% include "store/partials/_tracking_step.html" with name="Delivered" active=True %}
+    {% else %}
+      {% include "store/partials/_tracking_step.html" with name="Delivered" active=False %}
+    {% endif %}
+
+  </div>
+</div>
+
+    <!-- ORDER SUMMARY -->
+    <div class="grid md:grid-cols-3 gap-8">
+
+      <!-- Left: Items -->
+      <div class="md:col-span-2">
+
+        <h2 class="text-xl font-semibold mb-4">Items in This Order</h2>
+
+        <div class="divide-y divide-gray-800 bg-black/40 border border-gray-800 rounded-2xl">
+
+          {% for item in order.items.all %}
+          <div class="flex items-center justify-between p-5">
+
+            <div class="flex items-center gap-4">
+              <img src="{{ item.product.get_main_image_url }}"
+                class="w-20 h-20 rounded-lg object-cover border border-gray-800">
+
+              <div>
+                <p class="font-semibold">{{ item.product.name }}</p>
+
+                {% if item.variant %}
+                <p class="text-gray-400 text-sm">Variant: {{ item.variant.name }}</p>
+                {% endif %}
+
+                <p class="text-gray-400 text-sm">Quantity: {{ item.quantity }}</p>
+
+                <!-- Buy Again -->
+                <a href="{% url 'add_to_cart' item.product.id %}"
+                  class="inline-flex items-center gap-2 mt-2 text-blue-400 hover:text-blue-300 text-sm">
+                  <i class="fa-solid fa-cart-plus"></i> Buy Again
+                </a>
+              </div>
+            </div>
+
+            <p class="font-bold text-lg">₹{{ item.total_price|floatformat:2 }}</p>
+          </div>
+          {% endfor %}
+
+        </div>
+
+      </div>
+
+<!-- Right: Billing + Shipping -->
+<div class="space-y-8">
+
+<!-- Order Summary -->
+<div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow">
+  <h3 class="font-semibold text-lg mb-4">Order Summary</h3>
+
+  <div class="space-y-3 text-gray-300 text-base">
+
+    <!-- Subtotal -->
+    <div class="flex justify-between">
+      <span>Subtotal</span>
+      <span>₹{{ subtotal|floatformat:2 }}</span>
+    </div>
+
+    <!-- Shipping -->
+    <div class="flex justify-between">
+      <span>Shipping</span>
+      <span>₹{{ shipping|floatformat:2 }}</span>
+    </div>
+
+    <!-- Tax -->
+    <div class="flex justify-between">
+      <span>Tax</span>
+      <span>₹{{ tax|floatformat:2 }}</span>
+    </div>
+
+    {% if discount_amount > 0 %}
+    <!-- Discount -->
+    <div class="flex justify-between text-green-400">
+      <span>Discount ({{ order.discount_percent }}%)</span>
+      <span>- ₹{{ discount_amount|floatformat:2 }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Divider -->
+    <div class="border-t border-gray-700 pt-4 flex justify-between text-xl font-semibold text-white">
+      <span>Total</span>
+      <span class="text-green-400 text-2xl">₹{{ total|floatformat:2 }}</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- Shipping Address -->
+<div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow">
+  <h3 class="font-semibold text-lg mb-4">Shipping Address</h3>
+
+  <p>{{ order.shipping_first_name }} {{ order.shipping_last_name }}</p>
+
+  <p>{{ order.shipping_address_line1 }}</p>
+
+  {% if order.shipping_address_line2 %}
+  <p>{{ order.shipping_address_line2 }}</p>
+  {% endif %}
+
+  <p>{{ order.shipping_city }}, {{ order.shipping_state }}</p>
+
+  <p>{{ order.shipping_country }} - {{ order.shipping_postal_code }}</p>
+
+  <p class="mt-2 text-gray-300">Phone: {{ order.shipping_phone }}</p>
+</div>
+
+        <!-- Billing Info -->
+        <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow">
+          <h3 class="font-semibold text-lg mb-4">Billing</h3>
+
+          <p><b>Payment Method:</b> {{ order.payment_method }}</p>
+          <p><b>Transaction ID:</b> {{ order.transaction_id }}</p>
+          <p><b>Email:</b> {{ order.user.email }}</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Back -->
+    <div class="mt-10">
+      <a href="{% url 'orders' %}"
+        class="inline-flex items-center gap-2 text-gray-300 hover:text-white">
+        <i class="fa-solid fa-arrow-left text-sm"></i> Back to Orders
+      </a>
+    </div>
+
+  </div>
+
+</section>
+{% endblock %}
+
+<style>
+.step-label {
+    max-width: 75px;
+}
+
+</style>

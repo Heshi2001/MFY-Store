@@ -1,0 +1,25 @@
+{% extends "store/base.html" %}
+{% block title %}Return #{{ return_request.id }}{% endblock %}
+
+{% block content %}
+<section class="pt-44 pb-20 bg-black text-white">
+
+  <div class="max-w-3xl mx-auto px-6">
+    <h1 class="text-3xl font-extrabold mb-8">Return Request #{{ return_request.id }}</h1>
+
+    <div class="bg-black/40 border border-gray-800 p-6 rounded-2xl space-y-5">
+
+      <p><b>Status:</b> {{ return_request.status }}</p>
+      <p><b>Reason:</b> {{ return_request.reason }}</p>
+      <p><b>Details:</b> {{ return_request.details|default:"No details" }}</p>
+
+      <a href="{% url 'order_detail' return_request.order.id %}"
+         class="inline-flex items-center gap-2 text-gray-300 hover:text-white">
+        <i class="fa-solid fa-arrow-left text-sm"></i> Back to Order
+      </a>
+
+    </div>
+  </div>
+
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+<div class="flex flex-col items-center flex-1 min-w-0">
+
+    <div class="w-6 h-6 rounded-full border-2
+        {% if active %}
+            border-green-400 bg-green-400 shadow-lg
+        {% else %}
+            border-gray-600 bg-gray-800
+        {% endif %}
+    "></div>
+
+    <p class="mt-2 text-[10px] text-center text-gray-300 whitespace-nowrap leading-tight">
+        {{ name }}
+    </p>
+</div>

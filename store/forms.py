@@ -36,8 +36,8 @@ class AddressForm(forms.ModelForm):
             "address_line2": forms.TextInput(attrs={"class": "form-control", "placeholder": "Address Line 2"}),
             "city": forms.TextInput(attrs={"class": "form-control", "placeholder": "City"}),
             "state": forms.TextInput(attrs={"class": "form-control", "placeholder": "State"}),
-            "country": forms.TextInput(attrs={"class": "form-control", "placeholder": "Country"}),
+            "country": forms.HiddenInput(),          # HIDE
             "postal_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "Postal Code"}),
-            "address_type": forms.Select(attrs={"class": "form-select"}),
-            "is_default": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "address_type": forms.HiddenInput(),     # HIDE
+            "is_default": forms.HiddenInput(),       # HIDE
         }

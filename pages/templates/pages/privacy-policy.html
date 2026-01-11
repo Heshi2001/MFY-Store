@@ -1,0 +1,35 @@
+{% extends "pages/pages_base.html" %}
+
+{% block title %}{{ page.title }} | MFY Store{% endblock %}
+{% block meta_description %}{{ page.title }} of MFY Store.{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="mb-8" data-aos="fade-up">
+    <h1 class="text-4xl font-extrabold text-white flex items-center gap-3">
+        🔏 {{ page.title }}
+    </h1>
+    <p class="text-gray-400 text-sm mt-1">Last Updated: {{ page.updated_at|date:"F j, Y" }}</p>
+</div>
+
+<!-- PAGE CONTENT (Dynamic from Admin) -->
+<div class="prose prose-invert max-w-none text-gray-300 leading-relaxed" data-aos="fade-up" data-aos-delay="150">
+    {{ page.content|safe }}
+</div>
+
+<!-- SEO STRUCTURED DATA -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "PrivacyPolicy",
+  "name": "{{ page.title }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "publisher": {
+    "@type": "Organization",
+    "name": "MFY Store"
+  }
+}
+</script>
+
+{% endblock %}

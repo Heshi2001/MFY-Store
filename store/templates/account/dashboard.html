@@ -1,223 +1,441 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}My Store{% endblock %}</title>
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block title %}My Account | MFY Store{% endblock %}
 
-  <!-- FontAwesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% block content %}
+<div class="min-h-screen bg-black text-white pt-40">
 
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-</head>
-<body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="{% url 'index' %}">🛒 MFY</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-              data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" 
-              aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <div class="max-w-7xl mx-auto lg:px-8">
+    <div class="lg:grid lg:grid-cols-12 lg:gap-8">
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          {% if request.user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'account_dashboard' %}">
-                <i class="fas fa-user"></i> My Account
-              </a>
-            </li>
-           <li class="nav-item">
-              <form method="post" action="{% url 'account_logout' %}" class="d-inline">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-link nav-link p-0">
-                  <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-              </form>
-            </li>
-          {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'login' %}">
-                <i class="fas fa-sign-in-alt"></i> Login
-              </a>
-            </li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </nav>
+      <!-- SIDEBAR (desktop) -->
+      <aside
+        id="account-sidebar"
+        class="col-span-3 hidden lg:block sticky top-6 h-[calc(100vh-3rem)] overflow-auto pr-6"
+        aria-label="Account navigation">
 
-  <div class="container my-5">
-    <h2 class="mb-4 fw-bold">My Account</h2>
+        <div class="bg-black/40 border border-gray-800 rounded-2xl p-4 backdrop-blur-md shadow-xl">
 
-     <!-- 🔔 Notifications Section -->
-    {% if messages %}
-      <div class="mb-4">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <div class="flex items-center gap-3 pb-4 border-b border-gray-800/60">
+            <div class="relative">
+              <!-- Avatar (SIDEBAR) -->
+              <img id="avatar-img"
+                   src="{{ request.user.userprofile.avatar_url }}"
+                   alt="Profile"
+                   class="w-10 h-10 rounded-full object-cover border-2 border-green-400" />
+
+              <button id="avatar-edit-btn"
+                      class="absolute -bottom-0.5 -right-1 bg-green-500/90 text-black text-xs px-2 py-0.5 rounded-full shadow hover:scale-105 transition">
+                Edit
+              </button>
+            </div>
+
+            <div>
+              <h2 class="text-lg font-semibold">{{ request.user.get_full_name|default_if_none:request.user.username }}</h2>
+              <p class="text-xs text-gray-400">{{ request.user.email }}</p>
+            </div>
           </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-    <!-- End Notifications -->
 
-    <div class="row g-4">
-        <!-- Profile -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-user-circle fa-2x text-primary"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Profile</h5>
-                        <p class="card-text text-muted mb-2">{{ request.user.username }}<br>{{ request.user.email }}</p>
-                        <a href="{% url 'account_settings' %}" class="btn btn-sm btn-outline-primary rounded-pill">Edit Profile</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-box fa-2x text-success"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">My Orders</h5>
-                        <p class="card-text text-muted mb-2">Track, return or buy again</p>
-                        <a href="{% url 'orders' %}" class="btn btn-sm btn-outline-success rounded-pill">View Orders</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Wishlist -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-heart fa-2x text-danger"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Wishlist</h5>
-                        <p class="card-text text-muted mb-2">Your saved items</p>
-                        <a href="{% url 'wishlist' %}" class="btn btn-sm btn-outline-danger rounded-pill">View Wishlist</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Addresses -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-map-marker-alt fa-2x text-warning"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Addresses</h5>
-                        <p class="card-text text-muted mb-2">Manage your shipping info</p>
-                        <a href="{% url 'account_addresses' %}" class="btn btn-sm btn-outline-warning rounded-pill">Manage Addresses</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Payments -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-credit-card fa-2x text-info"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Payment Methods</h5>
-                        <p class="card-text text-muted mb-2">Saved cards & UPI</p>
-                        <a href="{% url 'payments' %}" class="btn btn-sm btn-outline-info rounded-pill">Manage Payments</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Support -->
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4 h-100">
-                <div class="card-body d-flex align-items-center">
-                    <div class="me-3">
-                        <i class="fas fa-headset fa-2x text-secondary"></i>
-                    </div>
-                    <div>
-                        <h5 class="card-title mb-1">Support</h5>
-                        <p class="card-text text-muted mb-2">Need help? Contact us</p>
-                        <a href="{% url 'contact' %}" class="btn btn-sm btn-outline-secondary rounded-pill">Get Support</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-      <!-- Password -->
-      <div class="col-md-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-          <div class="card-body d-flex align-items-center">
-            <div class="me-3">
-              <i class="fas fa-key fa-2x text-warning"></i>
-            </div>
-           <div>
-             <h5 class="card-title mb-1">Password</h5>
-             <p class="card-text text-muted mb-2">Update your account password</p>
-             <a href="{% url 'account_change_password' %}" class="btn btn-sm btn-outline-warning rounded-pill">Change Password</a>
-           </div>
-         </div>
-       </div>
-     </div>
-
-    <!-- Offers & Rewards -->
-    <div class="col-md-6">
-      <div class="card shadow-sm border-0 rounded-4 h-100">
-        <div class="card-body d-flex align-items-center">
-          <div class="me-3">
-            <i class="fas fa-gift fa-2x text-purple"></i>
-          </div>
-        <div>
-          <h5 class="card-title mb-1">Offers & Rewards</h5>
-          {% if user_coupons %}
-            <p class="card-text text-muted mb-2">
-              You have <strong>{{ user_coupons.count }}</strong> active coupon{{ user_coupons.count|pluralize }} 🎉
-           </p>
-           <a href="{% url 'account_offers' %}" class="btn btn-sm btn-outline-primary rounded-pill">
-            View Coupons
-           </a>
-         {% else %}
-            <p class="card-text text-muted mb-2">No active offers right now</p>
-            <a href="{% url 'account_offers' %}" class="btn btn-sm btn-outline-secondary rounded-pill">
-              Check Offers
+          <nav class="mt-4 space-y-1" aria-label="Sidebar links">
+            <a href="{% url 'account_dashboard' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-house-chimney text-sm text-green-400"></i>Dashboard
             </a>
-         {% endif %}
+            <a href="{% url 'orders' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-box text-sm text-sky-400"></i>Orders
+            </a>
+            <a href="{% url 'wishlist' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-heart text-sm text-rose-400"></i>Wishlist
+            </a>
+            <a href="{% url 'account_addresses' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-map-marker-alt text-sm text-yellow-400"></i>Addresses
+            </a>
+            <a href="{% url 'offers' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-gift text-sm text-purple-400"></i>Offers
+            </a>
+            <a href="{% url 'payments' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-credit-card text-sm text-cyan-400"></i>Payment Methods
+            </a>
+            <a href="{% url 'contact' %}" class="group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-green-600/10">
+              <i class="fa-solid fa-headset text-sm text-gray-300"></i>Support
+            </a>
+
+            <form method="post" action="{% url 'account_logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="w-full text-left group flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-red-600/10">
+                <i class="fa-solid fa-sign-out-alt text-sm text-red-400"></i>Logout
+              </button>
+            </form>
+          </nav>
+
         </div>
-      </div>
-    </div>
+      </aside>
+
+ <!-- MOBILE TOP BAR -->
+<div class="lg:hidden sticky top-4 z-40">
+  <div class="flex items-center justify-between gap-3 px-4">
+    <h1 class="text-xl font-semibold">Account</h1>
+
+    <!-- MOBILE AVATAR -->
+    <img id="avatar-img-mobile-top"
+         src="{{ request.user.userprofile.avatar_url }}"
+         alt="Profile"
+         class="w-10 h-10 rounded-full object-cover border-2 border-green-400" />
   </div>
 </div>
+
+<!-- 📌 NEW MINIMAL MOBILE ACTION SCROLLER -->
+<div class="lg:hidden mt-6 px-4">
+  <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+    <a href="{% url 'orders' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-box text-sky-300"></i> Orders
+    </a>
+
+    <a href="{% url 'wishlist' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-heart text-rose-300"></i> Wishlist
+    </a>
+
+    <a href="{% url 'account_addresses' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-map-marker-alt text-yellow-300"></i> Addresses
+    </a>
+
+    <a href="{% url 'offers' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-gift text-purple-300"></i> Offers
+    </a>
+
+    <a href="{% url 'payments' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-credit-card text-cyan-300"></i> Payments
+    </a>
+
+    <a href="{% url 'contact' %}" class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 whitespace-nowrap">
+      <i class="fa-solid fa-headset text-gray-300"></i> Support
+    </a>
+
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      <button class="flex items-center gap-2 text-sm bg-black/40 border border-gray-800 px-3 py-2 rounded-full text-gray-200 hover:bg-red-600/10 whitespace-nowrap">
+        <i class="fa-solid fa-sign-out-alt text-red-300"></i> Logout
+      </button>
+    </form>
+
+  </div>
+</div>
+       
+      <!-- MAIN CONTENT -->
+      <section class="col-span-9 px-4 lg:px-0 py-8">
+        <!-- HEADER BANNER --> 
+            <header class="rounded-2xl p-6 mb-6 relative overflow-hidden" 
+                 style="background: linear-gradient(90deg, rgba(6,95,70,0.15), rgba(6,95,70,0.06)); border: 1px solid rgba(6,95,70,0.18);"> 
+                 <div class="absolute -left-24 -top-24 w-96 h-96 rounded-full blur-3xl bg-gradient-to-r from-green-600/40 to-transparent opacity-60">
+                 </div> 
+                 <div class="relative flex flex-col md:flex-row justify-between items-center gap-4"> 
+                  <div> <h1 class="text-2xl md:text-3xl font-extrabold text-green-300"> Welcome back, {{ request.user.first_name|default:request.user.username }} 👋 </h1>
+                     <p class="text-gray-300 mt-1">Here's a summary of your account.</p> 
+                  </div> 
+                    <div class="flex items-center gap-3"> 
+                      <a href="{% url 'orders' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500 text-green-300 hover:scale-105"> 
+                        <i class="fa-solid fa-box"></i> View orders </a> 
+                      <a href="{% url 'offers' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-800 text-gray-300 hover:scale-105"> Offers </a> 
+                    </div> 
+                  </div>
+              </header>
+
+<!-- STATS -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+  <!-- Orders -->
+  <a href="{% url 'orders' %}"
+     class="bg-black/40 border border-gray-800 rounded-2xl p-4 shadow opacity-0 translate-y-4 hover:border-green-500/50 hover:scale-[1.02] transition duration-300 block"
+     data-enter="fade-slide">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-400">Orders</p>
+        <p class="text-2xl font-semibold">{{ orders_count|default:"—" }}</p>
+      </div>
+      <div class="text-3xl text-green-400"><i class="fa-solid fa-box"></i></div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">Purchase history</p>
+  </a>
+
+  <!-- Wishlist -->
+  <a href="{% url 'wishlist' %}"
+     class="bg-black/40 border border-gray-800 rounded-2xl p-4 shadow opacity-0 translate-y-4 hover:border-rose-500/50 hover:scale-[1.02] transition duration-300 block"
+     data-enter="fade-slide" data-delay="100">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-400">Wishlist</p>
+        <p class="text-2xl font-semibold">{{ wishlist_count|default:"—" }}</p>
+      </div>
+      <div class="text-3xl text-rose-400"><i class="fa-solid fa-heart"></i></div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">Saved items</p>
+  </a>
+
+  <!-- Coupons -->
+  <a href="{% url 'offers' %}"
+     class="bg-black/40 border border-gray-800 rounded-2xl p-4 shadow opacity-0 translate-y-4 hover:border-purple-500/50 hover:scale-[1.02] transition duration-300 block"
+     data-enter="fade-slide" data-delay="200">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-400">Active Coupons</p>
+        <p class="text-2xl font-semibold">{{ user_coupons.count|default:"0" }}</p>
+      </div>
+      <div class="text-3xl text-purple-400"><i class="fa-solid fa-ticket-simple"></i></div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">Available offers</p>
+  </a>
+
+  <!-- Estimated Value -->
+  <a href="#"  
+     class="bg-black/40 border border-gray-800 rounded-2xl p-4 shadow opacity-0 translate-y-4 hover:border-cyan-500/50 hover:scale-[1.02] transition duration-300 block"
+     data-enter="fade-slide" data-delay="300">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-400">Estimated Value</p>
+        <p class="text-2xl font-semibold">{{ revenue_estimate|default:"₹0" }}</p>
+      </div>
+      <div class="text-3xl text-cyan-400"><i class="fa-solid fa-chart-line"></i></div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">If you sell on MFY</p>
+  </a>
+
 </div>
 
-  <!-- Footer -->
-  <footer class="bg-light text-center py-3 mt-5 border-top">
-    <p class="mb-0">&copy; 2025 MyStore. All rights reserved.</p>
-  </footer>
+        <!-- PROFILE + ORDERS -->
+        <div class="grid lg:grid-cols-3 gap-6">
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+          <!-- PROFILE CARD -->
+          <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow"
+               data-enter="fade-slide" data-delay="400">
+
+            <h3 class="text-lg font-semibold mb-3">Profile</h3>
+
+            <div class="flex items-start gap-4 flex-wrap">
+
+              <img id="avatar-img-2"
+                   src="{{ request.user.userprofile.avatar_url }}"
+                   class="w-20 h-20 rounded-full object-cover border-2 border-green-400 shadow-sm" />
+
+              <div>
+                <p class="font-semibold">{{ request.user.get_full_name|default:request.user.username }}</p>
+                <p class="text-sm text-gray-400">{{ request.user.email }}</p>
+
+                <div class="mt-3 flex gap-2">
+                  <label for="avatar-file"
+                         class="px-3 py-1 rounded-full bg-green-500/10 border border-green-500 text-green-300 cursor-pointer hover:scale-105 flex items-center gap-2">
+                    <i class="fa-solid fa-camera"></i> Change
+                  </label>
+
+                  <a href="{% url 'account_settings' %}"
+                     class="px-3 py-1 rounded-full border border-gray-700 text-gray-300 hover:scale-105 flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> Settings
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- AVATAR FORM -->
+            <form id="avatar-form" enctype="multipart/form-data" class="mt-4" method="post" action="{% url 'account_upload_avatar' %}">
+              {% csrf_token %}
+              <input id="avatar-file" name="avatar" type="file" accept="image/*" class="hidden" />
+              <p id="avatar-feedback" class="text-xs text-gray-400 mt-2">PNG / JPG. Max 5MB.</p>
+            </form>
+
+          </div>
+
+          <!-- RECENT ORDERS -->
+          <div class="lg:col-span-2 space-y-4">
+
+            <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow"
+                 data-enter="fade-slide" data-delay="500">
+
+              <h3 class="text-lg font-semibold mb-4">Recent Orders</h3>
+
+              <!-- SKELETON -->
+              <div id="orders-skeleton" class="space-y-3">
+                <div class="animate-pulse flex items-center gap-4 p-3 bg-gray-900/30 rounded">
+                  <div class="h-10 w-10 bg-gray-800 rounded"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="h-3 w-3/5 bg-gray-800 rounded"></div>
+                    <div class="h-3 w-1/3 bg-gray-800 rounded"></div>
+                  </div>
+                  <div class="h-4 w-16 bg-gray-800 rounded"></div>
+                </div>
+
+                <div class="animate-pulse flex items-center gap-4 p-3 bg-gray-900/30 rounded">
+                  <div class="h-10 w-10 bg-gray-800 rounded"></div>
+                  <div class="flex-1 space-y-2">
+                    <div class="h-3 w-3/5 bg-gray-800 rounded"></div>
+                    <div class="h-3 w-1/3 bg-gray-800 rounded"></div>
+                  </div>
+                  <div class="h-4 w-16 bg-gray-800 rounded"></div>
+                </div>
+              </div>
+
+              <!-- REAL CONTENT (JS replaces skeleton) -->
+              <div id="orders-list" class="hidden space-y-3"></div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow"
+                 data-enter="fade-slide" data-delay="600">
+              <h3 class="text-lg font-semibold mb-3">Quick Actions</h3>
+
+              <div class="flex flex-wrap gap-3">
+                <a href="{% url 'orders' %}" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200 hover:bg-green-600/10">
+                  View Orders
+                </a>
+                <a href="{% url 'wishlist' %}" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200 hover:bg-rose-600/10">
+                  View Wishlist
+                </a>
+                <a href="{% url 'offers' %}" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200 hover:bg-purple-600/10">
+                  Check Offers
+                </a>
+                <a href="{% url 'contact' %}" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200 hover:bg-gray-700/20">
+                  Contact Support
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+<style>
+/* HIDE SCROLLBAR COMPLETELY (horizontal + vertical) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  overflow-y: hidden !important; /* Prevent reserved bar height */
+}
+</style>
+
+{% block extra_js %}
+
+<script>
+/* ------------------------------------
+   Mobile Drawer
+------------------------------------- */
+const drawerOpen = document.getElementById('drawer-open');
+const drawerClose = document.getElementById('drawer-close');
+const mobileDrawer = document.getElementById('mobile-drawer');
+const drawerBackdrop = document.getElementById('drawer-backdrop');
+
+if (drawerOpen) drawerOpen.addEventListener('click', () => mobileDrawer.classList.remove('hidden'));
+if (drawerClose) drawerClose.addEventListener('click', () => mobileDrawer.classList.add('hidden'));
+if (drawerBackdrop) drawerBackdrop.addEventListener('click', () => mobileDrawer.classList.add('hidden'));
+
+/* ------------------------------------
+   Avatar Upload + Preview
+------------------------------------- */
+const avatarFile = document.getElementById('avatar-file');
+const avatarForm = document.getElementById('avatar-form');
+
+const avatarImg = document.getElementById('avatar-img');
+const avatarImgMobile = document.getElementById('avatar-img-mobile-top');
+const avatarImg2 = document.getElementById('avatar-img-2');
+
+const avatarEditBtn = document.getElementById('avatar-edit-btn');
+const avatarFeedback = document.getElementById('avatar-feedback');
+
+function previewAndUpload(file) {
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    avatarFeedback.textContent = 'File too large. Max 5MB.';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    [avatarImg, avatarImgMobile, avatarImg2].forEach(el => {
+      if (el) el.src = src;
+    });
+  };
+  reader.readAsDataURL(file);
+
+  const formData = new FormData();
+  formData.append('avatar', file);
+  formData.append('csrfmiddlewaretoken', document.querySelector('input[name=csrfmiddlewaretoken]').value);
+
+  avatarFeedback.textContent = 'Uploading...';
+
+  fetch("{% url 'account_upload_avatar' %}", {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin'
+  })
+  .then(r => r.json())
+  .then(data => {
+    avatarFeedback.textContent = data.success ? 'Uploaded!' : (data.message || 'Upload failed');
+    if (data.success && data.url) {
+      [avatarImg, avatarImgMobile, avatarImg2].forEach(el => el.src = data.url);
+    }
+  })
+  .catch(() => {
+    avatarFeedback.textContent = 'Upload failed';
+  });
+}
+
+if (avatarEditBtn) avatarEditBtn.addEventListener('click', () => avatarFile.click());
+if (avatarFile) avatarFile.addEventListener('change', e => previewAndUpload(e.target.files[0]));
+
+/* ------------------------------------
+   Load Orders JSON from Django
+------------------------------------- */
+const RECENT_ORDERS = JSON.parse('{{ orders_json|safe }}');
+
+/* ------------------------------------
+   Skeleton Loading + real order load
+------------------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-enter]').forEach((el, i) => {
+    const delay = el.dataset.delay ? parseInt(el.dataset.delay) : (i * 80);
+    setTimeout(() => {
+      el.style.transition = 'opacity 420ms ease, transform 420ms ease';
+      el.style.opacity = 1;
+      el.style.transform = 'translateY(0)';
+    }, delay + 180);
+  });
+
+  setTimeout(() => {
+    const ordersList = document.getElementById('orders-list');
+    const skeleton = document.getElementById('orders-skeleton');
+
+    ordersList.innerHTML = RECENT_ORDERS.map(o => `
+      <a href="/account/orders/${o.id}/"
+         class="p-3 bg-gray-900/30 rounded flex items-center justify-between hover:bg-gray-900/40 transition">
+         
+        <div class="flex items-center gap-3">
+          <img src="${o.image}"
+               class="w-12 h-12 rounded object-cover bg-gray-800" />
+
+          <div>
+            <div class="text-sm font-semibold">Order #${o.id}</div>
+            <div class="text-xs text-gray-400">${o.status} • ${o.date}</div>
+          </div>
+        </div>
+
+        <div class="text-sm font-medium text-green-300">₹${o.total}</div>
+      </a>
+    `).join('');
+
+    ordersList.classList.remove('hidden');
+    skeleton.remove();
+  }, 1200);
+});
+</script>
+{% endblock %} 

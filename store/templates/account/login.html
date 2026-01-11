@@ -1,150 +1,174 @@
+{% extends "store/base.html" %}
+
 {% load static %}
 {% load widget_tweaks %}
 {% load socialaccount %}
 {% load i18n %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %}Products | MFY Store{% endblock %}
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta name="description" content="" />
-  <meta name="author" content="" />
-  <title>Login | MFY</title>
+{% block content %}
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet" />
+<div class="auth-container min-h-screen bg-gray-950 text-gray-200 flex flex-col items-center pt-40 px-4">
 
-  <!-- Bootstrap core CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Additional CSS Files -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}" />
-  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}" />
-  <link rel="stylesheet" href="{% static 'store/css/login.css' %}" />
- </head>
+  <!-- Glass Neon Card -->
+  <div class="card w-full max-w-md bg-gray-900/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-[0_0_28px_rgba(34,197,94,0.25)] transition-all duration-500 hover:shadow-[0_0_40px_rgba(34,197,94,0.35)]">
 
-<body>
-  <div class="auth-container">
-    <div class="card">
-      <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="authTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">{% trans "Login" %}</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab">{% trans "Signup" %}</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="otp-tab" data-bs-toggle="tab" data-bs-target="#otp" type="button" role="tab">{% trans "OTP Login" %}</button>
-          </li>
-        </ul>
-      </div>
+    <!-- Tab Header -->
+    <div class="card-header border-b border-gray-700/50">
+      <ul class="nav nav-tabs card-header-tabs flex justify-center gap-4">
 
-      <div class="card-body tab-content">
-        <!-- Login Tab -->
-        <div class="tab-pane fade show active" id="login" role="tabpanel">
-          <form method="post" action="{% url 'account_login' %}">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-           <div class="mb-3">
-            <label for="{{ form.login.id_for_label }}" class="form-label">{% trans "Email or Username" %}</label>
-            {{ form.login|add_class:"form-control" }}
+        <li>
+          <button type="button" id="login-tab"
+            data-tab="login"
+            class="tab-btn nav-link active tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
+            {% trans "Login" %}
+          </button>
+        </li>
+
+        <li>
+          <button type="button" id="signup-tab"
+            data-tab="signup"
+            class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
+            {% trans "Signup" %}
+          </button>
+        </li>
+
+        <li>
+          <button type="button" id="otp-tab"
+            data-tab="otp"
+            class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
+            {% trans "OTP Login" %}
+          </button>
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- Body -->
+    <div class="tab-content p-6">
+
+      <!-- LOGIN -->
+      <div class="tab-pane show" id="login" data-tab-panel="login">
+        <form method="post" action="{% url 'account_login' %}">
+          {% csrf_token %}
+          <!-- ✅ added -->
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+
+          {{ form.non_field_errors }}
+
+          <!-- Floating Email -->
+          <div class="floating-group mb-6">
+            {{ form.login|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition-all duration-300" }}
+            <label class="floating-label">{% trans "Email or Username" %}</label>
             {{ form.login.errors }}
-           </div>
-           <div class="mb-3">
-            <label for="{{ form.password.id_for_label }}" class="form-label">{% trans "Password" %}</label>
-            {{ form.password|add_class:"form-control" }}
+          </div>
+
+          <!-- Floating Password -->
+          <div class="floating-group mb-6">
+            {{ form.password|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
+            <label class="floating-label">{% trans "Password" %}</label>
             {{ form.password.errors }}
-           </div>
-            <div class="mb-3 form-check">
-              {{ form.remember }} <label class="form-check-label" for="id_remember">{% trans "Remember me" %}</label>
-            </div>
-            <button type="submit" class="btn btn-primary btn-custom">{% trans "Login" %}</button>
-            <p class="text-muted mt-2"><a href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a></p>
-          </form>
-        </div>
+          </div>
 
-   <!-- Signup Tab -->
-<div class="tab-pane fade" id="signup" role="tabpanel">
-  <form method="post" action="{% url 'account_signup' %}">
-    {% csrf_token %}
-    {{ signup_form.non_field_errors }}
+          <div class="mb-5 flex items-center gap-2">
+            {{ form.remember }}
+            <label for="id_remember" class="text-gray-400">{% trans "Remember me" %}</label>
+          </div>
 
-    <div class="mb-3">
-      <label for="{{ signup_form.username.id_for_label }}" class="form-label">{% trans "Username" %}</label>
-      {{ signup_form.username|add_class:"form-control" }}
-      {{ signup_form.username.errors }}
-    </div>
-    <div class="mb-3">
-     <label for="{{ signup_form.email.id_for_label }}" class="form-label">{% trans "Email" %}</label>
-     {{ signup_form.email|add_class:"form-control" }}
-     {{ signup_form.email.errors }}
-    </div>
-    <div class="mb-3">
-      <label for="{{ signup_form.password1.id_for_label }}" class="form-label">{% trans "Password" %}</label>
-      {{ signup_form.password1|add_class:"form-control" }}
-      {{ signup_form.password1.errors }}
-    </div>
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:shadow-green-400/30 hover:scale-[1.03]">
+            {% trans "Login" %}
+          </button>
 
-    <div class="mb-3">
-      <label for="{{ signup_form.password2.id_for_label }}" class="form-label">{% trans "Confirm Password" %}</label>
-      {{ signup_form.password2|add_class:"form-control" }}
-      {{ signup_form.password2.errors }}
-    </div>
-
-    <button type="submit" class="btn btn-success btn-custom">{% trans "Create Account" %}</button>
-  </form>
-</div>
-
-        <!-- OTP Login Tab -->
-        <div class="tab-pane fade" id="otp" role="tabpanel">
-          <form method="post" action="{% url 'otp_login' %}">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="id_email" class="form-label">{% trans "Email for OTP" %}</label>
-              <input type="email" name="email" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-warning btn-custom">{% trans "Send OTP" %}</button>
-          </form>
-        </div>
+          <p class="text-sm text-gray-400 mt-4 text-center">
+            <a href="{% url 'account_reset_password' %}" class="hover:text-green-400 transition">
+              {% trans "Forgot Password?" %}
+            </a>
+          </p>
+        </form>
       </div>
+
+      <!-- SIGNUP -->
+      <div class="tab-pane hidden" id="signup" data-tab-panel="signup">
+        <form method="post" action="{% url 'account_signup' %}">
+          {% csrf_token %}
+          <!-- ✅ added -->
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+
+          {{ signup_form.non_field_errors }}
+
+          <!-- Username -->
+          <div class="floating-group mb-6">
+            {{ signup_form.username|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
+            <label class="floating-label">{% trans "Username" %}</label>
+            {{ signup_form.username.errors }}
+          </div>
+
+          <!-- Email -->
+          <div class="floating-group mb-6">
+            {{ signup_form.email|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
+            <label class="floating-label">{% trans "Email" %}</label>
+            {{ signup_form.email.errors }}
+          </div>
+
+          <!-- Password -->
+          <div class="floating-group mb-6">
+            {{ signup_form.password1|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
+            <label class="floating-label">{% trans "Password" %}</label>
+            {{ signup_form.password1.errors }}
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="floating-group mb-6">
+            {{ signup_form.password2|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
+            <label class="floating-label">{% trans "Confirm Password" %}</label>
+            {{ signup_form.password2.errors }}
+          </div>
+
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:shadow-green-400/30 hover:scale-[1.03]">
+            {% trans "Create Account" %}
+          </button>
+        </form>
+      </div>
+
+      <!-- OTP -->
+      <div class="tab-pane hidden" id="otp" data-tab-panel="otp">
+        <form method="post" action="{% url 'otp_login' %}">
+          {% csrf_token %}
+          <!-- ✅ added -->
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+
+          <div class="floating-group mb-6">
+            <input type="email" name="email" required
+              class="floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300">
+            <label class="floating-label">{% trans "Email for OTP" %}</label>
+          </div>
+
+          <button type="submit"
+            class="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:scale-[1.03]">
+            {% trans "Send OTP" %}
+          </button>
+        </form>
+      </div>
+
     </div>
   </div>
- 
-<!-- Social Login Section (outside card) -->
-<div class="social-login mt-3 text-center">
-  <p class="text-muted mb-2">{% trans "Or continue with" %}</p>
-  <div class="d-flex justify-content-center gap-2 flex-wrap">
-    
-    <!-- Google -->
-    <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger btn-social">
+</div>
+
+<div class="text-center mt-6">
+  <p class="text-gray-400 mb-2">{% trans "Or continue with" %}</p>
+  <div class="flex justify-center">
+    <a href="{% provider_login_url 'google' %}"
+       class="flex items-center gap-2 px-4 py-2 border border-red-500 rounded-xl text-red-400 hover:bg-red-600 hover:text-white transition-all duration-300 hover:scale-105">
       <i class="fab fa-google"></i> Google
     </a>
   </div>
 </div>
 
-<!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <p>Copyright &copy; 2025 MFY.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
+{% endblock %}
 
-  <!-- Scripts -->
-  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="{% static 'store/js/custom.js' %}"></script>
-  <script src="{% static 'store/js/owl.js' %}"></script>
-  <script src="{% static 'store/js/slick.js' %}"></script>
-  <script src="{% static 'store/js/isotope.js' %}"></script>
-  <script src="{% static 'store/js/accordions.js' %}"></script>
-</body>
-</html>                             
+{% block page_js %}
+<script src="{% static 'store/js/authTabs.js' %}"></script>
+{% endblock %}

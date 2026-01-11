@@ -1,0 +1,86 @@
+<!-- Product Grid -->
+
+  {% for product in products %}
+  <div class="bg-gray-900 rounded-2xl overflow-hidden shadow-md relative hover:shadow-xl transition-transform transform hover:scale-[1.02] group">
+
+    <!-- Wishlist Button -->
+    <button
+      class="absolute top-2 right-2 bg-black/50 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn"
+      data-product-id="{{ product.id }}"
+      aria-label="Toggle Wishlist">
+      <i class="{% if product.id in wishlist_ids %}fa-solid text-[#00C897]{% else %}fa-regular text-white{% endif %} fa-heart text-lg transition-all"></i>
+    </button>
+
+    <!-- Product Image -->
+    <a href="{% url 'product_detail' product.id %}">
+      {% if product.get_main_image_url %}
+        <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-72 object-cover transition-transform duration-300 group-hover:scale-105">
+      {% else %}
+        <div class="w-full h-72 bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
+      {% endif %}
+    </a>
+
+    <!-- Discount Badge -->
+    {% if product.discount_percent %}
+    <span class="absolute top-2 left-2 bg-[#00C897]/90 text-white text-xs font-semibold px-3 py-1 rounded-md shadow-md animate-float">
+      {{ product.discount_percent|floatformat:0 }}% OFF
+    </span>
+    {% endif %}
+
+    <!-- Details -->
+    <div class="p-4 space-y-1">
+      <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
+      {% if product.short_description %}
+        <p class="text-sm text-gray-400 line-clamp-2">{{ product.short_description }}</p>
+      {% endif %}
+
+      {% if product.avg_rating > 0 %}
+        <div class="flex items-center text-gray-400 text-sm space-x-1">
+          <i class="fa fa-star text-yellow-400"></i>
+          <span>{{ product.avg_rating }}</span>
+          <span>•</span>
+          <span>({{ product.total_reviews }})</span>
+        </div>
+      {% else %}
+        <div class="text-gray-500 text-sm">No reviews yet</div>
+      {% endif %}
+
+      <div class="mt-1">
+        {% if product.offer_price %}
+            <p class="mt-2">
+              <span class="text-gray-400 line-through text-sm">
+                ₹{{ product.original_price }}
+              </span>
+              <span class="text-[#00A07A] font-bold ml-2">
+                ₹{{ product.offer_price }}
+              </span>
+            </p>
+          {% else %}
+            <p class="mt-1 text-white font-bold">
+              ₹{{ product.display_price }}
+            </p>
+          {% endif %}
+      </div>
+
+      {% if product.in_stock %}
+        <p class="text-sm text-[#00C897] font-medium mt-1">
+          In Stock • Ships in 1–2 days
+        </p>
+      {% else %}
+        <p class="text-sm font-semibold text-red-500 mt-1 animate-pulse">
+          ⚠️ Out of Stock
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Add to Cart -->
+    <button
+      class="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 bg-gradient-to-r from-[#00C897] to-[#00A07A] hover:from-[#00A07A] hover:to-[#008060] text-white text-sm font-semibold py-2 rounded-md transition-all duration-300 ease-in-out add-to-cart-btn"
+      data-product-id="{{ product.id }}">
+      Add to Cart
+    </button>
+  </div>
+  {% empty %}
+  <p class="col-span-full text-center text-gray-400 py-12">No products available in this category.</p>
+  {% endfor %}
+</div>

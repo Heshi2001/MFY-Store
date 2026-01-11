@@ -1,49 +1,34 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP - My Store</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: #f0f2f5;
-            font-family: 'Poppins', sans-serif;
-        }
-        .otp-card {
-            max-width: 450px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0px 4px 20px rgba(0,0,0,0.1);
-        }
-        .btn-success {
-            background: #28a745;
-            border: none;
-        }
-        .btn-success:hover {
-            background: #218838;
-        }
-        .otp-input {
-            letter-spacing: 10px;
-            text-align: center;
-            font-size: 20px;
-        }
-    </style>
-</head>
-<body>
-<div class="otp-card">
-    <h3 class="text-center mb-4">Verify OTP</h3>
-    <form method="POST" action="{% url 'verify_email_otp' %}">
-        {% csrf_token %}
-        <div class="mb-3">
-            <label for="otp" class="form-label">Enter OTP</label>
-            <input type="text" maxlength="6" class="form-control otp-input" name="otp" required placeholder="******">
-        </div>
-        <button type="submit" class="btn btn-success w-100">Verify OTP</button>
+
+{% block title %}Verify OTP | MFY Store{% endblock %}
+
+{% block content %}
+<div class="pt-[var(--navbar-height,4.5rem)] bg-black min-h-screen flex items-center justify-center px-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
+    <h2 class="text-2xl font-semibold text-white mb-4">Verify OTP</h2>
+    <p class="text-gray-400 mb-6">Please enter the 6-digit OTP sent to your email or phone.</p>
+
+    <form method="POST" action="{% url 'verify_email_otp' %}" class="space-y-6">
+      {% csrf_token %}
+      <div>
+        <label for="otp" class="block text-sm font-medium text-gray-300 mb-2">Enter OTP</label>
+        <input 
+          type="text" 
+          name="otp" 
+          maxlength="6" 
+          required 
+          placeholder="******"
+          class="w-full px-4 py-3 text-center tracking-[0.5em] text-lg text-gray-100 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+      </div>
+
+      <button 
+        type="submit" 
+        class="w-full bg-green-600 hover:bg-green-500 text-white font-medium py-3 rounded-lg transition duration-200">
+        Verify OTP
+      </button>
     </form>
+  </div>
 </div>
-</body>
-</html>
+{% endblock %}

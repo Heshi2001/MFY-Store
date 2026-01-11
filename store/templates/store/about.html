@@ -1,195 +1,281 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
 
-  <title>MFY - About</title>
+{# 
+  expects in view/context:
+    about_page (optional)  -> AboutPage instance (fields: title, subtitle, about_text, background_image)
+    about_text             -> fallback text if about_page not provided
+    social_links           -> queryset/list of SocialLink {url, icon_class, name}
+    values                 -> queryset/list of Value {icon, title, description}
+    team_members           -> queryset/list of TeamMember (prefetched social_links)
+    services               -> queryset/list of Service {icon, title, description, link, button_text}
+    clients                -> queryset/list of Client {image, name}
+    request                 -> available in template for canonical url
+#}
 
-  <!-- Bootstrap core CSS -->
-  <link href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+{% block title %}
+  {{ about_page.title|default:"About Us | MFY Store" }}
+{% endblock %}
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/owl.css' %}">
-</head>
-<body>
+{% block extra_head %}
+  <!-- SEO meta -->
+  <meta name="description" content="{{ about_page.about_text|default:about_text|truncatechars:160 }}">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  <!-- Open Graph -->
+  <meta property="og:site_name" content="MFY Store">
+  <meta property="og:title" content="{{ about_page.title|default:'About Us - MFY Store' }}">
+  <meta property="og:description" content="{{ about_page.about_text|default:about_text|truncatechars:160 }}">
+  {% if about_page.background_image %}
+    <meta property="og:image" content="{{ about_page.background_image.url }}">
+  {% endif %}
+  <meta property="og:type" content="website">
 
-   <!-- Header Start -->
-  <header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-        <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
+  <!-- AOS (Animate On Scroll) CSS -->
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+ <section class="relative bg-gradient-to-b from-gray-900 via-black to-black pt-[calc(var(--navbar-height,11rem)+3rem)] pb-20 text-center overflow-hidden">
+  <div class="relative z-10 max-w-5xl mx-auto px-6" data-aos="fade-up">
+    <!-- Main Title -->
+    <h1 class="text-4xl md:text-6xl font-extrabold mb-3 text-white">
+      {{ about_page.title|default:"About MFY Store" }}
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="text-lg md:text-xl text-green-400 font-medium mb-6">
+      {{ about_page.subtitle|default:"Made For Dreamers and Creators" }}
+    </p>
+
+  </div>
+
+  {% comment %} Decorative faint background image {% endcomment %}
+  {% if about_page.background_image %}
+    <div class="absolute inset-0 bg-cover bg-center opacity-10"
+         style="background-image: url('{{ about_page.background_image.url }}'); filter: brightness(0.08);"></div>
+  {% else %}
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-black/60 to-transparent"></div>
+  {% endif %}
+</section>
+
+<!-- ABOUT & SOCIAL LINKS -->
+<section class="pt-0 pb-12 bg-black -mt-10">
+  <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-8 items-center">
+    <div class="relative group overflow-hidden rounded-2xl shadow-lg" data-aos="fade-right">
+      <img
+        src="{% if about_page.background_image %}{{ about_page.background_image.url }}{% else %}{% static 'store/images/MFYab.png' %}{% endif %}"
+        alt="About MFY Store"
+          class="object-contain w-full h-auto max-h-[420px] md:max-h-[380px] transform group-hover:scale-105 transition duration-700 ease-in-out rounded-2xl mx-auto"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition rounded-2xl"></div>
+    </div>
+
+    <div data-aos="fade-left">
+      <h2 class="text-3xl font-bold mb-3 text-white">Who We Are &amp; What We Do</h2>
+      <p class="text-gray-400 leading-relaxed mb-4 text-justify">
+        {{ about_page.about_text|default:about_text }}
+      </p>
+
+      <div class="flex items-center gap-4">
+        {% for icon in social_links %}
+          <a href="{{ icon.url }}" target="_blank" rel="noopener"
+             class="text-gray-400 hover:text-green-400 text-xl transition transform hover:scale-110"
+             aria-label="{{ icon.name|default:'social' }}">
+            <i class="fa {{ icon.icon_class }}" aria-hidden="true"></i>
+          </a>
+        {% empty %}
+          <p class="text-gray-600 text-sm">No social links configured yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION & VISION -->
+<section class="py-20 bg-gradient-to-b from-gray-900 to-black text-center">
+  <div class="max-w-5xl mx-auto px-6">
+    <h2 class="text-4xl font-bold mb-12" data-aos="fade-up">Our Mission &amp; Vision</h2>
+
+    <div class="grid gap-10 md:grid-cols-2">
+      <article class="bg-gray-800 rounded-2xl p-10 shadow-lg transform hover:-translate-y-1 transition duration-500"
+               data-aos="fade-right">
+        <div class="w-16 h-16 mx-auto mb-6 flex items-center justify-center bg-green-500/10 rounded-full">
+          <i class="fa-solid fa-bullseye text-green-400 text-3xl"></i>
+        </div>
+        <h3 class="text-2xl font-semibold mb-3">Our Mission</h3>
+        <p class="text-gray-400 leading-relaxed ">
+          {% if about_page %}{{ about_page.mission|default:"To empower individuals through innovative, sustainable and stylish products." }}{% else %}To empower individuals through innovative, sustainable and stylish products.{% endif %}
+        </p>
+      </article>
+
+      <article class="bg-gray-800 rounded-2xl p-10 shadow-lg transform hover:-translate-y-1 transition duration-500"
+               data-aos="fade-left">
+        <div class="w-16 h-16 mx-auto mb-6 flex items-center justify-center bg-green-500/10 rounded-full">
+          <i class="fa-solid fa-eye text-green-400 text-3xl"></i>
+        </div>
+        <h3 class="text-2xl font-semibold mb-3">Our Vision</h3>
+        <p class="text-gray-400 leading-relaxed">
+          {% if about_page %}{{ about_page.vision|default:"To become a globally trusted lifestyle brand that values design and sustainability." }}{% else %}To become a globally trusted lifestyle brand that values design and sustainability.{% endif %}
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES (wave animated) -->
+<section class="py-20 bg-black text-center border-t border-gray-800">
+  <div class="max-w-6xl mx-auto px-6">
+    <h2 class="text-4xl font-bold mb-12" data-aos="fade-up">Our Core Values</h2>
+
+    <div class="grid gap-8 md:grid-cols-3">
+      {% for value in values %}
+      <div class="bg-gray-800 rounded-2xl p-8 shadow-lg transform hover:-translate-y-1 transition"
+           data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+        <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-green-500/10 rounded-full">
+          <i class="fa {{ value.icon }} text-green-400 text-2xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">{{ value.title }}</h3>
+        <p class="text-gray-400 text-sm">{{ value.description }}</p>
+      </div>
+      {% empty %}
+      <div class="text-gray-500">No values configured yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="py-20 bg-gradient-to-b from-black to-gray-900">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <h2 class="text-4xl font-bold mb-12" data-aos="fade-up">Our Team Members</h2>
+
+    <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+      {% for member in team_members %}
+      <article class="bg-gray-800 rounded-2xl p-6 hover:bg-gray-700 transform hover:-translate-y-1 transition shadow-lg"
+               data-aos="zoom-in" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+        <div class="relative w-36 h-36 mx-auto mb-6 rounded-full overflow-hidden border-4 border-green-500">
+          <img src="{% if member.image %}{{ member.image.url }}{% else %}{% static 'store/images/avatar-placeholder.png' %}{% endif %}"
+               alt="{{ member.name }}" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex items-center justify-center gap-4 transition">
+            {% for soc in member.social_links.all %}
+              <a href="{{ soc.url }}" target="_blank" rel="noopener" class="text-green-400 hover:text-white text-lg">
+                <i class="fa {{ soc.icon_class }}"></i>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <h4 class="text-xl font-semibold">{{ member.name }}</h4>
+        <p class="text-green-400 text-sm mb-2">{{ member.role }}</p>
+        <p class="text-gray-400 text-sm">{{ member.description }}</p>
+      </article>
+      {% empty %}
+      <p class="text-gray-500">No team members yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="py-20 bg-black">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <h2 class="text-4xl font-bold mb-12" data-aos="fade-up">Our Services</h2>
+
+    <div class="grid gap-10 md:grid-cols-3">
+      {% for service in services %}
+      <div class="bg-gray-800 rounded-2xl p-8 hover:bg-gray-700 transform hover:-translate-y-1 transition shadow-xl"
+           data-aos="flip-left" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+        <div class="w-16 h-16 mx-auto mb-6 flex items-center justify-center bg-green-500/10 rounded-full">
+          <i class="fa {{ service.icon }} text-green-400 text-3xl"></i>
+        </div>
+        <h4 class="text-xl font-semibold mb-3">{{ service.title }}</h4>
+        <p class="text-gray-400 mb-6">{{ service.description }}</p>
+
+        {% if service.link %}
+        <a href="{{ service.link }}" class="inline-block bg-green-500 hover:bg-green-400 text-black font-semibold px-5 py-2 rounded-full transition">
+          {{ service.button_text|default:"Learn More" }}
         </a>
-        <!-- NavBar Toggler -->
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
-          aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- NavBar Items -->
-        <div class="collapse navbar-collapse" id="navbarResponsive">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="{% url 'products' %}"> Our Products</a></li>
-            <li class="nav-item active"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
-            <li class="nav-item "><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
-          </ul>
-        </div>
+        {% endif %}
       </div>
-    </nav>
-  </header>
-  <!-- Header End -->
-   
-    <!-- Page Content -->
-    <div class="page-heading about-heading header-text">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12 text-content">
-            <h4>about us</h4>
-            <h2>our company</h2>
-          </div>
-        </div>
-      </div>
+      {% empty %}
+      <p class="text-gray-500">No services configured yet.</p>
+      {% endfor %}
     </div>
+  </div>
+</section>
 
-    <div class="best-features about-features">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12 section-heading">
-            <h2>Our Background</h2>
-          </div>
-          <div class="col-md-6 right-image">
-            <img src="{% static 'store/images/feature-image.jpg' %}" alt="" />
-          </div>
-          <div class="col-md-6 left-content">
-            <h4>Who we are &amp; What we do?</h4>
-            <p>{{ about_text }}</p>
-            <ul class="social-icons">
-              {% for icon in social_links %}
-                <li><a href="{{ icon.url }}"><i class="fa {{ icon.icon_class }}"></i></a></li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
+<!-- PARTNERS / CLIENTS -->
+<section class="py-20 bg-gradient-to-b from-gray-900 to-black">
+  <div class="max-w-6xl mx-auto px-6 text-center">
+    <h2 class="text-4xl font-bold mb-12" data-aos="fade-up">Happy Partners</h2>
+
+    <div class="flex flex-wrap justify-center items-center gap-8">
+      {% for client in clients %}
+      <div class="w-40 h-24 flex items-center justify-center rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 transition transform hover:scale-105 shadow-lg"
+           data-aos="zoom-in-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+        <img src="{% if client.image %}{{ client.image.url }}{% else %}{% static 'store/images/client-placeholder.png' %}{% endif %}"
+             alt="{{ client.name }}"
+             class="w-full h-full object-cover" />
       </div>
+      {% empty %}
+      <p class="text-gray-500">No partners yet.</p>
+      {% endfor %}
     </div>
+  </div>
+</section>
+{% endblock %}
 
-    <!-- Team Members -->
-    <div class="team-members">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12 section-heading">
-            <h2>Our Team Members</h2>
-          </div>
+{% block page_js %}
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    // Initialize AOS with re-trigger on re-enter (once: false)
+    AOS.init({
+      duration: 900,
+      once: false, // retrigger when element re-enters the viewport
+      offset: 120,
+      easing: 'ease-in-out',
+    });
 
-          {% for member in team_members %}
-          <div class="col-md-4">
-            <div class="team-member">
-              <div class="thumb-container">
-                <img src="{% static member.image %}" alt="{{ member.name }}" />
-                <div class="hover-effect">
-                  <div class="hover-content">
-                    <ul class="social-icons">
-                      {% for icon in member.social_links %}
-                        <li><a href="{{ icon.url }}"><i class="fa {{ icon.icon_class }}"></i></a></li>
-                      {% endfor %}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div class="down-content">
-                <h4>{{ member.name }}</h4>
-                <span>{{ member.role }}</span>
-                <p>{{ member.description }}</p>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+    // Wave / ripple effect for values & other lists:
+    document.addEventListener('DOMContentLoaded', function () {
+      const waveNodes = document.querySelectorAll('[data-aos="zoom-in"]');
+      waveNodes.forEach((el, i) => {
+        // set progressive delay (150ms increments)
+        el.setAttribute('data-aos-delay', String(i * 150));
+      });
 
-    <!-- Services -->
-    <div class="services">
-      <div class="container">
-        <div class="row">
-          {% for service in services %}
-          <div class="col-md-4">
-            <div class="service-item">
-              <div class="icon"><i class="fa {{ service.icon }}"></i></div>
-              <div class="down-content">
-                <h4>{{ service.title }}</h4>
-                <p>{{ service.description }}</p>
-                <a href="{{ service.link }}" class="filled-button">{{ service.button_text }}</a>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+      // Also set delays for services and team flips if present
+      document.querySelectorAll('[data-aos="flip-left"]').forEach((el, i) => {
+        el.setAttribute('data-aos-delay', String(i * 120));
+      });
+      document.querySelectorAll('[data-aos="zoom-in-up"]').forEach((el, i) => {
+        el.setAttribute('data-aos-delay', String(i * 100));
+      });
 
-    <!-- Clients -->
-    <div class="happy-clients">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-12 section-heading">
-            <h2>Happy Partners</h2>
-          </div>
-          <div class="col-md-12">
-            <div class="owl-clients owl-carousel">
-              {% for client in clients %}
-              <div class="client-item">
-                <img src="{% static client.image %}" alt="Partner {{ forloop.counter }}" />
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-      <div class="container">
-          <div class="row">
-              <div class="col-md-12">
-                  <div class="inner-content text-center">
-                      <p>
-                          Copyright &copy; 2025 MFY.
-                      </p>
-                  </div>
-              </div>
-          </div>
-      </div>
-  </footer>
-    
-
-  <!-- Scripts -->
-  <script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-  <script src="{% static 'store/vendor/bootstrap/js/bootstrap.min.js' %}"></script>
-  <script src="{% static 'store/js/custom.js' %}"></script>
-  <script src="{% static 'store/js/owl.js' %}"></script>
-  <script src="{% static 'store/js/slick.js' %}"></script>
-  <script src="{% static 'store/js/isotope.js' %}"></script>
-  <script src="{% static 'store/js/accordions.js' %}"></script>
-  
-  <script language = "text/Javascript"> 
-      cleared[0] = cleared[1] = cleared[2] = 0; //set a cleared flag for each field
-      function clearField(t){                   //declaring the array outside of the
-      if(! cleared[t.id]){                      // function makes it static and global
-          cleared[t.id] = 1;  // you could use true and false, but that's more typing
-          t.value='';         // with more chance of typos
-          t.style.color='#fff';
-          }
+      // Refresh AOS to pick up dynamic delays
+      if (window.AOS) {
+        AOS.refresh();
       }
-    </script>
-  </body>
-</html>
+    });
+  </script>
+
+  {# JSON-LD structured data for SEO: Organization + Page #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "headline": "{{ about_page.title|default:'About MFY Store' }}",
+    "description": "{{ about_page.about_text|default:about_text|truncatechars:160 }}",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "MFY Store",
+      "url": "{{ request.build_absolute_uri|slice:':-1' }}",
+      "logo": "{% static 'store/images/MFY STANDARD DP (1).png' %}"
+      {% if social_links.exists %}
+      , "sameAs": [{% for s in social_links %}"{{ s.url }}"{% if not forloop.last %},{% endif %}{% endfor %}]
+      {% endif %}
+    }
+  }
+  </script>
+{% endblock %}

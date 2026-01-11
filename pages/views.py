@@ -1,13 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from .models import SitePage
 
-def refund(request):
-    return render(request, 'pages/refund.html')
-
-def shipping(request):
-    return render(request, 'pages/shipping.html')
-
-def privacy(request):
-    return render(request, 'pages/privacy.html')
-
-def terms(request):
-    return render(request, 'pages/terms.html')
+def site_page(request, slug):
+    page = get_object_or_404(SitePage, slug=slug)
+    return render(request, f"pages/{slug}.html", {"page": page})

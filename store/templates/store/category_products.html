@@ -1,211 +1,197 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ category.name }} - MFY Store</title>
-  <meta name="csrf-token" content="{{ csrf_token }}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <style>
-    /* Hide scrollbars */
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+{% block title %}{{ category.name }} | MFY Store{% endblock %}
 
-    /* Floating discount badge animation */
-    @keyframes floatBadge {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    .animate-float {
-      animation: floatBadge 2s ease-in-out infinite;
-    }
+{% block content %}
 
-    /* Add-to-cart glow on hover */
-    .add-to-cart-btn:hover {
-      box-shadow: 0 8px 20px rgba(0, 200, 151, 0.6);
-    }
-  </style>
-</head>
+<div x-data="searchComponent()" class="pt-[var(--navbar-height,4.5rem)] bg-black min-h-screen text-white">
 
-<body class="font-sans bg-black text-white">
-
-<!-- Navbar -->
-<header class="bg-black text-white shadow-md border-b border-gray-800 sticky top-0 z-50">
-  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
-      <div class="flex items-center md:hidden">
-        <button id="mobile-menu-button" class="focus:outline-none">
-          <i class="fa fa-bars text-2xl"></i>
-        </button>
-      </div>
-      <a href="{% url 'index' %}" class="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-        <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="h-10 w-auto">
-        <h2 class="text-xl font-bold">MADE FOR <em class="text-[#006A4E]">YOU</em></h2>
-      </a>
-      <div class="flex items-center space-x-4 ml-auto">
-        <a href="{% url 'cart' %}" class="relative flex items-center space-x-1 hover:text-[#006A4E]">
-          <i class="fa fa-shopping-cart text-xl"></i>
-          {% if cart_items_count %}
-          <span class="absolute -top-2 -right-2 bg-red-600 text-xs px-2 py-0.5 rounded-full">
-            {{ cart_items_count }}
-          </span>
-          {% endif %}
-        </a>
-        {% if user.is_authenticated %}
-          <div class="flex items-center space-x-2">
-            <span class="hidden md:inline text-gray-300">Hi,</span>
-            <a href="{% url 'account_dashboard' %}" 
-               class="bg-[#006A4E] hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
-              {{ user.username }}
-            </a>
-            <form method="post" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="hover:text-red-400 ml-2">
-                <i class="fa fa-sign-out-alt"></i>
-              </button>
-            </form>
-          </div>
-        {% else %}
-          <a href="{% url 'account_login' %}" 
-             class="bg-[#006A4E] hover:bg-green-700 px-4 py-2 rounded-lg text-white font-medium flex items-center space-x-2">
-            <i class="fa fa-user"></i>
-            <span class="hidden sm:inline">Login</span>
-          </a>
-        {% endif %}
-      </div>
+<!-- ✅ Category Header (Compact Height) -->
+<section class="relative text-center border-b border-gray-800">
+  {% if category.image %}
+    <!-- Category Image -->
+    <div class="relative h-32 sm:h-40 md:h-48 overflow-hidden">
+      <img src="{{ category.image.url }}"
+           alt="{{ category.name }} Banner"
+           class="w-full h-full object-cover opacity-85">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     </div>
-  </nav>
-  <div id="mobile-menu" class="hidden md:hidden bg-gray-900 px-4 py-2 space-y-2 border-t border-gray-700">
-    <a href="{% url 'index' %}" class="block hover:text-[#006A4E]">Home</a>
-    <a href="{% url 'products' %}" class="block hover:text-[#006A4E]">Our Products</a>
-    <a href="{% url 'about' %}" class="block hover:text-[#006A4E]">About Us</a>
-    <a href="{% url 'contact' %}" class="block hover:text-[#006A4E]">Contact Us</a>
-  </div>
-</header>
-
-<!-- Category Header -->
-<section class="text-center py-10 bg-gray-900 border-b border-gray-800">
-  <h1 class="text-3xl font-bold text-[#00C897]">{{ category.name }}</h1>
-  <p class="text-gray-400 mt-2">Discover exclusive items under "{{ category.name }}"</p>
-</section>
-
-<!-- Product Grid -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-  {% if products %}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-      {% for product in products %}
-      <div class="bg-gray-900 rounded-2xl overflow-hidden shadow-md group relative transition-transform transform hover:scale-105 hover:shadow-2xl">
-
-        <a href="{% url 'product_detail' product.id %}">
-          {% if product.first_image %}
-            <img src="{{ product.first_image.image.url }}" alt="{{ product.name }}" class="w-full h-64 object-cover">
-          {% else %}
-            <div class="w-full h-64 bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
-          {% endif %}
-        </a>
-
-        {% if product.discount_percent %}
-        <span class="absolute top-2 left-2 bg-[#00C897]/80 text-white shadow-md text-xs font-semibold px-3 py-1 rounded-md animate-float">
-          {{ product.discount_percent }}% OFF
-        </span>
-        {% endif %}
-
-        <!-- Product Info -->
-        <div class="p-4 text-center">
-          <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
-          {% if product.offer_price %}
-            <p class="mt-2">
-              <span class="text-gray-400 line-through text-sm">₹{{ product.price }}</span>
-              <span class="text-[#00A07A] font-bold ml-2">₹{{ product.offer_price }}</span>
-            </p>
-          {% else %}
-            <p class="mt-1 text-white font-bold">₹{{ product.price }}</p>
-          {% endif %}
-        </div>
-
-        <!-- Add to Cart Button -->
-        <button class="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0
-          bg-gradient-to-r from-[#00C897] to-[#00A07A] hover:from-[#00A07A] hover:to-[#008060]
-          text-white text-sm font-semibold py-2 rounded-md transition-all duration-300 ease-in-out add-to-cart-btn"
-          data-product-id="{{ product.id }}">
-         Add to Cart
-       </button>
-
-      </div>
-      {% endfor %}
+  {% elif category.parent and category.parent.image %}
+    <!-- Fallback: Parent Category Image -->
+    <div class="relative h-32 sm:h-40 md:h-48 overflow-hidden">
+      <img src="{{ category.parent.image.url }}"
+           alt="{{ category.parent.name }} Banner"
+           class="w-full h-full object-cover opacity-85">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
     </div>
   {% else %}
-    <p class="text-center text-gray-400 text-lg">No products available in this category yet.</p>
+    <!-- No Image -->
+    <div class="h-28 sm:h-36 bg-gray-900 flex items-center justify-center">
+      <p class="text-gray-500 italic">No banner image available</p>
+    </div>
   {% endif %}
-</section>
 
-<!-- Footer -->
-<footer class="bg-black text-white py-8 mt-12 border-t border-gray-800">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-8">
-    <div>
-      <h3 class="font-semibold text-lg mb-2">MFY Store</h3>
-      <p class="text-gray-400">Made For You – Bringing quality products to your doorstep.</p>
-    </div>
-    <div>
-      <h3 class="font-semibold text-lg mb-2">Quick Links</h3>
-      <ul class="space-y-2">
-        <li><a href="{% url 'terms' %}" class="hover:text-[#006A4E]">Terms & Conditions</a></li>
-        <li><a href="{% url 'privacy' %}" class="hover:text-[#006A4E]">Privacy Policy</a></li>
-        <li><a href="{% url 'refund' %}" class="hover:text-[#006A4E]">Refund & Cancellation</a></li>
-        <li><a href="{% url 'shipping' %}" class="hover:text-[#006A4E]">Shipping Policy</a></li>
-        <li><a href="{% url 'contact' %}" class="hover:text-[#006A4E]">Contact Us</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3 class="font-semibold text-lg mb-2">Follow Us</h3>
-      <div class="flex space-x-4">
-        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-facebook"></i></a>
-        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-twitter"></i></a>
-        <a href="#" class="hover:text-[#006A4E]"><i class="fab fa-instagram"></i></a>
+  <!-- Overlay Text -->
+  <div class="absolute inset-0 flex flex-col justify-center items-center z-10">
+    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-[#00C897] drop-shadow-md">
+      {{ category.name }}
+    </h1>
+    <p class="text-gray-300 mt-1 text-xs sm:text-sm md:text-base">
+      Explore products under “{{ category.name }}”
+    </p>
+  </div>
+</section>
+`
+  <!-- Sort & Filter Bar -->
+  <div class="flex justify-between items-center px-4 sm:px-8 py-4 border-b border-gray-800 sticky top-[var(--navbar-height,4.5rem)] bg-black z-30">
+    <div class="flex items-center space-x-3 relative">
+      <!-- SORT -->
+      <button id="sort-toggle"
+        class="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-md hover:bg-[#00A07A]/40 transition">
+        <i class="fa-solid fa-arrow-down-short-wide"></i>
+        <span class="text-sm font-medium">Sort</span>
+        <i id="sort-arrow" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+      </button>
+
+      <!-- Sort Dropdown -->
+      <div id="sort-dropdown"
+        class="absolute left-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg hidden animate-fade-in z-50">
+        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
+          hx-get="{% url 'category_products' category.slug %}?sort=newest" hx-target="#category-product-grid" hx-swap="innerHTML">
+          🕒 Newest
+        </button>
+        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
+          hx-get="{% url 'category_products' category.slug %}?sort=low-high" hx-target="#category-product-grid" hx-swap="innerHTML">
+          💸 Price: Low → High
+        </button>
+        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
+          hx-get="{% url 'category_products' category.slug %}?sort=high-low" hx-target="#category-product-grid" hx-swap="innerHTML">
+          💰 Price: High → Low
+        </button>
+        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
+          hx-get="{% url 'category_products' category.slug %}?sort=rating" hx-target="#category-product-grid" hx-swap="innerHTML">
+          ⭐ Top Rated
+        </button>
       </div>
     </div>
-  </div>
-  <div class="text-center text-gray-500 mt-8 text-sm">
-    &copy; 2025 MFY Store. All rights reserved.
-  </div>
-</footer>
 
-<!-- Toast Notification -->
-<div id="cart-toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg hidden z-50">
-  <span id="cart-toast-message"></span>
+    <!-- Right side -->
+    <div class="flex items-center space-x-3">
+      <p class="text-sm text-gray-400 hidden md:block">Showing {{ products|length }} items</p>
+
+      <button
+        class="hidden md:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-md hover:bg-[#00A07A]/30 transition"
+        @click="openDesktop()"
+        aria-label="Open search"
+      >
+        <i class="fas fa-search"></i>
+        <span class="text-sm text-gray-200">Search</span>
+      </button>
+
+      <p class="text-sm text-gray-400 md:hidden">Showing {{ products|length }} items</p>
+    </div>
+  </div>
+
+  <!-- Shimmer Loader -->
+  <div id="shimmer-loader" class="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 hidden">
+    {% for i in "123456789012" %}
+    <div class="animate-pulse bg-gray-800 rounded-xl overflow-hidden">
+      <div class="h-48 bg-gray-700"></div>
+      <div class="p-4 space-y-2">
+        <div class="h-4 bg-gray-700 rounded w-3/4"></div>
+        <div class="h-3 bg-gray-700 rounded w-1/2"></div>
+        <div class="h-4 bg-gray-700 rounded w-1/3 mt-2"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  
+  <!-- ✅ Product Grid Section -->
+  <div id="category-product-grid"
+     class="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 transition-opacity duration-300">
+    {% include "store/partials/_product_grid.html" %}
+  </div>
+
+<!-- Desktop Fullscreen Search Overlay (Alpine-controlled) -->
+<div
+  x-show="desktopOpen"
+  x-cloak
+  x-transition.opacity
+  @keydown.escape.window="closeDesktop()"
+  class="fixed inset-0 bg-black z-50 flex items-start sm:items-center justify-center p-6"
+  style="backdrop-filter: blur(6px);"
+>
+  <div class="w-full max-w-2xl">
+    <div class="relative w-full">
+      <button @click="closeDesktop()" class="absolute right-0 top-0 text-gray-400 hover:text-white text-3xl p-2 z-30">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <form method="GET" action="{% url 'search_results' %}" class="w-full">
+        <input
+          id="search-box-desktop"
+          name="query"
+          type="text"
+          autocomplete="off"
+          placeholder="Search for products..."
+          @input.debounce.250="onInput($event, 'desktop')"
+          @focus="onFocus('desktop')"
+          class="w-full rounded-full py-4 pl-6 pr-12 bg-gray-900 text-white text-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#00C896] transition"
+        />
+      </form>
+
+      <!-- Suggestions (desktop) -->
+      <div
+        id="suggestions-desktop"
+        class="hidden mt-3 w-full bg-gray-800 border border-gray-700 rounded-xl shadow-xl max-h-80 overflow-y-auto text-white"
+      ></div>
+    </div>
+  </div>
 </div>
 
-<!-- Scripts -->
-<script>
-  // Mobile menu toggle
-  document.getElementById("mobile-menu-button").addEventListener("click", () => {
-    document.getElementById("mobile-menu").classList.toggle("hidden");
-  });
+<!-- Mobile bottom-fixed search bar -->
+<div class="md:hidden">
+  <div class="fixed bottom-0 left-0 w-full bg-gray-900 border-t border-gray-800 p-3 z-40 fixed-search">
+    <form method="GET" action="{% url 'search_results' %}" class="relative">
+      <div class="relative w-full">
+        <input
+          id="search-box-mobile"
+          name="query"
+          type="text"
+          autocomplete="off"
+          placeholder="Search for products..."
+          @input.debounce.250="onInput($event, 'mobile')"
+          @focus="openMobileSheet()"
+          class="w-full rounded-full py-2 pl-4 pr-10 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00C896] transition"
+        />
+        <button type="submit" class="absolute right-3 top-2.5 text-gray-400 hover:text-white">
+          <i class="fas fa-search"></i>
+        </button>
 
-  // Add to Cart AJAX Toast
-  document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const productId = btn.getAttribute("data-product-id");
-      fetch("{% url 'add_to_cart' 0 %}".replace('0', productId), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
-        },
-        body: JSON.stringify({ product_id: productId, quantity: 1 })
-      })
-      .then(res => res.json())
-      .then(data => {
-        const toast = document.getElementById("cart-toast");
-        document.getElementById("cart-toast-message").innerText = data.message || "Added to cart!";
-        toast.classList.remove("hidden");
-        setTimeout(() => toast.classList.add("hidden"), 3000);
-      });
-    });
-  });
+        <!-- Mobile suggestions sheet -->
+        <div
+          id="suggestions-mobile"
+          x-show="mobileSheetOpen"
+          x-cloak
+          x-transition:enter="sheet-enter sheet-enter-active"
+          x-transition:leave="sheet-leave sheet-leave-active"
+          @click.away="closeMobileSheet()"
+          class="absolute bottom-full mb-3 left-0 w-full bg-gray-800 border border-gray-700 rounded-xl shadow-xl max-h-72 overflow-y-auto text-white z-50"
+        ></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block page_js %}
+<script>
+  const searchSuggestionsURL = "{% url 'search_suggestions' %}";
 </script>
-</body>
-</html>
+<script src="{% static 'store/js/search_suggestions.js' %}"></script>
+<script src="{% static 'store/js/filters_sort_htmx.js' %}"></script>
+{% endblock %}

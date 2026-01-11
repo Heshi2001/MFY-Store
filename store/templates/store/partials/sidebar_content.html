@@ -1,0 +1,69 @@
+{% load static %}
+
+<!-- Sidebar Header -->
+  <div class="relative flex flex-col items-center justify-center p-4 border-b border-gray-700">
+    <div class="flex flex-col items-center justify-center">
+      <img src="{% static 'store/images/logo.png' %}" alt="MFY Logo" class="h-20 w-24 block m-0 p-0 animate-fade-in">
+      <h1 class="text-lg font-semibold m-0 p-0 -mt-1 leading-none animate-fade-in">Made For You</h1>
+    </div>
+    <button id="close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl transition-transform duration-300 hover:rotate-90">&times;</button>
+  </div>
+
+  <!-- Top Navigation Links -->
+  <div class="p-4 space-y-2 border-b border-gray-700 animate-slide-in">
+    <a href="{% url 'index' %}" class="block hover:text-green-400">Home</a>
+  </div>
+
+  <!-- Sidebar Categories -->
+  <div class="p-5 space-y-2 scrollbar-hide flex-1 animate-slide-in">
+    <h2 class="text-gray-400 text-sm uppercase tracking-wide mb-2">Categories</h2>
+    {% include 'store/partials/category_tree.html' with categories=sidebar_categories %}
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="mt-auto border-t border-gray-700 bg-gray-900 p-4 animate-slide-in">
+    <ul class="flex flex-col divide-y divide-gray-800 rounded-lg overflow-hidden bg-gray-800/40 mb-4">
+      <li>
+        <a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+          <i class="fa-solid fa-heart text-pink-400"></i>
+          <span class="text-sm">Wishlist</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'orders' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+          <i class="fa-solid fa-box text-yellow-400"></i>
+          <span class="text-sm">My Orders</span>
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'faq' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+          <i class="fa-solid fa-headset text-green-400"></i>
+          <span class="text-sm">Support</span>
+        </a>
+      </li>
+    </ul>
+
+    <h3 class="text-gray-400 uppercase text-[11px] font-semibold mb-3 tracking-wider">Your Account</h3>
+    {% if user.is_authenticated %}
+    <div class="flex flex-col gap-2">
+      <a href="{% url 'account_dashboard' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+        <i class="fa-regular fa-user text-blue-400"></i>
+        <span class="text-sm">{{ user.username }}</span>
+      </a>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-red-600 hover:text-white transition rounded-lg">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span class="text-sm">Logout</span>
+        </button>
+      </form>
+    </div>
+    {% else %}
+    <a href="{% url 'account_login' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
+      <i class="fa-regular fa-user text-blue-400"></i>
+      <span class="text-sm">Login</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+      

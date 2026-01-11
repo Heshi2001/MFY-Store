@@ -1,52 +1,165 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Addresses</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="{% static 'store/css/address.css' %}" rel="stylesheet">
-</head>
-<body class="bg-light">
 
-<div class="container py-5">
-  <h2 class="mb-4">My Addresses</h2>
+{% block title %}My Addresses | {{ site_name|default:"MFY Store" }}{% endblock %}
+{% block meta_description %}Manage your saved shipping addresses — add, edit, set default, or delete addresses for faster checkout.{% endblock %}
 
-  <a href="{% url 'address_add' %}" class="btn btn-primary mb-3">➕ Add New Address</a>
+{% block extra_head %}
+<style>
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fadeInUp { animation: fadeInUp 420ms ease-out both; }
+  .glow-default { box-shadow: 0 0 12px rgba(16, 185, 129, 0.6), 0 0 24px rgba(16, 185, 129, 0.4); border-color: rgba(16,185,129,0.4) !important; }
+  #toast-default { transition: all .4s ease; }
+</style>
+{% endblock %}
 
-  {% if addresses %}
-    <div class="row">
+{% block content %}
+<main class="min-h-screen bg-black text-slate-100 pt-40 pb-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+      <div>
+        <h1 class="text-3xl font-extrabold tracking-tight">My Addresses</h1>
+        <p class="mt-1 text-sm text-slate-400">Saved billing & shipping addresses for faster checkout.</p>
+      </div>
+
+      <a href="{% url 'address_add' %}"
+        class="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium shadow-sm
+            bg-gradient-to-r from-emerald-600 to-green-500 
+            hover:scale-[1.03] transition-transform
+             w-fit md:w-fit">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Add New Address
+      </a>
+    </div>
+
+    {% if addresses %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for address in addresses %}
-        <div class="col-md-6 mb-4">
-          <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-body">
-              <h5 class="card-title">
+        <article data-address-id="{{ address.id }}"
+          class="rounded-2xl p-5 shadow-md border border-slate-800 bg-slate-800/40 animate-fadeInUp transition-all {% if address.is_default %}glow-default{% endif %}">
+
+          <!-- HEADER -->
+          <header class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold leading-6">
                 {{ address.first_name }} {{ address.last_name }}
                 {% if address.is_default %}
-                  <span class="badge bg-success ms-2">Default</span>
+                  <span class="ml-2 inline-flex items-center rounded-full bg-emerald-600/20 text-emerald-300 px-2 py-0.5 text-xs font-medium">Default</span>
                 {% endif %}
-              </h5>
-              <p class="card-text mb-1">
-                {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}
-              </p>
-              <p class="card-text mb-1">{{ address.city }}, {{ address.state }} - {{ address.postal_code }}</p>
-              <p class="card-text mb-1">{{ address.country }}</p>
-              <p class="card-text"><strong>Phone:</strong> {{ address.phone }}</p>
-
-              <div class="d-flex flex-wrap gap-2 mt-3">
-                <a href="{% url 'edit_address' address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
-              </div>
+              </h3>
+              <p class="mt-1 text-sm text-slate-400">Phone: <span class="text-slate-200 font-medium">{{ address.phone }}</span></p>
             </div>
+
+            <div class="flex items-center gap-2">
+              <!-- Copy -->
+              <button type="button" class="copy-btn p-2 rounded-md hover:bg-slate-700/60" aria-label="Copy">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2"/><rect x="8" y="3" width="13" height="13" rx="2"/></svg>
+              </button>
+
+              {% if not address.is_default %}
+              <!-- Set Default -->
+              <form action="{% url 'set_default_address' address.id %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-3 py-2 text-xs rounded-full bg-slate-800/60 hover:bg-emerald-600/20 text-emerald-300 transition">Set default</button>
+              </form>
+              {% endif %}
+            </div>
+          </header>
+
+          <!-- BODY -->
+          <div class="mt-4 text-sm text-slate-300 leading-relaxed">
+            <p>{{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}</p>
+            <p class="mt-1">{{ address.city }}, {{ address.state }} - {{ address.postal_code }}</p>
+            <p class="mt-1">{{ address.country }}</p>
           </div>
+        
+<footer class="mt-4 flex flex-wrap gap-2">
+    <a href="{% url 'edit_address' address.id %}"
+       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-700 text-sm hover:bg-slate-800 transition">
+       Edit
+    </a>
+
+    {% if not address.is_default %}
+        <a href="{% url 'address_delete_confirm' address.id %}"
+           class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-600 text-sm text-red-300 hover:bg-red-700/20 transition">
+            Delete
+        </a>
+    {% else %}
+        <button disabled
+                class="px-3 py-2 rounded-lg border border-slate-700/40 text-slate-600 cursor-not-allowed text-sm">
+            Delete
+        </button>
+    {% endif %}
+</footer>       
+</article>
+{% endfor %}
+</div>
+{% else %}
+      <div class="rounded-2xl p-8 bg-slate-800/40 border border-slate-700 text-center">
+        <p class="text-lg font-medium">You have no saved addresses yet.</p>
+        <p class="mt-2 text-sm text-slate-400">Add an address now to speed up your next checkout.</p>
+        <div class="mt-4">
+          <a href="{% url 'address_add' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-600 text-sm font-semibold shadow-sm">Add Address</a>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info">You have no saved addresses. Add one now!</div>
-  {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast-default" class="fixed top-6 right-6 bg-emerald-600 text-white px-4 py-2 rounded-xl shadow-lg opacity-0 pointer-events-none">
+  Default address updated!
 </div>
 
-</body>
-</html>
+{% block extra_scripts %}
+<script>
+// Copy
+function copyText(text){ 
+  navigator.clipboard.writeText(text);
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+
+  const card = btn.closest('article');
+  const lines = Array.from(card.querySelectorAll('p'))
+                      .map(x => x.innerText.trim())
+                      .join('\n');
+
+  copyText(lines);
+
+  // Change to tick icon
+  const original = btn.innerHTML;
+  btn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" fill="none" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M5 13l4 4L19 7"/>
+    </svg>
+  `;
+
+  // Revert after 1.5s
+  setTimeout(() => { btn.innerHTML = original; }, 1500);
+});
+
+// Confirm Delete
+function confirmDelete(e){ if(!confirm('Delete this address?')){ e.preventDefault(); return false;} return true; }
+
+// Default Toast Animation
+const toast = document.getElementById('toast-default');
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('default_updated')) {
+  toast.classList.remove('opacity-0');
+  toast.classList.add('opacity-100');
+  setTimeout(()=>{
+    toast.classList.add('opacity-0');
+    toast.classList.remove('opacity-100');
+  }, 1800);zs
+}
+</script>
+{% endblock %}
+{% endblock %}

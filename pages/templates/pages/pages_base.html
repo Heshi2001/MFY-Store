@@ -4,59 +4,191 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}MFY Store{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}MFY Store - Shop Your Style{% endblock %}">
+  <title>{% block title %}MFY Store | Made For You{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" href="{% static 'images/favicon.ico' %}">
-</head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+
+  <!-- AOS Animations -->
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Header -->
-  <header class="bg-gray-900 text-white shadow">
-    <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-      <a href="/" class="text-2xl font-bold tracking-wide">MFY Store</a>
-      <nav class="space-x-6 hidden sm:block">
-        <a href="/" class="hover:text-gray-300">Home</a>
-        <a href="/store" class="hover:text-gray-300">Shop</a>
-        <a href="{% url 'contact' %}" class="hover:text-gray-300">Contact</a>
-      </nav>
-    </div>
-  </header>
+  <!-- Global custom CSS -->
+  <link rel="stylesheet" href="{% static 'store/css/custom.css' %}">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-6 py-12">
-    {% block content %}{% endblock %}
-  </main>
+  <!-- 🌟 Typography Enhancements -->
+  <style>
 
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-gray-300 mt-10">
-    <div class="max-w-7xl mx-auto px-6 py-8 grid md:grid-cols-3 gap-8">
-      <div>
-        <h3 class="text-lg font-semibold mb-3">MFY Store</h3>
-        <p class="text-sm">Made for you — fashion, comfort, and quality combined.</p>
-      </div>
-      <div>
-        <h3 class="text-lg font-semibold mb-3">Quick Links</h3>
-        <ul class="space-y-2 text-sm">
-          <li><a href="{% url 'terms' %}" class="hover:text-white">Terms & Conditions</a></li>
-          <li><a href="{% url 'privacy' %}" class="hover:text-white">Privacy Policy</a></li>
-          <li><a href="{% url 'refund' %}" class="hover:text-white">Refund & Cancellation</a></li>
-          <li><a href="{% url 'shipping' %}" class="hover:text-white">Shipping Policy</a></li>
-          <li><a href="{% url 'contact' %}" class="hover:text-white">Contact Us</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="text-lg font-semibold mb-3">Follow Us</h3>
-        <div class="flex space-x-4 text-xl">
-          <a href="#" class="hover:text-white"><i class="fa-brands fa-instagram"></i></a>
-          <a href="#" class="hover:text-white"><i class="fa-brands fa-facebook"></i></a>
-          <a href="#" class="hover:text-white"><i class="fa-brands fa-x-twitter"></i></a>
-        </div>
-      </div>
-    </div>
-    <p class="text-center text-sm py-4 border-t border-gray-700">&copy; 2025 MFY Store. All rights reserved.</p>
-  </footer>
+  /* Stylish font setup */
+  body {
+    font-family: 'Inter', sans-serif;
+  }
 
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  /* Page Heading (Dynamic Title) */
+  .prose h1 {
+    font-family: 'Playfair Display', serif;
+    @apply text-white font-bold mb-6;
+
+    /* Responsive size */
+    @apply text-2xl sm:text-3xl md:text-4xl lg:text-5xl;
+  }
+
+  /* Section headings inside content */
+  .prose h2 {
+    font-family: 'Playfair Display', serif;
+    @apply text-gray-100 mt-10 mb-4 font-semibold;
+
+    /* Responsive size */
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+
+  /* Paragraphs */
+  .prose p {
+    @apply text-gray-300 leading-relaxed;
+
+    /* Responsive text */
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  /* Lists */
+  .prose ul {
+    @apply list-disc pl-6 space-y-2 text-gray-300;
+    @apply text-sm sm:text-base md:text-lg;
+  }
+
+  /* Bold text inside content */
+  .prose strong {
+    @apply text-white font-semibold;
+  }
+
+</style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="font-sans bg-black text-white">
+
+  <!-- Global Navbar -->
+  {% include 'store/partials/navbar.html' %}
+
+  <!-- ========================= -->
+  <!-- 🌟 POLICY LAYOUT WRAPPER -->
+  <!-- ========================= -->
+
+<!-- 🌟 MOBILE POLICY NAV (Only on Mobile) -->
+<div class="lg:hidden max-w-7xl mx-auto pt-40 px-6 bg-gray-800 border border-gray-800 
+            rounded-xl p-3 mb-5 text-center text-sm text-gray-300">
+
+  <a href="{% url 'privacy-policy' %}"
+     class="{% if request.resolver_match.url_name == 'privacy-policy' %}
+              text-green-400 font-semibold
+            {% else %}
+              hover:text-white
+            {% endif %}">
+    Privacy
+  </a>
+
+  <span class="mx-2 text-gray-500">|</span>
+
+  <a href="{% url 'terms-conditions' %}"
+     class="{% if request.resolver_match.url_name == 'terms-conditions' %}
+              text-green-400 font-semibold
+            {% else %}
+              hover:text-white
+            {% endif %}">
+    Terms
+  </a>
+
+  <span class="mx-2 text-gray-500">|</span>
+
+  <a href="{% url 'refund-policy' %}"
+     class="{% if request.resolver_match.url_name == 'refund-policy' %}
+              text-green-400 font-semibold
+            {% else %}
+              hover:text-white
+            {% endif %}">
+    Refund
+  </a>
+
+  <span class="mx-2 text-gray-500">|</span>
+
+  <a href="{% url 'shipping-policy' %}"
+     class="{% if request.resolver_match.url_name == 'shipping-policy' %}
+              text-green-400 font-semibold
+            {% else %}
+              hover:text-white
+            {% endif %}">
+    Shipping
+  </a>
+
+</div>
+
+<div class="flex max-w-7xl mx-auto pt-6 lg:pt-40 px-6 lg:px-12 gap-10">
+      
+      <!-- ⭐ Sidebar -->
+      <aside class="hidden lg:block w-64 sticky top-32 h-fit bg-gray-800 border border-gray-800 rounded-2xl p-5"
+             data-aos="fade-right" data-aos-duration="700">
+
+          <h3 class="text-lg font-bold text-white mb-4">Our Policies</h3>
+
+          <ul class="space-y-3 text-gray-300">
+              <li><a href="{% url 'privacy-policy' %}" class="hover:text-white">🔏 Privacy Policy</a></li>
+              <li><a href="{% url 'terms-conditions' %}" class="hover:text-white">📜 Terms & Conditions</a></li>
+              <li><a href="{% url 'refund-policy' %}" class="hover:text-white">💸 Refund Policy</a></li>
+              <li><a href="{% url 'shipping-policy' %}" class="hover:text-white">🚚 Shipping Policy</a></li>
+          </ul>
+      </aside>
+
+      <!-- ⭐ Main Content Area -->
+      <main class="w-full prose prose-invert max-w-none text-gray-300 leading-relaxed"
+            data-aos="fade-up" data-aos-duration="700">
+
+          {% block content %}
+          {% endblock %}
+
+          {% block structured_data %}
+          {% endblock %}
+      </main>
+  </div>
+
+  <!-- Global Footer -->
+  {% include 'store/partials/footer.html' %}
+
+  <!-- Toast Notification -->
+  <div id="cart-toast" role="status" aria-live="polite"
+    class="hidden fixed bottom-5 right-5 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 translate-y-5 z-50">
+    <p id="cart-toast-message" class="text-sm font-medium"></p>
+  </div>
+
+  {% block extra_js %}
+  <script>
+    const ADD_TO_CART_URL = "{% url 'add_to_cart' 0 %}";
+    const SEARCH_SUGGESTIONS_URL = "{% url 'search_suggestions' %}";
+  </script>
+
+  <script src="{% static 'store/js/main.js' %}" defer></script>
+  <script src="{% static 'store/js/searchComponent.js' %}" defer></script>
+  <script src="{% static 'store/js/wishlist_cart.js' %}" defer></script>
+  <script src="{% static 'store/js/banner_carousel.js' %}" defer></script>
+  <script src="{% static 'store/js/scroll_buttons.js' %}" defer></script>
+  <script src="{% static 'store/js/search.js' %}" defer></script>
+
+  <!-- Alpine.js -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- AOS Init -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({ once: true });
+  </script>
+  {% endblock %}
+
+  {% block page_js %}{% endblock %}
+
 </body>
 </html>

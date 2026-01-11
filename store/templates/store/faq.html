@@ -1,155 +1,149 @@
+{% extends "store/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MFY - FAQ</title>
-  <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="{% static 'store/vendor/bootstrap/css/bootstrap.min.css' %}">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-  <link rel="stylesheet" href="{% static 'store/css/templatemo-sixteen.css' %}">
-  <link rel="stylesheet" href="{% static 'store/css/faq.css' %}">
-</head>
-<body>
 
-<!-- Header -->
-<header class="">
-    <nav class="navbar navbar-expand-lg">
-      <div class="container">
-         <a class="navbar-brand d-flex align-items-center logo-container" href="{% url 'index' %}">
-          <img src="{% static 'store/images/MFY STANDARD DP (1).png' %}" alt="Logo" class="logo-img mb-1" />
-          <h2 class="mb-0 text-logo">MADE FOR<em> YOU</em></h2>
-        </a>
-      </div>
-    </nav>
-  </header>
+{% block title %}FAQ | MFY Store{% endblock %}
 
-<!-- Page Heading -->
-<div class="page-heading header-text">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="text-content">
-          <h4>frequently asked questions</h4>
-          <h2>Have a Question?</h2>
-        </div>
+{% block content %}
+
+<main class="relative z-10">
+  <!-- FAQ Section -->
+  <section 
+    class="max-w-4xl mx-auto px-4 pt-40 pb-10 md:pt-42 md:pb-12 text-gray-100" 
+    x-data="faqPage()"
+  >
+    <!-- Heading -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-green-400 mb-3 animate-fade-in">
+        Frequently Asked Questions
+      </h1>
+      <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
+        Find quick answers to the most common questions about MFY Store.
+      </p>
+    </div>
+
+    <!-- Search box with auto-suggest -->
+    <div class="relative mb-10 max-w-md mx-auto">
+      <input 
+        type="text"
+        x-model="searchQuery"
+        x-on:input="filterFAQs"
+        placeholder="Search your question..."
+        class="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-xl focus:ring-2 focus:ring-green-500 focus:outline-none text-gray-100 placeholder-gray-500 transition-all duration-200"
+      />
+      <div 
+        x-show="suggestions.length > 0"
+        class="absolute z-10 w-full bg-gray-800 border border-gray-700 mt-2 rounded-xl shadow-lg overflow-hidden"
+      >
+        <template x-for="(suggestion, index) in suggestions" :key="index">
+          <div 
+            @click="selectSuggestion(suggestion)" 
+            class="px-4 py-2 hover:bg-green-600 hover:text-white cursor-pointer text-sm text-gray-300 transition-all duration-150"
+          >
+            <span x-text="suggestion"></span>
+          </div>
+        </template>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- FAQ Section -->
-<section class="faq-section py-5">
-  <div class="container">
-    <div class="accordion" id="faqAccordion">
-
-      <!-- FAQ Item 1 -->
-      <div class="card">
-        <div class="card-header" id="faq1">
-          <h5 class="mb-0">
-            <button class="btn btn-link" data-toggle="collapse" data-target="#collapse1" aria-expanded="true">
-              What is Made For You (MFY)?
-            </button>
-          </h5>
-        </div>
-        <div id="collapse1" class="collapse show" data-parent="#faqAccordion">
-          <div class="card-body">
-            MFY is a fashion brand offering customized clothing crafted uniquely for you.
+    <!-- FAQ List -->
+    <div class="space-y-3 md:space-y-4" id="faq-container">
+      {% for faq in faqs %}
+      <div 
+        class="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden transition-all hover:border-green-500 animate-slide-up"
+        x-data="{ open: false }"
+      >
+        <button 
+          @click="open = !open"
+          class="w-full flex justify-between items-center p-5 text-left focus:outline-none group"
+        >
+          <div class="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 class="w-5 h-5 text-green-400 group-hover:scale-110 transition-transform" 
+                 fill="none" 
+                 viewBox="0 0 24 24" 
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h6m-3-9a9 9 0 100 18 9 9 0 000-18z" />
+            </svg>
+            <span class="text-lg font-semibold group-hover:text-green-400 transition-colors">
+              {{ faq.question }}
+            </span>
           </div>
+          <i 
+            class="fa-solid fa-chevron-down text-gray-400 transition-all duration-300"
+            :class="{ 'rotate-180 text-green-400': open }"
+          ></i>
+        </button>
+        <div 
+          x-show="open"
+          x-collapse
+          class="px-5 pb-5 text-gray-300 text-sm leading-relaxed"
+        >
+          {{ faq.answer|linebreaks }}
         </div>
       </div>
-
-      <!-- FAQ Item 2 -->
-      <div class="card">
-        <div class="card-header" id="faq2">
-          <h5 class="mb-0">
-            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse2">
-              How can I place an order?
-            </button>
-          </h5>
-        </div>
-        <div id="collapse2" class="collapse" data-parent="#faqAccordion">
-          <div class="card-body">
-            Browse our products, select size, color, and add to cart. Proceed to checkout and fill your shipping details.
-          </div>
-        </div>
+      {% empty %}
+      <div class="text-center mt-12 animate-fade-in">
+        <img src="{% static 'store/images/empty-faq.svg' %}" class="w-36 h-36 mx-auto opacity-80 animate-float" alt="No FAQs">
+        <p class="text-gray-400 mt-3 text-sm">No FAQs available at the moment.</p>
       </div>
-
-      <!-- FAQ Item 3 -->
-      <div class="card">
-        <div class="card-header" id="faq3">
-          <h5 class="mb-0">
-            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse3">
-              What payment methods do you accept?
-            </button>
-          </h5>
-        </div>
-        <div id="collapse3" class="collapse" data-parent="#faqAccordion">
-          <div class="card-body">
-            We accept UPI, debit/credit cards, net banking, and cash on delivery (in select areas).
-          </div>
-        </div>
-      </div>
-
-      <!-- FAQ Item 4 -->
-      <div class="card">
-        <div class="card-header" id="faq4">
-          <h5 class="mb-0">
-            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse4">
-              Do you offer customization?
-            </button>
-          </h5>
-        </div>
-        <div id="collapse4" class="collapse" data-parent="#faqAccordion">
-          <div class="card-body">
-            Yes! You can request size, fit, color, and even embroidery personalization on select products.
-          </div>
-        </div>
-      </div>
-
-      <!-- FAQ Item 5 -->
-      <div class="card">
-        <div class="card-header" id="faq5">
-          <h5 class="mb-0">
-            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapse5">
-              What’s your return and exchange policy?
-            </button>
-          </h5>
-        </div>
-        <div id="collapse5" class="collapse" data-parent="#faqAccordion">
-          <div class="card-body">
-            Returns and exchanges are accepted within 7 days of delivery for unused items. Custom orders may not be eligible.
-          </div>
-        </div>
-      </div>
-
+      {% endfor %}
     </div>
-  </div>
-</section>
 
-<!-- Go to Home Button -->
-<div class="text-center mb-5">
-  <a href="{% url 'index' %}" class="btn btn-primary go-home-btn">
-    <i class="fa fa-home mr-2"></i> Go to Home
-  </a>
-</div>
-
-<!-- Footer -->
- <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12">
-          <div class="inner-content">
-            <p>Copyright &copy; 2025 MFY.</p>
-          </div>
-        </div>
-      </div>
+    <!-- Go Home Button -->
+    <div class="text-center my-10">
+      <a href="{% url 'index' %}" 
+         class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-green-500/30">
+        <i class="fa fa-home"></i> Go to Home
+      </a>
     </div>
-  </footer>
+  </section>
+</main>
 
-<script src="{% static 'store/vendor/jquery/jquery.min.js' %}"></script>
-<script src="{% static 'store/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-</body>
-</html>
+<!-- Floating WhatsApp / Live Chat -->
+<a href="https://wa.me/{{ whatsapp_number|default:'+919876543210' }}"
+   target="_blank"
+   class="fixed bottom-6 right-6 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full shadow-lg transition-all duration-300 animate-fade-in">
+  <i class="fa-brands fa-whatsapp text-xl animate-pulse"></i>
+  <span class="hidden sm:inline text-sm font-medium">Chat with us</span>
+</a>
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+function faqPage() {
+  return {
+    searchQuery: '',
+    suggestions: [],
+    filterFAQs() {
+      const query = this.searchQuery.toLowerCase();
+      this.suggestions = [];
+      document.querySelectorAll('#faq-container > div').forEach(faq => {
+        const question = faq.querySelector('span').innerText.toLowerCase();
+        faq.style.display = question.includes(query) ? 'block' : 'none';
+        if (question.includes(query) && query.length > 0) {
+          this.suggestions.push(faq.querySelector('span').innerText);
+        }
+      });
+    },
+    selectSuggestion(text) {
+      this.searchQuery = text;
+      this.filterFAQs();
+      this.suggestions = [];
+    }
+  }
+}
+</script>
+
+<!-- Subtle Animations -->
+<style>
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+.animate-float { animation: float 3s ease-in-out infinite; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+.animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+@keyframes slideUp { from{opacity:0;transform:translateY(15px);} to{opacity:1;transform:translateY(0);} }
+.animate-slide-up { animation: slideUp 0.6s ease-out both; }
+</style>
+{% endblock %}

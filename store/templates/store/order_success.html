@@ -1,55 +1,282 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Success</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 40px 60px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        h1 {
-            font-size: 2.5rem;
-            color: #22c55e; /* green */
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1.2rem;
-            color: #374151; /* gray-700 */
-        }
-        a {
-            display: inline-block;
-            margin-top: 25px;
-            text-decoration: none;
-            background-color: #3b82f6; /* blue */
-            color: white;
-            padding: 12px 25px;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        a:hover {
-            background-color: #2563eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🎉 Order Placed Successfully!</h1>
-        <p>Thank you for your purchase. Your order has been confirmed.</p>
-        <a href="/">Go to Homepage</a>
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Order Success | MFY Store{% endblock %}
+
+{% block content %}
+
+<section class="min-h-screen flex flex-col items-center justify-center 
+  bg-gradient-to-br from-gray-900 via-black to-gray-950 text-white relative 
+  overflow-hidden px-4 pt-[calc(var(--navbar-height,4.5rem)+1.5rem)]">
+
+  <!-- Background Glow -->
+  <div class="hidden sm:block absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(16,185,129,0.12),transparent_60%)]"></div>
+  <div class="hidden sm:block absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(59,130,246,0.06),transparent_60%)]"></div>
+
+  <div class="relative z-10 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
+
+    <!-- LEFT: Summary Card -->
+    <div class="bg-gray-900/90 border border-gray-800 rounded-3xl shadow-2xl p-6 sm:p-8 flex flex-col justify-center items-center text-center animate-fadeIn">
+
+      <!-- Success Icon -->
+      <div class="flex justify-center mb-5">
+        <div class="h-16 w-16 sm:h-20 sm:w-20 flex items-center justify-center rounded-full bg-green-500/20 border border-green-400 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+               stroke-width="2" stroke="currentColor" class="w-8 h-8 sm:w-10 sm:h-10 text-green-400">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-2xl sm:text-3xl font-bold text-green-400 mb-2">Order Placed!</h1>
+      <p class="text-gray-300 text-sm sm:text-base mb-6 leading-relaxed">
+        Thanks for your order <span class="font-semibold text-green-400">#{{ order.id }}</span>.<br>
+        We’re processing it and will ship soon!
+      </p>
+
+      <!-- Order Info -->
+      <div class="bg-gray-800/60 border border-gray-700 rounded-2xl text-left w-full max-w-sm p-5 mb-6 shadow-inner">
+        <h2 class="text-base font-semibold text-white mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-green-400"></i> Summary
+        </h2>
+        <div class="text-gray-300 text-sm space-y-2">
+          <div class="flex justify-between"><span>Order Date:</span><span>{{ order.created_at|date:"M d, Y" }}</span></div>
+
+          {% comment %}
+            Use order.estimated_delivery if set (model field), otherwise use estimated_delivery passed from view.
+            If neither exist, compute fallback in template (today + 5 days) via simple filter; but typically view provides it.
+          {% endcomment %}
+          <div class="flex justify-between">
+            <span>Delivery:</span>
+            <span class="text-blue-400">
+              {% if order.estimated_delivery %}
+                {{ order.estimated_delivery|date:"M d, Y" }}
+              {% elif estimated_delivery %}
+                {{ estimated_delivery }}
+              {% else %}
+                {% now "Y-m-d" as today_iso %}
+                {{ today_iso }} <!-- fallback raw date; view usually provides estimated_delivery -->
+              {% endif %}
+            </span>
+          </div>
+          
+          <!-- ✅ Coupon Section -->
+          {% if order.coupon %}
+          <div class="flex justify-between items-center pt-2 mt-2 border-t border-gray-700">
+            <span>Coupon Used:</span>
+            <span class="font-medium text-green-400">
+              {{ order.coupon.code }}
+            </span>
+          </div>
+          <div class="flex justify-between text-gray-300 text-sm">
+            <span>Discount:</span>
+            <span class="text-green-400">-{{ order.discount_percent|default:"0" }}%</span>
+          </div>
+          {% endif %}
+          <!-- ✅ End Coupon Section -->
+           
+          <div class="flex justify-between font-semibold text-white pt-2 border-t border-gray-700 mt-2">
+            <span>Total:</span><span>₹{{ order.total_price|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center w-full max-w-sm">
+        <a href="{% url 'index' %}"
+           class="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-green-500 hover:bg-green-600 text-black font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-green-500/30">
+          <i class="fa-solid fa-house"></i> Home
+        </a>
+        <a href="{% url 'orders' %}"
+           class="inline-flex items-center justify-center gap-2 w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-md hover:shadow-blue-500/30">
+          <i class="fa-solid fa-box"></i> My Orders
+        </a>
+      </div>
     </div>
-</body>
-</html>
+
+    <!-- RIGHT: Item List & Progress -->
+    <div class="bg-gray-900/80 border border-gray-800 rounded-3xl shadow-xl p-6 sm:p-8 overflow-y-auto max-h-[80vh] animate-fadeIn delay-100">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg sm:text-xl font-semibold text-white mb-0 flex items-center gap-2">
+          <i class="fa-solid fa-cart-shopping text-green-400"></i> Items in Your Order
+        </h2>
+
+<!-- Payment badges (compact + responsive) -->
+<div class="flex flex-wrap justify-center sm:justify-end items-center gap-3 mt-4 sm:mt-0">
+  <img src="{% static 'store/images/payments/razorpay.png' %}" 
+       alt="Razorpay" 
+       class="h-5 sm:h-6 opacity-80 hover:opacity-100 transition" />
+  <img src="{% static 'store/images/payments/visa.png' %}" 
+       alt="Visa" 
+       class="h-5 sm:h-6 opacity-80 hover:opacity-100 transition" />
+  <img src="{% static 'store/images/payments/mastercard.png' %}" 
+       alt="Mastercard" 
+       class="h-5 sm:h-6 opacity-80 hover:opacity-100 transition" />
+  <img src="{% static 'store/images/payments/upi.png' %}" 
+       alt="UPI" 
+       class="h-5 sm:h-6 opacity-80 hover:opacity-100 transition" />
+</div>
+</div>
+
+      <div class="divide-y divide-gray-700">
+        {% for item in items %}
+        <div class="flex items-center gap-4 py-4">
+          <img src="{{ item.product.get_main_image_url|default:'/static/store/images/placeholder.png' }}" 
+               alt="{{ item.product.name }}"
+               class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover border border-gray-700 flex-shrink-0">
+          <div class="flex-1">
+            <p class="text-white text-sm sm:text-base font-medium truncate">{{ item.product.name }}</p>
+            <p class="text-gray-400 text-xs sm:text-sm">Qty: {{ item.quantity }}</p>
+          </div>
+          <span class="text-sm sm:text-base font-semibold text-green-400 whitespace-nowrap">₹{{ item.total_price|floatformat:2 }}</span>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-4">No items found.</p>
+        {% endfor %}
+      </div>
+
+<!-- 🧭 Order Progress Tracker -->
+<div class="mt-8">
+  <h3 class="text-base font-semibold text-gray-200 mb-4 flex items-center gap-2">
+    <i class="fa-solid fa-truck text-green-400"></i> Order Status
+  </h3>
+
+  <div class="relative w-full">
+    <!-- Progress Line -->
+    <div class="absolute top-[70%] left-0 w-full h-[3px] bg-gray-800 rounded-full -translate-y-1/2">
+      <div class="progress-bar" style="--progress: {{ order.delivery_progress|default:'0' }}%;">
+        <div class="h-[3px] bg-green-500 rounded-full transition-all duration-700"
+             style="width: var(--progress);"></div>
+      </div>
+    </div>
+
+    <!-- Steps Row -->
+    <div class="relative flex justify-between items-center w-full">
+      <!-- Step 1 -->
+      <div class="flex flex-col items-center text-center w-1/4">
+        <div class="w-8 h-8 flex items-center justify-center rounded-full
+                    {% if order.status in 'Pending,Processing,Shipped,Delivered' %}
+                      bg-green-500 text-black
+                    {% else %}
+                      bg-gray-700 text-gray-400
+                    {% endif %}
+                    shadow-md transition-all duration-300">
+          <i class="fa-solid fa-cart-shopping text-sm"></i>
+        </div>
+        <p class="mt-5 text-xs text-gray-400">Pending</p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="flex flex-col items-center text-center w-1/4">
+        <div class="w-8 h-8 flex items-center justify-center rounded-full
+                    {% if order.status in 'Processing,Shipped,Delivered' %}
+                      bg-green-500 text-black
+                    {% else %}
+                      bg-gray-700 text-gray-400
+                    {% endif %}
+                    shadow-md transition-all duration-300">
+          <i class="fa-solid fa-box-open text-sm"></i>
+        </div>
+        <p class="mt-5 text-xs text-gray-400">Processing</p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="flex flex-col items-center text-center w-1/4">
+        <div class="w-8 h-8 flex items-center justify-center rounded-full
+                    {% if order.status in 'Shipped,Delivered' %}
+                      bg-green-500 text-black
+                    {% else %}
+                      bg-gray-700 text-gray-400
+                    {% endif %}
+                    shadow-md transition-all duration-300">
+          <i class="fa-solid fa-truck text-sm"></i>
+        </div>
+        <p class="mt-5 text-xs text-gray-400">Shipped</p>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="flex flex-col items-center text-center w-1/4">
+        <div class="w-8 h-8 flex items-center justify-center rounded-full
+                    {% if order.status == 'Delivered' %}
+                      bg-green-500 text-black
+                    {% else %}
+                      bg-gray-700 text-gray-400
+                    {% endif %}
+                    shadow-md transition-all duration-300">
+          <i class="fa-solid fa-circle-check text-sm"></i>
+        </div>
+        <p class="mt-5 text-xs text-gray-400">Delivered</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current status -->
+  <div class="mt-6 text-sm text-gray-300 text-center sm:text-left">
+    <strong>Status:</strong>
+    <span class="ml-2 text-green-400 font-semibold">{{ order.status }}</span>
+  </div>
+</div>
+
+<!-- 🏠 Shipping address -->
+{% if order.shipping_address %}
+<div class="mt-6 bg-gray-800/60 border border-gray-700 rounded-lg p-4 text-sm text-gray-300">
+  <div class="flex items-start gap-3">
+    <i class="fa-solid fa-location-dot text-green-400 mt-1"></i>
+    <div>
+      <div class="font-semibold text-white">Shipping Address</div>
+      <div class="text-xs text-gray-400 mt-1">
+        {{ order.shipping_address.first_name }} {{ order.shipping_address.last_name }} • {{ order.shipping_address.phone }}<br>
+        {{ order.shipping_address.address_line1 }}{% if order.shipping_address.address_line2 %}, {{ order.shipping_address.address_line2 }}{% endif %}<br>
+        {{ order.shipping_address.city }}, {{ order.shipping_address.state }}, {{ order.shipping_address.postal_code }}<br>
+        {{ order.shipping_address.country }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ☎️ Support row -->
+<div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+  <div class="text-sm text-gray-300 text-center sm:text-left">
+    Need help with this order? Our support is available 24/7.
+    <div class="mt-2 text-xs text-gray-400">
+      Order ID: <span class="text-white font-mono">{{ order.id }}</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 mt-3 sm:mt-0">
+    <a href="https://wa.me/917904438276"
+       target="_blank"
+       class="px-3 py-2 rounded-md bg-green-600 hover:bg-green-500 text-white text-sm font-medium shadow-md">
+      <i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp
+    </a>
+    <a href="mailto:euliheshicleetus2001@gmail.com"
+       class="px-3 py-2 rounded-md bg-gray-800 border border-gray-700 text-sm text-gray-200 hover:bg-gray-800/90">
+      <i class="fa-regular fa-envelope mr-1"></i> Email
+    </a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Your MFY Store order was placed successfully. View your order details, items, and estimated delivery date.">
+<link rel="canonical" href="{{ request.build_absolute_uri }}">
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeIn { animation: fadeIn 0.8s ease-out; }
+  .delay-100 { animation-delay: 0.2s; }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  @media (max-width: 640px) {
+    section { padding-top: 6rem; }
+    .max-h-\[80vh\] { max-height: none; }
+  }
+</style>
+{% endblock %}
