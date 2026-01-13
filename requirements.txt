@@ -58,6 +58,7 @@ python-decouple==3.8
 python-dotenv==1.1.0
 python-slugify==8.0.4
 razorpay==1.4.2
+reportlab==4.1.0
 requests==2.32.3
 setuptools==80.9.0
 six==1.17.0
