@@ -53,7 +53,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariant
         fields = [
-            "id", "color", "size", "age_group", "quantity", "image",
+            "id", "color", "size", "age_group", "stock" , "image",
             "thumbnail_url", "full_url"
         ]
 
@@ -71,43 +71,54 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ["id", "name"]
 
-
 class ProductSerializer(serializers.ModelSerializer):
-    # ✅ Changed images to SerializerMethodField to exclude main image
     images = serializers.SerializerMethodField()
     variants = ProductVariantSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
+
+    display_price = serializers.SerializerMethodField()
+    in_stock = serializers.SerializerMethodField()
+
     main_thumbnail_url = serializers.SerializerMethodField()
     main_full_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
-            "id", "sku", "name", "price", "offer_price", "dealer",
-            "stock", "description", "category", "images", "variants",
-            "main_thumbnail_url", "main_full_url",
+            "id",
+            "sku",
+            "name",
+            "dealer",
+            "description",
+            "category",
+            "images",
+            "variants",
+            "display_price",
+            "in_stock",
+            "main_thumbnail_url",
+            "main_full_url",
         ]
 
+    def get_display_price(self, obj):
+        variant = obj.get_base_variant()
+        if not variant:
+            return None
+        return variant.offer_price or variant.price
+
+    def get_in_stock(self, obj):
+        return obj.variants.filter(stock__gt=0).exists()
+
     def get_main_thumbnail_url(self, obj):
-        url = obj.get_main_image_url() or (
-            obj.images.first().image.url if obj.images.exists() else None
-        )
+        url = obj.get_main_image_url()
         return normalize_image_url(url, size=400)
 
     def get_main_full_url(self, obj):
-        url = obj.get_main_image_url() or (
-            obj.images.first().image.url if obj.images.exists() else None
-        )
+        url = obj.get_main_image_url()
         return normalize_image_url(url, size=800)
 
     def get_images(self, obj):
-        """
-        ✅ Exclude main image from the images list to prevent duplicates
-        """
         main_url = obj.get_main_image_url()
-        non_main_images = obj.images.all()
+        qs = obj.images.all()
         if main_url:
-            # Exclude main image
-            non_main_images = non_main_images.exclude(image=main_url)
-
-        return ProductImageSerializer(non_main_images, many=True).data
+            qs = qs.exclude(image=main_url)
+        return ProductImageSerializer(qs, many=True).data
