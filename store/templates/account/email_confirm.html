@@ -4,35 +4,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{% trans "Confirm Email Address" %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>{% trans "Confirm Email Address" %} | MFY Store</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Confirm your email address to activate your MFY Store account securely.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neon: '#00ff9c',
+            darkbg: '#0b0f14',
+            darkcard: '#111827',
+            muted: '#9ca3af'
+          },
+          boxShadow: {
+            neon: '0 0 25px rgba(0,255,156,0.35)'
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="height: 100vh;">
 
-<div class="card shadow-lg p-4" style="max-width: 500px; width: 100%;">
-    <h3 class="text-center mb-3">{% trans "Confirm Email Address" %}</h3>
+<body class="min-h-screen bg-darkbg flex items-center justify-center px-4 relative">
 
-    <p class="text-muted text-center">
-        {% blocktrans with email_address=email_address %}  
-        Please confirm that <strong>{{ email_address }}</strong> is an email address for user <strong>{{ user_display }}</strong>.  
+  <!-- Neon Glow Background -->
+  <div class="absolute inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-neon/10 blur-3xl rounded-full"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-neon/5 blur-3xl rounded-full"></div>
+  </div>
+
+  <!-- Card -->
+  <div class="relative w-full max-w-md bg-darkcard border border-white/10 rounded-2xl p-8 md:p-10 shadow-xl shadow-black/50">
+
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-neon/20 text-neon shadow-neon">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 12l-4-4-4 4m4-4v8" />
+        </svg>
+      </div>
+
+      <h1 class="text-2xl font-bold text-white mb-2">
+        {% trans "Confirm Email Address" %}
+      </h1>
+
+      <p class="text-muted text-sm leading-relaxed">
+        {% blocktrans with email_address=email_address %}
+          Please confirm that <span class="text-neon font-semibold">{{ email_address }}</span>
+          is an email address for user <span class="text-white font-semibold">{{ user_display }}</span>.
         {% endblocktrans %}
-    </p>
+      </p>
+    </div>
 
-    <form method="post" class="text-center">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary w-100">
-            {% trans "Confirm" %}
-        </button>
+    <!-- Confirm Button -->
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full bg-neon text-black font-semibold py-3 rounded-lg
+                     hover:bg-white hover:shadow-neon transition-all duration-300">
+        {% trans "Confirm Email" %}
+      </button>
     </form>
 
-    <hr>
-
-    <div class="text-center">
-        <a href="{% url 'account_login' %}" class="btn btn-link">{% trans "Sign In" %}</a> | 
-        <a href="{% url 'account_signup' %}" class="btn btn-link">{% trans "Sign Up" %}</a>
+    <!-- Divider -->
+    <div class="my-6 flex items-center">
+      <div class="flex-grow border-t border-white/10"></div>
+      <span class="px-3 text-xs text-muted uppercase tracking-wider">or</span>
+      <div class="flex-grow border-t border-white/10"></div>
     </div>
-</div>
+
+    <!-- Links -->
+    <div class="flex justify-center gap-6 text-sm">
+      <a href="{% url 'account_login' %}"
+         class="text-neon hover:text-white transition">
+        {% trans "Sign In" %}
+      </a>
+      <a href="{% url 'account_signup' %}"
+         class="text-neon hover:text-white transition">
+        {% trans "Sign Up" %}
+      </a>
+    </div>
+
+  </div>
 
 </body>
 </html>

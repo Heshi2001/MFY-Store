@@ -1,5 +1,19 @@
     [x-cloak] { display: none !important; }
     
+    :root {
+      --navbar-height: 72px;
+    }
+
+    .navbar,
+    header,
+    .site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     @keyframes floatBadge {0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
@@ -153,6 +167,43 @@
   }
 
   /* login */
+
+.auth-container {
+  position: relative;
+}
+
+.auth-main {
+  padding-top: 48px; /* was 72px */
+}
+
+.auth-header {
+  margin-top: clamp(24px, 4vw, 48px);
+}
+
+/* ===== Auth form error spacing ===== */
+.auth-error {
+  margin-bottom: 18px;        /* more breathing space */
+  font-size: 0.875rem;
+  color: #f87171;             /* red-400 */
+  line-height: 1.4;
+}
+
+/* Ensure next input group starts lower */
+.auth-error + .floating-group {
+  margin-top: 10px;
+}
+
+.floating-group {
+  position: relative;
+  padding-top: 6px;
+}
+
+.floating-group .errorlist {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #f87171;
+}
+
 .tab-underline {
   position: relative;
 }
@@ -172,24 +223,92 @@
   width: 90%;
 }
 
+.card-header {
+  padding: 1.25rem 1rem 0.75rem; /* top | sides | bottom */
+}
+
+.nav-tabs {
+  margin-top: 0.5rem; /* extra gap from top */
+}
+
+.tab-underline::after {
+  bottom: -10px; /* was -2px */
+}
+
+
 /* Floating Label */
-.floating-group {
-  position: relative;
+
+.floating-input {
+  padding-top: 1.6rem; /* space for label */
 }
-.floating-input:focus + label,
-.filled + label {
-  top: -0.6rem;
-  left: 0.75rem;
-  font-size: 0.75rem;
-  color: #22c55e;
-}
+
 .floating-label {
   position: absolute;
   left: 1rem;
-  top: 0.8rem;
-  transition: all 0.25s ease;
-  color: #9ca3af;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af; /* gray-400 */
+  font-size: 0.95rem;
   pointer-events: none;
+  transition: all 0.25s ease;
+  background: transparent;
 }
 
+/* 🔥 When focused or has value */
+.floating-input:focus + .floating-label,
+.floating-input:not(:placeholder-shown) + .floating-label {
+  top: -0.55rem;              /* ⬅ move ABOVE input */
+  left: 0.75rem;
+  font-size: 0.75rem;
+  color: #22c55e;             /* green-500 */
+  padding: 0 0.35rem;
+}
 
+/* ---------- Eye Icon ---------- */
+.password-toggle .eye {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='white' stroke-width='2' d='M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z'/%3E%3Ccircle cx='12' cy='12' r='3' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.password-toggle.active .eye {
+  transform: scale(1.1) rotate(180deg);
+  opacity: 0.7;
+}
+
+/* ---------- Strength Meter ---------- */
+.password-meter {
+  height: 4px;
+  background: #1f2937;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.meter-bar {
+  height: 100%;
+  width: 0%;
+  background: red;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* Strength colors */
+.meter-weak { background: #ef4444; }
+.meter-medium { background: #facc15; }
+.meter-strong { background: #22c55e; }
+
+/* Auth header animation */
+#authHeader {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+#authHeader.fade {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+#authHeader.hidden {
+  display: none;
+}

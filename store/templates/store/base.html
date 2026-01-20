@@ -27,7 +27,7 @@
   {% include 'store/partials/navbar.html' %}
 
   <!-- Main page content -->
-  <main>
+  <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
 

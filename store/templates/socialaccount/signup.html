@@ -2,49 +2,128 @@
 {% load account socialaccount %}
 {% load widget_tweaks %}
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>{% trans "Sign Up" %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <title>{% trans "Complete Signup" %} | MFY Store</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Complete your signup on MFY Store using Google. Secure, fast, and seamless onboarding experience.">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Theme -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            neon: '#00ff88',
+            darkbg: '#0b0f14',
+            darkcard: '#121826',
+          },
+          boxShadow: {
+            neon: '0 0 22px rgba(0,255,136,0.35)',
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-8 rounded-2xl shadow-md max-w-md w-full">
-    <h2 class="text-2xl font-bold text-center mb-4">{% trans "Complete Your Signup" %}</h2>
+<body class="min-h-screen bg-gradient-to-br from-black via-darkbg to-black flex items-center justify-center px-4">
 
-    <p class="text-gray-600 text-center mb-6">
-        {% blocktrans with site_name=site.name %}  
-        You are about to use your <span class="font-semibold">{{ account.get_provider.name }}</span> account to login to {{ site_name }}.  
-        As a final step, please complete the following form:  
-        {% endblocktrans %}
+  <!-- Card -->
+  <div class="w-full max-w-md bg-darkcard border border-white/10 rounded-2xl p-8 shadow-xl animate-fade-in">
+
+    <!-- Brand -->
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-extrabold tracking-wide text-white">
+        MFY<span class="text-neon">Store</span>
+      </h1>
+      <p class="text-gray-400 text-sm mt-2">
+        {% trans "Complete your signup" %}
+      </p>
+    </div>
+
+    <!-- Info -->
+    <p class="text-gray-400 text-sm text-center mb-6 leading-relaxed">
+      {% blocktrans with site_name=site.name %}
+      You are about to use your
+      <span class="text-neon font-semibold">{{ account.get_provider.name }}</span>
+      account to login to
+      <span class="font-semibold text-white">{{ site_name }}</span>.
+      As a final step, please complete the following form:
+      {% endblocktrans %}
     </p>
 
-    <form method="post" class="space-y-4">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
+    <!-- Form -->
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
 
-        <div>
-            <label for="id_username" class="block text-sm font-medium text-gray-700">{% trans "Username (optional)" %}</label>
-            {{ form.username|add_class:"w-full border rounded-lg px-3 py-2 mt-1" }}
-        </div>
+      <!-- Username -->
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-gray-300 mb-1">
+          {% trans "Username (optional)" %}
+        </label>
+        {{ form.username|add_class:"w-full rounded-xl bg-black/40 border border-white/10 text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neon focus:border-neon transition" }}
+      </div>
 
-        <div>
-            <label for="id_email" class="block text-sm font-medium text-gray-700">{% trans "Email" %}</label>
-            {{ form.email|add_class:"w-full border rounded-lg px-3 py-2 mt-1" }}
-        </div>
+      <!-- Email -->
+      <div>
+        <label for="id_email" class="block text-sm font-medium text-gray-300 mb-1">
+          {% trans "Email" %}
+        </label>
+        {{ form.email|add_class:"w-full rounded-xl bg-black/40 border border-white/10 text-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-neon focus:border-neon transition" }}
+      </div>
 
-        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-            {% trans "Sign Up" %}
-        </button>
+      <!-- Submit -->
+      <button
+        type="submit"
+        class="w-full py-3 rounded-xl bg-neon text-black font-semibold
+               hover:shadow-neon hover:scale-[1.01]
+               transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-neon"
+      >
+        {% trans "Complete Signup" %}
+      </button>
     </form>
 
-    <div class="text-center mt-4">
-        <a href="{% url 'account_login' %}" class="text-blue-600 hover:underline">{% trans "Sign In" %}</a>
+    <!-- Divider -->
+    <div class="flex items-center my-6">
+      <div class="flex-grow h-px bg-white/10"></div>
+      <span class="px-3 text-xs text-gray-500 uppercase tracking-wider">MFY</span>
+      <div class="flex-grow h-px bg-white/10"></div>
     </div>
-</div>
+
+    <!-- Footer Links -->
+    <div class="text-center text-sm">
+      <a href="{% url 'account_login' %}" class="text-gray-400 hover:text-neon transition">
+        ← {% trans "Back to Sign In" %}
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Animation -->
+  <style>
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.6s ease-out;
+    }
+  </style>
 
 </body>
 </html>

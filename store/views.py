@@ -544,7 +544,7 @@ def product_detail(request, product_id):
             "color": variant.color.id,
             "images": image_urls,
             "price": float(variant.price),
-            "offer_price": float(variant.offer_price) if variant.offer_price else null,
+            "offer_price": float(variant.offer_price) if variant.offer_price else None,
         })
 
     variant_map = json.dumps(variant_map_list)
@@ -1117,13 +1117,15 @@ class CombinedLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        try:
-            ctx["signup_form"] = SignupForm()
-        except Exception:
-            ctx["signup_form"] = None
+        ctx["signup_form"] = SignupForm()
+        ctx["active_tab"] = self.request.session.pop("active_tab", "login")
         return ctx
 
-   
+    def form_invalid(self, form):
+        # 🔥 ALWAYS force login tab on auth failure
+        self.request.session["active_tab"] = "login"
+        return super().form_invalid(form)
+
 def send_email_otp(request):
     """
     Accepts POST(email) -> creates OTP row, emails user, stores user id in session,
@@ -1133,28 +1135,30 @@ def send_email_otp(request):
         return redirect("account_login")
 
     email = (request.POST.get("email") or "").strip()
+
     if not email:
         messages.error(request, "Please enter an email address.")
+        request.session["active_tab"] = "otp"
         return redirect("account_login")
 
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         messages.error(request, "No account found with this email.")
+        request.session["active_tab"] = "otp"
         return redirect("account_login")
 
     otp = f"{random.randint(100000, 999999)}"
 
     try:
-        # Remove any old OTPs for this user and create a new one
         EmailOTP.objects.filter(user=user).delete()
         EmailOTP.objects.create(user=user, otp=otp)
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to save OTP to DB for %s", email)
         messages.error(request, "Server error. Please try again shortly.")
+        request.session["active_tab"] = "otp"
         return redirect("account_login")
 
-    # Attempt to send email
     try:
         from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None) or settings.EMAIL_HOST_USER
         send_mail(
@@ -1164,14 +1168,15 @@ def send_email_otp(request):
             recipient_list=[email],
             fail_silently=False,
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to send OTP email to %s", email)
         messages.error(request, "Unable to send OTP email. Please try again later.")
+        request.session["active_tab"] = "otp"
         return redirect("account_login")
 
-    # Save the user id in session for verification step
+    # Save user id for verification
     request.session["otp_user_id"] = user.id
-    # Optionally set expiry for session key (session cookie expiry already set in settings)
+
     messages.success(request, "OTP sent to your email.")
     return redirect("verify_email_otp")
 
@@ -1252,7 +1257,6 @@ def payments(request):
         "payment": payment,
         "order": order,
     })
-
 
 class CustomPasswordChangeView(PasswordChangeView):
     template_name = "account/password_change.html"
@@ -1394,7 +1398,31 @@ def create_discounted_order_ajax(request):
 class CustomSignupView(SignupView):
     template_name = "account/login.html"
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # 🔥 Always tell template we are on signup tab
+        ctx["active_tab"] = "signup"
+        return ctx
+
+    def form_invalid(self, form):
+        """
+        This runs when:
+        - username already exists
+        - email already exists
+        - password validation fails
+        """
+        response = super().form_invalid(form)
+
+        # 🔥 Force signup tab on error
+        if hasattr(response, "context_data"):
+            response.context_data["active_tab"] = "signup"
+
+        return response
+
     def get_success_url(self):
+        """
+        This runs ONLY when signup is successful
+        """
         post_next = self.request.POST.get("next")
         get_next = self.request.GET.get("next")
 
@@ -1406,10 +1434,10 @@ class CustomSignupView(SignupView):
             return post_next
         if get_next:
             return get_next
+
         print("✅ No next → redirecting to dashboard")
         return "/account/dashboard/"
-
-                                                                      
+                                                                     
 def get_or_create_session_key(request):
     """Ensure session_key exists for guest carts."""
     if not request.session.session_key:

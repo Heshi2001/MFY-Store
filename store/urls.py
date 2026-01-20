@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from .views import CustomPasswordChangeView, account_dashboard, update_avatar
+from .views import CustomPasswordChangeView, account_dashboard, update_avatar, CombinedLoginView, CustomSignupView
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -39,6 +39,8 @@ urlpatterns = [
     path("account/addresses/<int:pk>/delete/confirm/", views.address_delete_confirm, name="address_delete_confirm"),
     path("account/addresses/<int:pk>/delete/", views.delete_address, name="delete_address"),
     path("account/password/change/", CustomPasswordChangeView.as_view(), name="account_change_password"),
+    path("accounts/login/", CombinedLoginView.as_view(), name="account_login"),
+    path("accounts/signup/", CustomSignupView.as_view(), name="account_signup"),
     path("payments/", views.payments, name="payments"),
     path("offers/", views.account_offers, name="offers"),
     path("checkout/", views.checkout, name="checkout"),

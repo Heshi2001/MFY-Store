@@ -5,170 +5,294 @@
 {% load socialaccount %}
 {% load i18n %}
 
-{% block title %}Products | MFY Store{% endblock %}
+{% block title %}Login | MFY Store{% endblock %}
+{% block main_class %}auth-main{% endblock %}
 
 {% block content %}
 
-<div class="auth-container min-h-screen bg-gray-950 text-gray-200 flex flex-col items-center pt-40 px-4">
+<div class="auth-container min-h-screen bg-gray-950 text-gray-200 flex flex-col items-center pt-24 px-4">
+  
+<!-- Auth Page Header -->
+<div id="authHeader"
+     class="auth-header text-center mb-10 transition-all duration-300">
 
-  <!-- Glass Neon Card -->
-  <div class="card w-full max-w-md bg-gray-900/60 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-[0_0_28px_rgba(34,197,94,0.25)] transition-all duration-500 hover:shadow-[0_0_40px_rgba(34,197,94,0.35)]">
+  <h1 id="authHeaderTitle"
+      class="text-2xl font-semibold text-white transition-opacity duration-300">
+    Welcome Back
+  </h1>
 
-    <!-- Tab Header -->
-    <div class="card-header border-b border-gray-700/50">
-      <ul class="nav nav-tabs card-header-tabs flex justify-center gap-4">
+  <p id="authHeaderSubtitle"
+     class="text-gray-400 text-sm mt-1 transition-opacity duration-300">
+    Login to continue to MFY Store
+  </p>
+</div>
 
-        <li>
-          <button type="button" id="login-tab"
-            data-tab="login"
-            class="tab-btn nav-link active tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
-            {% trans "Login" %}
-          </button>
-        </li>
+<!-- Card Wrapper -->
+<div class="relative w-full max-w-md">
 
-        <li>
-          <button type="button" id="signup-tab"
-            data-tab="signup"
-            class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
-            {% trans "Signup" %}
-          </button>
-        </li>
+  <!-- Card Container (controls blur + border) -->
+  <div class="relative border border-gray-700/50 rounded-2xl
+              shadow-[0_0_28px_rgba(34,197,94,0.25)]
+              overflow-hidden">
 
-        <li>
-          <button type="button" id="otp-tab"
-            data-tab="otp"
-            class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium transition-all duration-300 hover:scale-105">
-            {% trans "OTP Login" %}
-          </button>
-        </li>
+    <!-- 🔥 Blur Layer (INSIDE card) -->
+    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-xl pointer-events-none"></div>
 
-      </ul>
-    </div>
+    <!-- Actual Card Content -->
+    <div class="relative z-10">
 
-    <!-- Body -->
-    <div class="tab-content p-6">
+      <!-- Tabs -->
+      <div class="card-header border-b border-gray-700/50 px-4 pt-5">
+        <ul class="flex justify-center gap-6">
 
-      <!-- LOGIN -->
-      <div class="tab-pane show" id="login" data-tab-panel="login">
-        <form method="post" action="{% url 'account_login' %}">
-          {% csrf_token %}
-          <!-- ✅ added -->
-          <input type="hidden" name="next" value="{{ request.GET.next }}">
+          <li>
+              <button type="button"
+  data-tab="login"
+  class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium
+        {% if active_tab == 'login' or not active_tab %}active{% endif %}">
+  {% trans "Login" %}
+</button>
 
-          {{ form.non_field_errors }}
+          </li>
 
-          <!-- Floating Email -->
-          <div class="floating-group mb-6">
-            {{ form.login|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition-all duration-300" }}
-            <label class="floating-label">{% trans "Email or Username" %}</label>
-            {{ form.login.errors }}
-          </div>
+          <li>
+            <button type="button"
+              data-tab="signup"
+              class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium
+                      {% if active_tab == 'signup' %}active{% endif %}">
+              {% trans "Signup" %}
+            </button>
+          </li>
 
-          <!-- Floating Password -->
-          <div class="floating-group mb-6">
-            {{ form.password|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
-            <label class="floating-label">{% trans "Password" %}</label>
-            {{ form.password.errors }}
-          </div>
-
-          <div class="mb-5 flex items-center gap-2">
-            {{ form.remember }}
-            <label for="id_remember" class="text-gray-400">{% trans "Remember me" %}</label>
-          </div>
-
-          <button type="submit"
-            class="w-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:shadow-green-400/30 hover:scale-[1.03]">
-            {% trans "Login" %}
-          </button>
-
-          <p class="text-sm text-gray-400 mt-4 text-center">
-            <a href="{% url 'account_reset_password' %}" class="hover:text-green-400 transition">
-              {% trans "Forgot Password?" %}
-            </a>
-          </p>
-        </form>
+          <li>
+            <button type="button"
+              data-tab="otp"
+              class="tab-btn nav-link tab-underline pb-3 text-gray-300 font-medium
+                    {% if active_tab == 'otp' %}active{% endif %}">
+              {% trans "OTP Login" %}
+            </button>
+          </li>
+        </ul>
       </div>
 
-      <!-- SIGNUP -->
-      <div class="tab-pane hidden" id="signup" data-tab-panel="signup">
-        <form method="post" action="{% url 'account_signup' %}">
-          {% csrf_token %}
-          <!-- ✅ added -->
-          <input type="hidden" name="next" value="{{ request.GET.next }}">
+      <!-- Body -->
+      <div class="tab-content p-6">
 
-          {{ signup_form.non_field_errors }}
+        <!-- LOGIN -->
+         <div class="tab-pane {% if active_tab == 'login' or not active_tab %}show{% else %}hidden{% endif %}"
+           data-tab-panel="login">
+          <form method="post" action="{% url 'account_login' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
 
-          <!-- Username -->
-          <div class="floating-group mb-6">
-            {{ signup_form.username|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
-            <label class="floating-label">{% trans "Username" %}</label>
-            {{ signup_form.username.errors }}
-          </div>
+            {% if form.non_field_errors %}
+              <div class="auth-error">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
 
-          <!-- Email -->
-          <div class="floating-group mb-6">
-            {{ signup_form.email|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
-            <label class="floating-label">{% trans "Email" %}</label>
-            {{ signup_form.email.errors }}
-          </div>
+            <!-- Email -->
+            <div class="floating-group mb-6">
+              {{ form.login|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Email or Username" %}</label>
+              {{ form.login.errors }}
+            </div>
 
-          <!-- Password -->
-          <div class="floating-group mb-6">
-            {{ signup_form.password1|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
-            <label class="floating-label">{% trans "Password" %}</label>
-            {{ signup_form.password1.errors }}
-          </div>
+            <!-- Password -->
+            <div class="floating-group mb-6 relative">
+              {{ form.password|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 pr-12 focus:border-green-500"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Password" %}</label>
 
-          <!-- Confirm Password -->
-          <div class="floating-group mb-6">
-            {{ signup_form.password2|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300" }}
-            <label class="floating-label">{% trans "Confirm Password" %}</label>
-            {{ signup_form.password2.errors }}
-          </div>
+              <button type="button"
+                class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                data-target="id_password"
+                aria-label="Show password">
+                <span class="eye"></span>
+              </button>
 
-          <button type="submit"
-            class="w-full bg-gradient-to-r from-green-500 to-green-400 hover:from-green-400 hover:to-green-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:shadow-green-400/30 hover:scale-[1.03]">
-            {% trans "Create Account" %}
-          </button>
-        </form>
+              <div class="password-meter mt-2">
+                <div class="meter-bar"></div>
+              </div>
+
+              {{ form.password.errors }}
+            </div>
+
+            <div class="flex items-center gap-2 mb-5">
+              {{ form.remember }}
+              <label for="id_remember" class="text-gray-400">{% trans "Remember me" %}</label>
+            </div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-400 text-gray-900 font-semibold py-3 rounded-xl hover:scale-[1.03] transition"> {% trans "Login" %} </button>
+
+            <p class="text-sm text-gray-400 mt-4 text-center">
+              <a href="{% url 'account_reset_password' %}" class="hover:text-green-400">
+                {% trans "Forgot Password?" %}
+              </a>
+            </p>
+          </form>
+        </div>
+
+        <!-- SIGNUP -->
+        <div class="tab-pane {% if active_tab == 'signup' %}show{% else %}hidden{% endif %}" data-tab-panel="signup">
+          <form method="post" action="{% url 'account_signup' %}">
+            {% csrf_token %}
+              <input type="hidden" name="active_tab" value="signup">
+
+            {% if signup_form.errors %}
+              <div class="auth-error mb-4">
+                {% for field, errors in signup_form.errors.items %}
+                  {% for error in errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <!-- Username -->
+            <div class="floating-group mb-6">
+              {{ signup_form.username|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 rounded-xl p-3 pt-5"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Username" %}</label>
+
+              {% if signup_form.username.errors %}
+                <p class="text-xs text-red-400 mt-1">
+                  {{ signup_form.username.errors|striptags }}
+                </p>
+              {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="floating-group mb-6">
+              {{ signup_form.email|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 rounded-xl p-3 pt-5"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Email" %}</label>
+
+              {% if signup_form.email.errors %}
+                <p class="text-xs text-red-400 mt-1">
+                  {{ signup_form.email.errors|striptags }}
+                </p>
+              {% endif %}
+            </div>
+
+
+            <!-- Password -->
+            <div class="floating-group mb-6 relative">
+              {{ signup_form.password1|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 rounded-xl p-3 pt-5 pr-12"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Password" %}</label>
+
+              <button type="button"
+                class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                data-target="id_password1">
+                <span class="eye"></span>
+              </button>
+
+              <div class="password-meter mt-2">
+                <div class="meter-bar"></div>
+              </div>
+              
+              {% if signup_form.password1.errors %}
+                <p class="text-xs text-red-400 mt-1">
+                  {{ signup_form.password1.errors|striptags }}
+                </p>
+              {% endif %}
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="floating-group mb-6 relative">
+              {{ signup_form.password2|add_class:"floating-input w-full bg-gray-800/50 border border-gray-700 rounded-xl p-3 pt-5 pr-12"|attr:"placeholder:" }}
+              <label class="floating-label">{% trans "Confirm Password" %}</label>
+
+              <button type="button"
+                class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                data-target="id_password2">
+                <span class="eye"></span>
+              </button>
+
+              <p class="password-match text-sm mt-2 hidden"></p> 
+              {% if signup_form.password2.errors %}
+                <p class="text-xs text-red-400 mt-1">
+                  {{ signup_form.password2.errors|striptags }}
+                </p>
+              {% endif %}
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-400 text-gray-900 font-semibold py-3 rounded-xl"> {% trans "Create Account" %} </button>
+          </form>
+        </div>
+
+        <!-- OTP -->
+         <div class="tab-pane {% if active_tab == 'otp' %}show{% else %}hidden{% endif %}" data-tab-panel="otp">
+          <form method="post" action="{% url 'otp_login' %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+
+            <div class="floating-group mb-6">
+              <input type="email" name="email" required placeholder=" "
+                class="floating-input w-full bg-gray-800/50 border border-gray-700 rounded-xl p-3 pt-5">
+              <label class="floating-label">{% trans "Email for OTP" %}</label>
+            </div>
+           <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-400 text-gray-900 font-semibold py-3 rounded-xl"> {% trans "Send OTP" %} </button>
+          </form>
+        </div>
+
       </div>
-
-      <!-- OTP -->
-      <div class="tab-pane hidden" id="otp" data-tab-panel="otp">
-        <form method="post" action="{% url 'otp_login' %}">
-          {% csrf_token %}
-          <!-- ✅ added -->
-          <input type="hidden" name="next" value="{{ request.GET.next }}">
-
-          <div class="floating-group mb-6">
-            <input type="email" name="email" required
-              class="floating-input w-full bg-gray-800/50 border border-gray-700 text-gray-200 rounded-xl p-3 pt-5 focus:border-green-500 focus:ring-green-500 transition duration-300">
-            <label class="floating-label">{% trans "Email for OTP" %}</label>
-          </div>
-
-          <button type="submit"
-            class="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-500 text-gray-900 font-semibold py-3 rounded-xl transition duration-300 shadow-lg hover:scale-[1.03]">
-            {% trans "Send OTP" %}
-          </button>
-        </form>
-      </div>
-
     </div>
   </div>
 </div>
-
-<div class="text-center mt-6">
-  <p class="text-gray-400 mb-2">{% trans "Or continue with" %}</p>
-  <div class="flex justify-center">
+  <!-- Social -->
+  <div class="mt-6 text-center">
+    <p class="text-gray-400 mb-3">{% trans "Or continue with" %}</p>
     <a href="{% provider_login_url 'google' %}"
-       class="flex items-center gap-2 px-4 py-2 border border-red-500 rounded-xl text-red-400 hover:bg-red-600 hover:text-white transition-all duration-300 hover:scale-105">
+      class="inline-flex items-center gap-2 px-4 py-2 border border-red-500 rounded-xl text-red-400 hover:bg-red-600 hover:text-white">
       <i class="fab fa-google"></i> Google
     </a>
   </div>
+
 </div>
 
 {% endblock %}
 
 {% block page_js %}
 <script src="{% static 'store/js/authTabs.js' %}"></script>
+
+{% if signup_form.username.errors %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const username = document.getElementById("id_username");
+    if (username) {
+      username.classList.add("border-red-500");
+    }
+  });
+</script>
+{% endif %}
+
+{% if signup_form.email.errors %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const email = document.getElementById("id_email");
+    if (email) {
+      email.classList.add("border-red-500");
+    }
+  });
+</script>
+{% endif %}
+
+{% if signup_form.password1.errors %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const pass1 = document.getElementById("id_password1");
+    if (pass1) {
+      pass1.classList.add("border-red-500");
+    }
+  });
+</script>
+{% endif %}
+
+{% if signup_form.password2.errors %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const pass2 = document.getElementById("id_password2");
+    if (pass2) {
+      pass2.classList.add("border-red-500");
+    }
+  });
+</script>
+{% endif %}
 {% endblock %}
