@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from django.conf import settings
-from .models import Product, ProductVariant, Wishlist, StockNotification, UserProfile
+from .models import Product, ProductVariant, Wishlist, StockNotification, UserProfile, ProductAccordion, AccordionTemplate
 
 @receiver(post_save, sender=Product)
 def notify_price_drop(sender, instance, **kwargs):
@@ -70,3 +70,24 @@ def notify_users_on_restock(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def ensure_user_profile(sender, instance, **kwargs):
     UserProfile.objects.get_or_create(user=instance)
+
+@receiver(post_save, sender=Product)
+def create_default_accordions(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    templates = AccordionTemplate.objects.filter(is_active=True)
+
+    accordions = []
+    for idx, tpl in enumerate(templates):
+        accordions.append(
+            ProductAccordion(
+                product=instance,
+                title=tpl.title,
+                content=tpl.default_content,
+                order=idx,
+                schema_key=tpl.schema_key
+            )
+        )
+
+    ProductAccordion.objects.bulk_create(accordions)

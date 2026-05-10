@@ -22,22 +22,28 @@ class UserUpdateForm(forms.ModelForm):
         }
 
 class AddressForm(forms.ModelForm):
+    use_as_shipping = forms.BooleanField(required=False, initial=True)
+    use_as_billing  = forms.BooleanField(required=False, initial=False)
+
     class Meta:
         model = Address
         fields = [
-            "first_name", "last_name", "phone", "address_line1", "address_line2",
-            "city", "state", "country", "postal_code", "address_type", "is_default"
+            "first_name", "last_name", "phone",
+            "address_line1", "address_line2",
+            "city", "state", "country",
+            "postal_code", "address_type", "is_default",
+            "use_as_shipping", "use_as_billing",
         ]
         widgets = {
-            "first_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
-            "last_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
-            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
+            "first_name":    forms.TextInput(attrs={"class": "form-control", "placeholder": "First Name"}),
+            "last_name":     forms.TextInput(attrs={"class": "form-control", "placeholder": "Last Name"}),
+            "phone":         forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone"}),
             "address_line1": forms.TextInput(attrs={"class": "form-control", "placeholder": "Address Line 1"}),
             "address_line2": forms.TextInput(attrs={"class": "form-control", "placeholder": "Address Line 2"}),
-            "city": forms.TextInput(attrs={"class": "form-control", "placeholder": "City"}),
-            "state": forms.TextInput(attrs={"class": "form-control", "placeholder": "State"}),
-            "country": forms.HiddenInput(),          # HIDE
-            "postal_code": forms.TextInput(attrs={"class": "form-control", "placeholder": "Postal Code"}),
-            "address_type": forms.HiddenInput(),     # HIDE
-            "is_default": forms.HiddenInput(),       # HIDE
+            "city":          forms.TextInput(attrs={"class": "form-control", "placeholder": "City"}),
+            "state":         forms.TextInput(attrs={"class": "form-control", "placeholder": "State"}),
+            "country":       forms.HiddenInput(),
+            "postal_code":   forms.TextInput(attrs={"class": "form-control", "placeholder": "Postal Code"}),
+            "address_type":  forms.HiddenInput(),
+            "is_default":    forms.HiddenInput(),
         }

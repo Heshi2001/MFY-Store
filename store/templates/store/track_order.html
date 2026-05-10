@@ -1,50 +1,134 @@
 {% extends "store/base.html" %}
 {% load static %}
-
 {% block title %}Track Order #{{ order.id }} • MFY Store{% endblock %}
 
 {% block content %}
 <section class="pt-44 pb-20 bg-black text-white">
-
   <div class="max-w-5xl mx-auto px-6">
 
     <!-- HEADER -->
-    <div class="mb-10">
+    <div class="mb-8">
       <h1 class="text-3xl font-extrabold">Track Order #{{ order.id }}</h1>
       <p class="text-gray-400 text-sm mt-1">Placed on {{ order.created_at|date:"M d, Y" }}</p>
     </div>
 
-    <!-- LIVE MAP (FAKE ANIMATION) -->
-    <div class="border border-gray-800 rounded-2xl overflow-hidden mb-8">
-      <div class="relative">
-        <img src="{% static 'img/map-dark.jpg' %}" class="w-full h-64 object-cover opacity-60">
+    <!-- STATUS BADGE -->
+    <div class="mb-8 flex items-center gap-3">
+      <span class="px-4 py-2 rounded-full font-semibold text-sm
+        {% if order.status == 'Delivered' %}bg-green-500/20 text-green-300
+        {% elif order.status == 'Shipped' or order.status == 'Out for Delivery' %}bg-blue-500/20 text-blue-300
+        {% elif order.status == 'Cancelled' %}bg-red-500/20 text-red-300
+        {% else %}bg-yellow-500/20 text-yellow-300{% endif %}">
+        {{ order.status }}
+      </span>
 
-        <div class="absolute inset-0 flex items-center justify-center">
-          <div class="animate-ping w-10 h-10 bg-blue-500 rounded-full opacity-70"></div>
-          <div class="absolute w-6 h-6 bg-blue-400 rounded-full"></div>
+      {% if fulfillment.tracking_id %}
+      <span class="text-xs text-gray-400">
+        AWB: <span class="font-mono text-white">{{ fulfillment.tracking_id }}</span>
+        {% if fulfillment.courier_name %}• {{ fulfillment.courier_name }}{% endif %}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if has_real_tracking and checkpoints %}
+    <!-- ═══════════════════════════════════════════════
+         REAL TRACKING — from AfterShip + courier scans
+    ════════════════════════════════════════════════ -->
+    <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 mb-8 shadow">
+      <div class="flex items-center gap-2 mb-6">
+        <i class="fa-solid fa-satellite-dish text-green-400"></i>
+        <h2 class="font-bold text-lg">Live Tracking</h2>
+        <span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">Real-time</span>
+      </div>
+
+      <div class="relative">
+        <!-- Vertical line -->
+        <div class="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-800"></div>
+
+        <div class="space-y-6">
+          {% for cp in checkpoints %}
+          <div class="flex gap-5 items-start relative">
+
+            <!-- Dot -->
+            <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 z-10
+              {% if forloop.first %}border-green-400 bg-green-400{% else %}border-gray-600 bg-gray-900{% endif %}
+              flex items-center justify-center">
+              {% if forloop.first %}
+              <div class="w-2 h-2 rounded-full bg-white"></div>
+              {% endif %}
+            </div>
+
+            <!-- Content -->
+            <div class="pb-4 flex-1">
+              <p class="text-white text-sm font-medium">{{ cp.message }}</p>
+              <p class="text-gray-500 text-xs mt-1">
+                {% if cp.location %}{{ cp.location }} • {% endif %}
+                {{ cp.checkpoint_time|date:"M d, Y — H:i" }}
+              </p>
+            </div>
+
+          </div>
+          {% endfor %}
         </div>
       </div>
     </div>
 
-    <!-- TRACKING TIMELINE -->
-    <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow mb-10">
+    {% else %}
+    <!-- ═══════════════════════════════════════════════
+         FALLBACK — time-based progress (until AWB added)
+    ════════════════════════════════════════════════ -->
+    <div class="bg-black/40 border border-gray-800 rounded-2xl p-6 shadow mb-8">
+      <div class="flex items-center gap-2 mb-6">
+        <i class="fa-solid fa-clock text-yellow-400"></i>
+        <h2 class="font-bold text-lg">Delivery Status</h2>
+        {% if not has_real_tracking %}
+        <span class="text-xs bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded-full">
+          Tracking available after dispatch
+        </span>
+        {% endif %}
+      </div>
 
-      <h2 class="font-bold text-lg mb-6">Delivery Status</h2>
+      <div class="space-y-6">
+        {% include "store/partials/_tracking_step.html" with name="Order Placed"      active=True %}
+        {% include "store/partials/_tracking_step.html" with name="Processing"        active=processing %}
+        {% include "store/partials/_tracking_step.html" with name="Shipped"           active=shipped %}
+        {% include "store/partials/_tracking_step.html" with name="Out for Delivery"  active=out_for_delivery %}
+        {% include "store/partials/_tracking_step.html" with name="Delivered"         active=delivered %}
+      </div>
+    </div>
+    {% endif %}
 
-      <div class="space-y-8">
-        {% include "store/partials/_tracking_step.html" with name="Order Placed" active=placed %}
-        {% include "store/partials/_tracking_step.html" with name="Processing" active=processing %}
-        {% include "store/partials/_tracking_step.html" with name="Shipped" active=shipped %}
-        {% include "store/partials/_tracking_step.html" with name="Out for Delivery" active=out_for_delivery %}
-        {% include "store/partials/_tracking_step.html" with name="Delivered" active=delivered %}
+    <!-- AWB INFO BOX (shown when AWB exists but no checkpoints yet) -->
+    {% if fulfillment.tracking_id and not checkpoints %}
+    <div class="mb-8 p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-300">
+      <div class="flex items-start gap-3">
+        <i class="fa-solid fa-truck mt-1"></i>
+        <div>
+          <p class="font-semibold">Order Dispatched</p>
+          <p class="text-sm mt-1">
+            Tracking number <span class="font-mono font-bold">{{ fulfillment.tracking_id }}</span>
+            has been assigned. Live updates will appear here within a few hours.
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ESTIMATED DELIVERY -->
+    <div class="bg-black/40 border border-gray-800 rounded-2xl p-5 mb-8">
+      <div class="flex items-center gap-3 text-sm text-gray-300">
+        <i class="fa-solid fa-calendar text-blue-400 text-base"></i>
+        <span>Estimated Delivery:</span>
+        <span class="font-semibold text-white">
+          {{ order.estimated_delivery|date:"M d, Y"|default:"Within 5-7 days" }}
+        </span>
       </div>
     </div>
 
     <!-- BACK -->
     <a href="{% url 'order_detail' order.id %}"
-       class="inline-flex items-center gap-2 text-gray-300 hover:text-white">
-      <i class="fa-solid fa-arrow-left text-sm"></i>
-      Back to Order Details
+       class="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm">
+      <i class="fa-solid fa-arrow-left"></i> Back to Order Details
     </a>
 
   </div>

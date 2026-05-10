@@ -8,6 +8,103 @@ from django.utils.text import slugify
 from django.conf import settings 
 from django.urls import reverse
 from decimal import Decimal
+from django.core.validators import RegexValidator
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
+class Brand(MPTTModel):
+
+    name = models.CharField(
+        max_length=120,
+        db_index=True
+    )
+
+    slug = models.SlugField(
+        unique=True,
+        blank=True
+    )
+
+    # ✅ NEW: parent field (TREE)
+    parent = TreeForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="children"
+    )
+
+    logo = CloudinaryField(
+        "brand_logo",
+        blank=True,
+        null=True
+    )
+
+    description = models.TextField(blank=True)
+
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # ✅ MPTT CONFIG
+    class MPTTMeta:
+        order_insertion_by = ["name"]
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["slug"]),
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["parent"]),  # 🔥 IMPORTANT
+        ]
+
+    # =========================
+    # SAVE (SAFE SLUG + HIERARCHY)
+    # =========================
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+            base_slug = slugify(self.name)
+
+            # 🔥 Optional hierarchical slug
+            if self.parent:
+                base_slug = f"{self.parent.slug}-{base_slug}"
+
+            slug = base_slug
+            counter = 1
+
+            while Brand.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        super().save(*args, **kwargs)
+
+    # =========================
+    # HELPERS
+    # =========================
+
+    def get_full_path(self):
+        return " > ".join(
+            [ancestor.name for ancestor in self.get_ancestors(include_self=True)]
+        )
+
+    def get_breadcrumbs(self):
+        return self.get_ancestors(include_self=True)
+
+    def is_leaf_brand(self):
+        return not self.get_children().exists()
+
+    def get_absolute_url(self):
+        return f"/brand/{self.slug}/"
+
+    def __str__(self):
+        return self.get_full_path()
 
 class Category(MPTTModel):
     name = models.CharField(max_length=100)
@@ -42,7 +139,7 @@ class Category(MPTTModel):
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
-
+        
     def get_absolute_url(self):
         return f"/category/{self.slug}/"
 
@@ -70,39 +167,134 @@ class HomeSection(models.Model):
         return self.title
 
 class Product(models.Model):
+
+    # =========================
+    # BRAND + PRODUCT TYPE
+    # =========================
+
+    PRODUCT_TYPE_CHOICES = [
+        ("SELLABLE", "Sellable"),
+        ("CUSTOM", "Customizable"),
+        ("SHOWCASE", "Showcase Only"),
+        ("SERVICE", "Service / Lead Only"),
+    ]
+
+    brand = models.ForeignKey(
+        "Brand",
+        on_delete=models.SET_NULL,
+        related_name="products",
+        null=True,
+        blank=True,
+        help_text="MFY Brand (Lifestyle.MFY, Krafty.MFY, etc)"
+    )
+
+    product_type = models.CharField(
+        max_length=20,
+        choices=PRODUCT_TYPE_CHOICES,
+        default="SELLABLE",
+        db_index=True,
+        help_text="Controls inventory, checkout, and frontend behavior"
+    )
+
+    track_inventory = models.BooleanField(
+        default=True,
+        help_text="Disable for showcase or service products"
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Hide product from website if disabled"
+    )
+
+    # =========================
+    # BASIC INFO
+    # =========================
+
+    category = models.ForeignKey(
+        "Category",
+        on_delete=models.CASCADE,
+        related_name="products"
+    )
+
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        db_index=True
+    )
+
+    name = models.CharField(
+        max_length=100,
+        db_index=True
+    )
+
+    slug = models.SlugField(
+        max_length=255,
+        db_index=True,
+        blank=True,
+        null=True
+    )
+    description = models.TextField(blank=True)
+    short_description = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+
+    special_offer_text = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True
+    )
+
+    keywords = models.TextField(
+        blank=True,
+        help_text="Comma separated keywords (dress, women dress, party dress)"
+    )
+    # =========================
+    # DEALER / FULFILLMENT
+    # =========================
+
     DEALER_CHOICES = [
         ("Self", "Self-Fulfilled"),
         ("Qikink", "Qikink"),
         ("Printrove", "Printrove"),
     ]
 
+    dealer = models.CharField(
+        max_length=20,
+        choices=DEALER_CHOICES,
+        default="Self",
+        db_index=True
+    )
+
+    # =========================
+    # IMAGE SETTINGS
+    # =========================
+
     IMAGE_MODE_CHOICES = [
         ("qikink", "Qikink Image"),
         ("custom", "Custom Image"),
     ]
 
-    category = models.ForeignKey(
-        "Category", on_delete=models.CASCADE, related_name="products"
-    )
-    sku = models.CharField(max_length=100, unique=True, null=True, blank=True)
-    name = models.CharField(max_length=100)
-
-    description = models.TextField(blank=True)
-    short_description = models.CharField(max_length=200, blank=True, null=True)
-    special_offer_text = models.CharField(max_length=150, blank=True, null=True)
-    material = models.CharField(max_length=100, blank=True, null=True)
-
-    dealer = models.CharField(
-        max_length=20, choices=DEALER_CHOICES, default="Self"
-    )
-
-    # 🖼️ Image mode
     image_mode = models.CharField(
-        max_length=20, choices=IMAGE_MODE_CHOICES, default="qikink"
+        max_length=20,
+        choices=IMAGE_MODE_CHOICES,
+        default="qikink"
     )
-    custom_image = CloudinaryField("custom_image", blank=True, null=True)
 
-    # 🚦 ATTRIBUTE FLAGS (THIS CONTROLS UI + VALIDATION)
+    custom_image = CloudinaryField(
+        "custom_image",
+        blank=True,
+        null=True
+    )
+
+    # =========================
+    # ATTRIBUTE FLAGS (UI CONTROL)
+    # =========================
+
     has_size = models.BooleanField(default=False)
     has_color = models.BooleanField(default=False)
     has_age_group = models.BooleanField(default=False)
@@ -114,25 +306,92 @@ class Product(models.Model):
     has_shoe_size = models.BooleanField(default=False)
     has_gender_fit = models.BooleanField(default=False)
 
-    # 🚚 Optional logistics
+    # =========================
+    # LOGISTICS
+    # =========================
+
     shipping_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
-    )
-    tax_rate = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True
     )
 
-    # ================== LOGIC ==================
+    tax_rate = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True
+    )
+
+    # =========================
+    # TIMESTAMPS
+    # =========================
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    # =========================
+    # META
+    # =========================
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(fields=["brand"]),
+            models.Index(fields=["product_type"]),
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["sku"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["name"]),
+            models.Index(fields=["keywords"]),
+        ]
+
+    # =========================
+    # SAVE LOGIC
+    # =========================
+
+    def save(self, *args, **kwargs):
+
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            self.slug = slug
+
+        # Auto-disable inventory tracking for non-sellable products
+        if self.product_type in ["SHOWCASE", "SERVICE"]:
+            self.track_inventory = False
+
+        super().save(*args, **kwargs)
+
+    # =========================
+    # BUSINESS LOGIC
+    # =========================
 
     def get_vendor_defaults(self):
+
         defaults = {
             "Qikink": {"shipping": Decimal("49.00"), "tax": Decimal("18.00")},
             "Printrove": {"shipping": Decimal("59.00"), "tax": Decimal("12.00")},
             "Self": {"shipping": Decimal("40.00"), "tax": Decimal("10.00")},
         }
+
         return defaults.get(self.dealer, defaults["Self"])
 
     def get_shipping_cost(self):
+
         return (
             self.shipping_price
             if self.shipping_price is not None
@@ -140,49 +399,101 @@ class Product(models.Model):
         )
 
     def get_tax_rate(self):
+
         return (
             self.tax_rate
             if self.tax_rate is not None
             else self.get_vendor_defaults()["tax"]
         )
 
-    # ---------------- DISPLAY HELPERS ----------------
+    # =========================
+    # INVENTORY LOGIC
+    # =========================
 
-    def get_base_variant(self):
-        """Cheapest variant (used for listing price)"""
-        return self.variants.order_by("price").first()
+    def get_total_stock(self):
 
-    def get_display_price(self):
-        variant = self.get_base_variant()
-        if not variant:
+        if not self.track_inventory:
             return None
-        return variant.offer_price or variant.price
+
+        from django.db.models import Sum
+
+        return self.variants.aggregate(
+            total=Sum("stock")
+        )["total"] or 0
 
     @property
     def in_stock(self):
-        """Product is in stock if ANY variant has stock"""
+
+        if not self.track_inventory:
+            return True
+
         return self.variants.filter(stock__gt=0).exists()
 
+    # =========================
+    # DISPLAY HELPERS
+    # =========================
+
+    def get_base_variant(self):
+
+        return self.variants.order_by("price").first()
+
+    def get_display_price(self):
+
+        variant = self.get_base_variant()
+
+        if not variant:
+            return None
+
+        return variant.offer_price or variant.price
+
     def get_main_image_url(self):
+
         if self.image_mode == "custom" and self.custom_image:
             return self.custom_image.url
 
         main_image = self.images.filter(is_main=True).first()
+
         if main_image:
             return main_image.image.url
 
-        fallback_image = self.images.first()
-        if fallback_image:
-            return fallback_image.image.url
+        fallback = self.images.first()
+
+        if fallback:
+            return fallback.image.url
 
         return "/static/store/images/placeholder.png"
 
     def get_absolute_url(self):
-        from django.urls import reverse
         return reverse("product_detail", args=[self.id])
 
+    # =========================
+    # STATUS HELPERS
+    # =========================
+
+    @property
+    def is_sellable(self):
+        return self.product_type == "SELLABLE"
+
+    @property
+    def is_customizable(self):
+        return self.product_type == "CUSTOM"
+
+    @property
+    def is_showcase(self):
+        return self.product_type == "SHOWCASE"
+
+    @property
+    def is_service(self):
+        return self.product_type == "SERVICE"
+
+    # =========================
+    # STRING
+    # =========================
+
     def __str__(self):
-        return self.name
+        brand_name = self.brand.name if self.brand else "No Brand"
+        product_name = self.name if self.name else f"Product {self.pk}"
+        return f"{brand_name} — {product_name}"
 
 # ---------- Color & Size ----------
 
@@ -219,6 +530,13 @@ class ProductVariant(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="variants"
     )
+    
+    sku = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
     # Apparel / Core
     color = models.ForeignKey(
@@ -230,40 +548,94 @@ class ProductVariant(models.Model):
     age_group = models.CharField(max_length=20, null=True, blank=True)
 
     # Universal attributes
-    dimension = models.CharField(max_length=30, null=True, blank=True)   # "40x60 cm"
-    capacity = models.CharField(max_length=20, null=True, blank=True)    # "500 ml"
-    weight = models.CharField(max_length=20, null=True, blank=True)      # "1 kg"
+    dimension    = models.CharField(max_length=30, null=True, blank=True)
+    capacity     = models.CharField(max_length=20, null=True, blank=True)
+    weight       = models.CharField(max_length=20, null=True, blank=True)
     pack_quantity = models.PositiveIntegerField(null=True, blank=True)
-    shoe_size = models.CharField(max_length=10, null=True, blank=True)
-    gender_fit = models.CharField(max_length=10, null=True, blank=True)
+    shoe_size    = models.CharField(max_length=10, null=True, blank=True)
+    gender_fit   = models.CharField(max_length=10, null=True, blank=True)
 
     # Pricing & stock
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Original MRP — must be greater than 0"   # ← hint in admin
+    )
     offer_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Sale price — must be less than MRP"      # ← hint in admin
     )
     discount_percent = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00, editable=False
+        max_digits=5,
+        decimal_places=2,
+        default=0.00,
+        editable=False
     )
     stock = models.PositiveIntegerField(default=0)
 
     # Variant image override
     image = CloudinaryField("image", blank=True, null=True)
 
-    # ================== LOGIC ==================
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # ================== VALIDATION ==================
+
+    def clean(self):
+        errors = {}
+
+        # ✅ Rule 1: price must be > 0
+        if self.price is None or self.price <= 0:
+            errors['price'] = _(
+                'Price must be greater than ₹0. '
+                'Enter the original MRP of this variant.'
+            )
+
+        # ✅ Rule 2: offer_price rules (only if price is valid)
+        if self.offer_price is not None:
+            if self.offer_price <= 0:
+                errors['offer_price'] = _(
+                    'Offer price must be greater than ₹0.'
+                )
+            elif self.price and self.offer_price >= self.price:
+                errors['offer_price'] = _(
+                    f'Offer price (₹{self.offer_price}) must be '
+                    f'less than original price (₹{self.price}).'
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    # ================== SAVE ==================
 
     def save(self, *args, **kwargs):
-        if self.offer_price and self.offer_price < self.price:
+        # ✅ Run validation before saving
+        self.full_clean()
+
+        # ✅ Auto-calculate discount percent
+        if self.offer_price and self.price and self.offer_price < self.price:
             self.discount_percent = (
                 (self.price - self.offer_price) / self.price * Decimal("100")
             ).quantize(Decimal("0.01"))
         else:
             self.discount_percent = Decimal("0.00")
+            # ✅ Clear offer_price if it equals price (no real discount)
+            if self.offer_price and self.price and self.offer_price >= self.price:
+                self.offer_price = None
+
         super().save(*args, **kwargs)
+
+    # ================== PROPERTIES ==================
 
     @property
     def final_price(self):
-        return self.offer_price or self.price
+        """What the customer actually pays"""
+        if self.offer_price and self.offer_price > 0:
+            return self.offer_price
+        return self.price
 
     @property
     def in_stock(self):
@@ -271,24 +643,123 @@ class ProductVariant(models.Model):
 
     def __str__(self):
         parts = [self.product.name]
-        if self.color:
-            parts.append(self.color.name)
-        if self.size:
-            parts.append(self.size.name)
-        if self.age_group:
-            parts.append(self.age_group)
-        if self.shoe_size:
-            parts.append(f"Shoe {self.shoe_size}")
+        if self.color:   parts.append(self.color.name)
+        if self.size:    parts.append(self.size.name)
+        if self.age_group: parts.append(self.age_group)
+        if self.shoe_size: parts.append(f"Shoe {self.shoe_size}")
         return " - ".join(parts)
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
     image = CloudinaryField("image")
     is_main = models.BooleanField(default=False)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     def __str__(self):
         return f"Image for {self.product.name}"
 
+User = get_user_model()
+
+class StockLog(models.Model):
+
+    variant = models.ForeignKey(
+        ProductVariant,
+        on_delete=models.CASCADE,
+        related_name="stock_logs"
+    )
+
+    change = models.IntegerField()
+
+    reason = models.CharField(
+        max_length=50,
+        choices=[
+            ("SALE", "Sale"),
+            ("RESTOCK", "Restock"),
+            ("RETURN", "Return"),
+            ("ADJUSTMENT", "Adjustment"),
+        ]
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    note = models.TextField(blank=True)
+
+class Customization(models.Model):
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE
+    )
+
+    data = models.JSONField()
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+class AccordionTemplate(models.Model):
+    """
+    Reusable accordion templates (Fabric, Shipping, Warranty, etc.)
+    """
+    title = models.CharField(max_length=120, unique=True)
+    default_content = models.TextField(
+        help_text="Plain text only. HTML will be auto-sanitized."
+    )
+    schema_key = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Schema.org key (e.g. material, shippingDetails)"
+    )
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+
+class ProductAccordion(models.Model):
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE,
+        related_name='accordions'
+    )
+
+    title = models.CharField(max_length=120)
+
+    content = models.TextField(
+        help_text="Plain text only. HTML not allowed."
+    )
+
+    order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    # 🔥 ANALYTICS
+    open_count = models.PositiveIntegerField(default=0)
+
+    # 🔍 SEO
+    schema_key = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Schema.org additionalProperty key"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.product.name} → {self.title}"
 
 # ----------------------
 # User & Address
@@ -324,11 +795,32 @@ class Address(models.Model):
     country = models.CharField(max_length=100, default="India")
     postal_code = models.CharField(max_length=30)
     address_type = models.CharField(max_length=30, choices=ADDRESS_TYPES, default="shipping")
-    is_default = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False)          # legacy — keep for backward compat
+
+    # ✅ NEW: granular defaults
+    is_default_shipping = models.BooleanField(default=False)
+    is_default_billing  = models.BooleanField(default=False)
+
+    # ✅ NEW: usage flags (one address can serve both roles)
+    use_as_shipping = models.BooleanField(default=True)
+    use_as_billing  = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}, {self.city} ({self.address_type})"
 
+    # ────────────────────────────────────────────────────────────
+    # Helper: enforce single default per type per user
+    # ────────────────────────────────────────────────────────────
+    def set_as_default_shipping(self):
+        Address.objects.filter(user=self.user, is_default_shipping=True).exclude(pk=self.pk).update(is_default_shipping=False)
+        self.is_default_shipping = True
+        self.is_default = True          # keep legacy in sync
+        self.save(update_fields=["is_default_shipping", "is_default"])
+
+    def set_as_default_billing(self):
+        Address.objects.filter(user=self.user, is_default_billing=True).exclude(pk=self.pk).update(is_default_billing=False)
+        self.is_default_billing = True
+        self.save(update_fields=["is_default_billing"])
 
 # ----------------------
 # Wishlist & Cart
@@ -717,6 +1209,9 @@ class Order(models.Model):
         ("Shipped", "Shipped"),
         ("Out for Delivery", "Out for Delivery"),
         ("Delivered", "Delivered"),
+        ("Cancelled",        "Cancelled"),   # ← NEW
+        ("Returned",         "Returned"),    # ← NEW
+        ("Refunded",         "Refunded"), 
     ]
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default="Pending")
 
@@ -744,27 +1239,66 @@ class Order(models.Model):
 
     # ✅ Estimated Delivery
     estimated_delivery = models.DateField(blank=True, null=True)
+    cancelled_at  = models.DateTimeField(null=True, blank=True)
+    delivered_at  = models.DateTimeField(null=True, blank=True)
+    returned_at   = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+
+        # Copy address snapshot automatically
+        if self.shipping_address and not self.shipping_first_name:
+            self.shipping_first_name = self.shipping_address.first_name
+            self.shipping_last_name = self.shipping_address.last_name
+            self.shipping_phone = self.shipping_address.phone
+            self.shipping_address_line1 = self.shipping_address.address_line1
+            self.shipping_address_line2 = self.shipping_address.address_line2
+            self.shipping_city = self.shipping_address.city
+            self.shipping_state = self.shipping_address.state
+            self.shipping_country = self.shipping_address.country
+            self.shipping_postal_code = self.shipping_address.postal_code
+
+        # Delivery date
         if not self.estimated_delivery:
             self.estimated_delivery = date.today() + timedelta(days=5)
+
         super().save(*args, **kwargs)
 
     @property
     def delivery_progress(self):
-        """
-        Return a percentage for UI progress bar.
-        """
         progress_map = {
-            "Pending": 20,
-            "Processing": 40,
-            "Shipped": 60,
+            "Pending":          20,
+            "Processing":       40,
+            "Shipped":          60,
             "Out for Delivery": 80,
-            "Delivered": 100,
+            "Delivered":        100,
+            "Cancelled":        0,
+            "Returned":         0,
+            "Refunded":         0,
         }
         return progress_map.get(self.status, 0)
 
+    @property
+    def is_cancellable(self):
+        return self.status in {"Pending", "Processing"}
+    
+    @property
+    def is_returnable(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        if self.status != "Delivered":
+            return False
+        if not self.delivered_at:
+            return False
+        return timezone.now() <= self.delivered_at + timedelta(days=7)
+
+    @property
+    def return_window_expires(self):
+        from datetime import timedelta
+        if self.delivered_at:
+            return self.delivered_at + timedelta(days=7)
+        return None
+    
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
 
@@ -846,15 +1380,22 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment #{self.id} - {self.status} - {self.user}"
 
+# store/models.py — find your Fulfillment class and add these 2 fields
+
 class Fulfillment(models.Model):
-    order = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="fulfillments")
-    dealer = models.CharField(max_length=20)  # "Qikink" | "Printrove" | "Self"
-    dealer_order_id = models.CharField(max_length=200, blank=True, null=True)  # id returned by dealer
-    tracking_id = models.CharField(max_length=200, blank=True, null=True)
-    status = models.CharField(max_length=50, default="created")  # created, sent, confirmed, shipped, delivered
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    raw_response = models.JSONField(blank=True, null=True)
+    order          = models.ForeignKey("Order", on_delete=models.CASCADE, related_name="fulfillments")
+    dealer         = models.CharField(max_length=20)
+    dealer_order_id= models.CharField(max_length=200, blank=True, null=True)
+    tracking_id    = models.CharField(max_length=200, blank=True, null=True)
+    status         = models.CharField(max_length=50, default="created")
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+    raw_response   = models.JSONField(blank=True, null=True)
+
+    # ── NEW: add only these 2 lines ──────────────────────
+    courier_name        = models.CharField(max_length=100, blank=True, null=True)  # e.g. "DTDC", "Delhivery"
+    aftership_registered= models.BooleanField(default=False)  # so we don't register twice
+    # ─────────────────────────────────────────────────────
 
     def __str__(self):
         return f"Fulfillment {self.id} for Order {self.order.id} via {self.dealer}"
@@ -928,10 +1469,39 @@ class FAQ(models.Model):
         return self.question
 
 class ReturnRequest(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+
+    STATUS_CHOICES = [
+        ("Requested",  "Requested"),
+        ("Approved",   "Approved"),
+        ("Picked",     "Picked"),
+        ("Completed",  "Completed"),
+        ("Rejected",   "Rejected"),
+    ]
+
+    order  = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="return_requests")
+    user   = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="return_requests")
     reason = models.TextField()
-    status = models.CharField(max_length=20, default="Pending")
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Requested")
+
+    # Lifecycle timestamps
+    created_at   = models.DateTimeField(auto_now_add=True)
+    approved_at  = models.DateTimeField(null=True, blank=True)
+    picked_at    = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    rejected_at  = models.DateTimeField(null=True, blank=True)
+    rejection_reason = models.TextField(blank=True)
+
+    @property
+    def return_window_expired(self):
+        from django.utils import timezone
+        from datetime import timedelta
+        if self.order.delivered_at:
+            return timezone.now() > self.order.delivered_at + timedelta(days=7)
+        return True  # conservative: expired if we don't know delivery time
+
+    def __str__(self):
+        return f"Return #{self.id} | Order #{self.order.id} | {self.status}"
 
 class NewsletterSubscriber(models.Model):
     email = models.EmailField(unique=True)
@@ -939,3 +1509,53 @@ class NewsletterSubscriber(models.Model):
 
     def __str__(self):
         return self.email
+
+class SearchQuery(models.Model):
+
+    query = models.CharField(max_length=255, db_index=True)
+
+    count = models.PositiveIntegerField(default=1)
+
+    last_searched = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-count"]
+
+    def __str__(self):
+        return f"{self.query} ({self.count})"
+
+class ProductRelation(models.Model):
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="related_from"
+    )
+
+    related_product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="related_to"
+    )
+
+    class Meta:
+        unique_together = ("product", "related_product")
+
+class TrackingCheckpoint(models.Model):
+    """
+    One row per courier scan event.
+    Populated by AfterShip webhook automatically.
+    """
+    order           = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="checkpoints"
+    )
+    message         = models.TextField()
+    location        = models.CharField(max_length=200, blank=True)
+    tag             = models.CharField(max_length=50, blank=True)
+    checkpoint_time = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-checkpoint_time"]
+
+    def __str__(self):
+        return f"{self.order.id} — {self.tag} — {self.checkpoint_time}"

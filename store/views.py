@@ -1,5 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category, Banner, HomeSection, PromoBanner,FAQ, StockNotification, CouponUsage, AboutPage, SocialLink, Value, TeamMember, Service, Client,SavedItem, ReturnRequest, NewsletterSubscriber, Payment
+from .models import Product, Cart, Order, OrderItem, ProductVariant, ProductImage, Wishlist, Review, UserProfile, Address, Coupon, CartItem, Category, Banner, HomeSection, PromoBanner,FAQ, StockNotification, CouponUsage, AboutPage, SocialLink, Value, TeamMember, Service, Client,SavedItem, ReturnRequest, NewsletterSubscriber, Payment, ProductAccordion, Brand,  ReturnRequest
+from store.services.order_services import (
+    cancel_order as svc_cancel,
+    request_return as svc_request_return,
+    approve_return as svc_approve,
+    complete_return as svc_complete,
+    update_order_status,
+)
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.html import escape, format_html
@@ -33,24 +40,42 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import ProductSerializer
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.db.models import Sum
-from django.db.models import Q
 from django.template.loader import render_to_string
 from .utils import get_or_create_session_key 
-from django.db.models import Avg, Count
 from django.core.paginator import Paginator
-from decimal import Decimal
 from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.core.serializers.json import DjangoJSONEncoder
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from decimal import Decimal, ROUND_HALF_UP
-from django.db.models import Case, When, Min, F
+from django.db.models import Case, When, Min, F, DecimalField, Avg, Count, Sum, Q  
+from .utils import smart_search, rank_products, correct_query, get_products_queryset
+from .models import SearchQuery
+from rapidfuzz import process
+from django.urls import reverse
+from mptt.templatetags.mptt_tags import cache_tree_children
+from .utils import get_products_queryset, apply_filters
 
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
+
+def _get_defaults(user):
+    """
+    Returns (default_shipping, default_billing) Address objects for a user.
+    Falls back gracefully when not set.
+    """
+    shipping = (
+        Address.objects.filter(user=user, is_default_shipping=True).first()
+        or Address.objects.filter(user=user, use_as_shipping=True).first()
+        or Address.objects.filter(user=user).first()
+    )
+    billing = (
+        Address.objects.filter(user=user, is_default_billing=True).first()
+        or Address.objects.filter(user=user, use_as_billing=True).first()
+        or shipping   # final fallback: same as shipping
+    )
+    return shipping, billing
 
 def attach_product_display_data(product):
     """
@@ -101,11 +126,6 @@ def index(request):
 
     # ✅ Categories
     top_categories = Category.objects.filter(parent__isnull=True)
-    categories_with_children = (
-        Category.objects
-        .filter(parent__isnull=True)
-        .prefetch_related('children')
-    )
 
     # ✅ Banners
     banners = Banner.objects.filter(active=True).order_by('order')
@@ -151,87 +171,245 @@ def index(request):
     return render(request, 'store/index.html', {
         'products': products,
         'categories': top_categories,
-        'sidebar_categories': categories_with_children,
         'banners': banners,
         'dynamic_sections': dynamic_sections,
         'promo_banner_text': promo_banner_text,
     })
 
-def category_products(request, slug):
-    category = get_object_or_404(Category, slug=slug)
+def products_view(request):
 
-    descendants = category.get_descendants(include_self=True)
+    sort      = request.GET.get("sort", "newest")
+    min_price = request.GET.get("min_price", "").strip()
+    max_price = request.GET.get("max_price", "").strip()
+    brand_ids = request.GET.getlist("brand")
 
-    products = (
-        Product.objects
-        .filter(category__in=descendants)
-        .prefetch_related("images", "variants")
-        .distinct()
+    base_qs = Product.objects.filter(
+        is_active=True
+    ).prefetch_related('images', 'variants')
+
+    # ✅ Annotate effective_price = offer_price if exists, else price
+    base_qs = base_qs.annotate(
+        effective_price=Min(
+            Case(
+                When(
+                    variants__offer_price__isnull=False,
+                    variants__offer_price__gt=0,
+                    then=F('variants__offer_price')
+                ),
+                When(
+                    variants__price__gt=0,
+                    then=F('variants__price')
+                ),
+                default=None,
+                output_field=DecimalField()
+            )
+        )
     )
 
-    sort_option = request.GET.get("sort")
+    # ✅ Sort using effective_price
+    if sort == "low-high":
+        base_qs = base_qs.order_by(
+            F("effective_price").asc(nulls_last=True)
+        )
+    elif sort == "high-low":
+        base_qs = base_qs.order_by(
+            F("effective_price").desc(nulls_last=True)
+        )
+    elif sort == "rating":
+        base_qs = base_qs.annotate(
+            avg_r=Avg("reviews__rating")
+        ).order_by(
+            F("avg_r").desc(nulls_last=True)
+        )
+    else:
+        base_qs = base_qs.order_by("-created_at")
 
-    if sort_option == "low-high":
-        products = products.annotate(
-            sort_price=Min(
-                Case(
-                    When(variants__offer_price__isnull=False, then=F("variants__offer_price")),
-                    default=F("variants__price"),
-                )
+    # ✅ Price filter using effective_price
+    if min_price:
+        try:
+            base_qs = base_qs.filter(
+                effective_price__gte=float(min_price)
             )
-        ).order_by("sort_price")
+        except (ValueError, TypeError):
+            pass
 
-    elif sort_option == "high-low":
-        products = products.annotate(
-            sort_price=Min(
-                Case(
-                    When(variants__offer_price__isnull=False, then=F("variants__offer_price")),
-                    default=F("variants__price"),
-                )
+    if max_price:
+        try:
+            base_qs = base_qs.filter(
+                effective_price__lte=float(max_price)
             )
-        ).order_by("-sort_price")
+        except (ValueError, TypeError):
+            pass
 
-    elif sort_option == "rating":
-        products = products.annotate(
-            avg_rating=Avg("reviews__rating")
-        ).order_by("-avg_rating")
+    # ✅ Brand filter
+    if brand_ids:
+        base_qs = base_qs.filter(brand_id__in=brand_ids)
 
-    elif sort_option == "newest":
-        products = products.order_by("-id")
+    base_qs = base_qs.distinct()
+    products = list(base_qs)
 
     for product in products:
         attach_product_display_data(product)
+        product.avg_rating = round(
+            getattr(product, 'avg_rating', None) or 0, 1
+        )
 
-    # ❤️ Wishlist
+    wishlist_ids = []
     if request.user.is_authenticated:
         wishlist_ids = list(
-            Wishlist.objects
-            .filter(user=request.user)
-            .values_list("product_id", flat=True)
+            Wishlist.objects.filter(user=request.user)
+            .values_list('product_id', flat=True)
+        )
+
+    brands = Brand.objects.filter(
+        products__is_active=True
+    ).distinct().order_by("name")
+
+    context = {
+        "products":      products,
+        "brands":        brands,
+        "wishlist_ids":  wishlist_ids,
+        "product_count": len(products),
+        "current_sort":  sort,
+        "use_full_search": True,
+    }
+
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "store/partials/_product_wrapper.html",
+            context
+        )
+
+    return render(request, "store/products.html", context)
+
+
+def category_products(request, slug):
+
+    category       = get_object_or_404(Category, slug=slug)
+    descendants    = category.get_descendants(include_self=True)
+    descendant_ids = list(descendants.values_list('id', flat=True))
+
+    sort      = request.GET.get("sort", "newest")
+    min_price = request.GET.get("min_price", "").strip()
+    max_price = request.GET.get("max_price", "").strip()
+    brand_ids = request.GET.getlist("brand")
+
+    base_qs = Product.objects.filter(
+        category_id__in=descendant_ids,
+        is_active=True
+    ).prefetch_related('images', 'variants')
+
+    # ✅ Annotate effective_price = offer_price if exists, else price
+    base_qs = base_qs.annotate(
+        effective_price=Min(
+            Case(
+                When(
+                    variants__offer_price__isnull=False,
+                    variants__offer_price__gt=0,
+                    then=F('variants__offer_price')
+                ),
+                When(
+                    variants__price__gt=0,
+                    then=F('variants__price')
+                ),
+                default=None,
+                output_field=DecimalField()
+            )
+        )
+    )
+
+    # ✅ Sort using effective_price
+    if sort == "low-high":
+        base_qs = base_qs.order_by(
+            F("effective_price").asc(nulls_last=True)
+        )
+    elif sort == "high-low":
+        base_qs = base_qs.order_by(
+            F("effective_price").desc(nulls_last=True)
+        )
+    elif sort == "rating":
+        base_qs = base_qs.annotate(
+            avg_r=Avg("reviews__rating")
+        ).order_by(
+            F("avg_r").desc(nulls_last=True)
         )
     else:
-        wishlist_ids = []
+        base_qs = base_qs.order_by("-created_at")
 
-    # 🛒 Cart count
+    # ✅ Price filter using effective_price
+    if min_price:
+        try:
+            base_qs = base_qs.filter(
+                effective_price__gte=float(min_price)
+            )
+        except (ValueError, TypeError):
+            pass
+
+    if max_price:
+        try:
+            base_qs = base_qs.filter(
+                effective_price__lte=float(max_price)
+            )
+        except (ValueError, TypeError):
+            pass
+
+    # ✅ Brand filter
+    if brand_ids:
+        base_qs = base_qs.filter(brand_id__in=brand_ids)
+
+    base_qs = base_qs.distinct()
+    products = list(base_qs)
+
+    for product in products:
+        attach_product_display_data(product)
+        product.avg_rating = round(
+            getattr(product, 'avg_rating', None) or 0, 1
+        )
+
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = list(
+            Wishlist.objects.filter(user=request.user)
+            .values_list("product_id", flat=True)
+        )
+
     if request.user.is_authenticated:
         cart_data = Cart.objects.for_user_or_session(user=request.user)
     else:
         session_key = get_or_create_session_key(request)
-        cart_data = Cart.objects.for_user_or_session(session_key=session_key)
+        cart_data   = Cart.objects.for_user_or_session(
+            session_key=session_key
+        )
 
     cart_items_count = (
-        cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
+        cart_data["cart"].items.aggregate(
+            total=Sum("quantity")
+        )["total"] or 0
     )
 
+    brands = Brand.objects.filter(
+        products__category_id__in=descendant_ids,
+        products__is_active=True
+    ).distinct().order_by("name")
+
     context = {
-        "category": category,
-        "products": products,
+        "category":        category,
+        "products":        products,
+        "brands":          brands,
+        "wishlist_ids":    wishlist_ids,
         "cart_items_count": cart_items_count,
-        "wishlist_ids": wishlist_ids,
+        "product_count":   len(products),
+        "current_sort":    sort,
+        "use_full_search": True,
     }
 
     if request.headers.get("HX-Request"):
-        return render(request, "store/partials/_product_grid.html", context)
+        return render(
+            request,
+            "store/partials/_product_wrapper.html",
+            context
+        )
 
     return render(request, "store/category_products.html", context)
 
@@ -350,36 +528,49 @@ def address_add(request):
         form = AddressForm(request.POST)
         if form.is_valid():
             address = form.save(commit=False)
-            address.user = request.user
+            address.user    = request.user
+            address.country = "India"
+            address.address_type = "home"
 
-            # FORCE required hidden/default values
-            address.country = "India"        # default country
-            address.address_type = "home"    # default to home
+            use_as_shipping = form.cleaned_data.get("use_as_shipping", True)
+            use_as_billing  = form.cleaned_data.get("use_as_billing",  False)
+            address.use_as_shipping = use_as_shipping
+            address.use_as_billing  = use_as_billing
 
-            # First address → make default
-            if not Address.objects.filter(user=request.user).exists():
-                address.is_default = True
+            # First address ever → default for both
+            is_first = not Address.objects.filter(user=request.user).exists()
+            if is_first:
+                address.is_default          = True
+                address.is_default_shipping = True
+                address.is_default_billing  = True
             else:
                 address.is_default = False
 
             address.save()
 
-            # Sync first/last name to User model
+            # Set granular defaults AFTER save (needs pk)
+            if use_as_shipping and not Address.objects.filter(
+                    user=request.user, is_default_shipping=True).exclude(pk=address.pk).exists():
+                address.set_as_default_shipping()
+
+            if use_as_billing and not Address.objects.filter(
+                    user=request.user, is_default_billing=True).exclude(pk=address.pk).exists():
+                address.set_as_default_billing()
+
+            # Sync name to User model
             if address.first_name and address.last_name:
                 request.user.first_name = address.first_name
-                request.user.last_name = address.last_name
+                request.user.last_name  = address.last_name
                 request.user.save()
 
-            return redirect("account_addresses")  # Works
-
+            return redirect("account_addresses")
         else:
-            print(form.errors)  # Debug if needed
-
+            print(form.errors)
     else:
         form = AddressForm()
 
     return render(request, "account/address_form.html", {"form": form})
-
+          
 @login_required
 def edit_address(request, pk):
     address = get_object_or_404(Address, pk=pk, user=request.user)
@@ -387,19 +578,40 @@ def edit_address(request, pk):
         form = AddressForm(request.POST, instance=address)
         if form.is_valid():
             address = form.save(commit=False)
-            if address.is_default:
-                Address.objects.filter(user=request.user, is_default=True).exclude(pk=address.pk).update(is_default=False)
+
+            use_as_shipping = form.cleaned_data.get("use_as_shipping", address.use_as_shipping)
+            use_as_billing  = form.cleaned_data.get("use_as_billing",  address.use_as_billing)
+            address.use_as_shipping = use_as_shipping
+            address.use_as_billing  = use_as_billing
+
             address.save()
-            # ✅ Sync names into User model again
+
+            # Sync names
             if address.first_name and address.last_name:
                 request.user.first_name = address.first_name
-                request.user.last_name = address.last_name
+                request.user.last_name  = address.last_name
                 request.user.save()
 
             return redirect("account_addresses")
     else:
         form = AddressForm(instance=address)
+
     return render(request, "account/address_form.html", {"form": form})
+
+@login_required
+@require_POST
+def set_default_shipping(request, pk):
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    address.set_as_default_shipping()
+    return redirect("account_addresses")
+
+
+@login_required
+@require_POST
+def set_default_billing(request, pk):
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    address.set_as_default_billing()
+    return redirect("account_addresses")
 
 @login_required
 def address_delete_confirm(request, pk):
@@ -410,52 +622,154 @@ def address_delete_confirm(request, pk):
 @require_POST
 def delete_address(request, pk):
     address = get_object_or_404(Address, pk=pk, user=request.user)
+
+    was_default_shipping = address.is_default_shipping
+    was_default_billing  = address.is_default_billing
+
     address.delete()
+
+    # Auto-reassign shipping default
+    if was_default_shipping:
+        next_shipping = Address.objects.filter(user=request.user, use_as_shipping=True).first()
+        if next_shipping:
+            next_shipping.is_default_shipping = True
+            next_shipping.is_default = True
+            next_shipping.save(update_fields=["is_default_shipping", "is_default"])
+
+    # Auto-reassign billing default
+    if was_default_billing:
+        next_billing = Address.objects.filter(user=request.user, use_as_billing=True).first()
+        if next_billing:
+            next_billing.is_default_billing = True
+            next_billing.save(update_fields=["is_default_billing"])
+
     return JsonResponse({"success": True})
 
-def products_view(request):
-    products = (
-        Product.objects
-        .prefetch_related('images', 'variants')
-        .order_by('-id')
-    )
+# ─────────────────────────────────────────────────────────
+# Order
+# ─────────────────────────────────────────────────────────
 
-    for product in products:
-        # 🖼 Image
-        if product.image_mode == "custom" and product.custom_image:
-            product.first_image = product.custom_image
+# ─────────────────────────────────────────────────────────
+# HELPER: inject live status into any order before render
+# ─────────────────────────────────────────────────────────
+
+def _refresh_order_status(order):
+    """Call this in any view that shows order status to the user."""
+    update_order_status(order)
+
+
+# ─────────────────────────────────────────────────────────
+# 1. CANCEL ORDER  (POST → JSON, for fetch/HTMX)
+# ─────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def cancel_order_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    result = svc_cancel(order, request.user)
+
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest" or \
+       request.content_type == "application/json":
+        return JsonResponse(result)
+
+    # Normal POST fallback
+    if result["success"]:
+        messages.success(request, "Order cancelled successfully. Refund will be processed.")
+    else:
+        messages.error(request, result["error"])
+
+    return redirect("order_detail", order_id=order_id)
+
+
+# ─────────────────────────────────────────────────────────
+# 2. REQUEST RETURN
+# ─────────────────────────────────────────────────────────
+
+@login_required
+def request_return_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    # Auto-refresh status first
+    _refresh_order_status(order)
+
+    if request.method == "POST":
+        reason = request.POST.get("reason", "").strip()
+        if not reason:
+            messages.error(request, "Please provide a reason for the return.")
+            return redirect("request_return", order_id=order_id)
+
+        result = svc_request_return(order, request.user, reason)
+        if result["success"]:
+            messages.success(request, "Return request submitted! We'll contact you within 24 hours.")
+            return redirect("return_detail", return_id=result["return_id"])
         else:
-            product.first_image = product.images.first()
+            messages.error(request, result["error"])
 
-        # 🟢 BASE VARIANT (CHEAPEST)
-        base_variant = product.get_base_variant()
-
-        if base_variant:
-            product.display_price = base_variant.offer_price or base_variant.price
-            product.original_price = base_variant.price
-            product.offer_price = base_variant.offer_price
-            product.discount_percent = base_variant.discount_percent
-            
-        else:
-            product.display_price = None
-            product.original_price = None
-            product.offer_price = None
-            product.discount_percent = None
-
-        # ⭐ Ratings
-        avg_rating = product.reviews.aggregate(avg=Avg('rating'))['avg'] or 0
-        product.avg_rating = round(avg_rating, 1)
-        product.total_reviews = product.reviews.count()
-
-    return render(request, 'store/products.html', {
-        "products": products,
+    return render(request, "store/return_request.html", {
+        "order": order,
+        "is_returnable": order.is_returnable,
+        "return_window_expires": order.return_window_expires,
     })
+
+
+# ─────────────────────────────────────────────────────────
+# 3. RETURN DETAIL
+# ─────────────────────────────────────────────────────────
+
+@login_required
+def return_detail_view(request, return_id):
+    ret = get_object_or_404(ReturnRequest, id=return_id, user=request.user)
+    return render(request, "store/return_detail.html", {"return_obj": ret})
+
+
+# ─────────────────────────────────────────────────────────
+# 4. ADMIN: APPROVE RETURN
+# ─────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def approve_return_view(request, return_id):
+    if not request.user.is_staff:
+        return JsonResponse({"success": False, "error": "Staff only."}, status=403)
+
+    ret = get_object_or_404(ReturnRequest, id=return_id)
+    from store.services.order_services import approve_return as svc_approve
+    result = svc_approve(ret, request.user)
+    return JsonResponse(result)
+
+
+# ─────────────────────────────────────────────────────────
+# 5. ADMIN: COMPLETE RETURN
+# ─────────────────────────────────────────────────────────
+
+@login_required
+@require_POST
+def complete_return_view(request, return_id):
+    if not request.user.is_staff:
+        return JsonResponse({"success": False, "error": "Staff only."}, status=403)
+
+    ret = get_object_or_404(ReturnRequest, id=return_id)
+    from store.services.order_services import complete_return as svc_complete
+    result = svc_complete(ret, request.user)
+    return JsonResponse(result)
+
+
+# ─────────────────────────────────────────────────────────
+# 6. UPDATED ORDERS LIST (refreshes status live)
+# ─────────────────────────────────────────────────────────
 
 @login_required
 def orders_list(request):
+    from datetime import timedelta
+    from store.models import Wishlist
+
     orders = Order.objects.filter(user=request.user).order_by("-created_at")
 
     for order in orders:
+        # Live status update (time-based)
+        _refresh_order_status(order)
+
+        # Estimated delivery label
         if not order.estimated_delivery:
             order.auto_estimated_delivery = order.created_at + timedelta(days=5)
         else:
@@ -465,23 +779,28 @@ def orders_list(request):
 
     return render(request, "store/orders.html", {
         "orders": orders,
-        "wishlist_items": wishlist_items,  
+        "wishlist_items": wishlist_items,
     })
+
+
+# ─────────────────────────────────────────────────────────
+# 7. UPDATED ORDER DETAIL (refreshes status live)
+# ─────────────────────────────────────────────────────────
 
 @login_required
 def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    items = order.items.select_related("product").all()
 
-    # 🧾 Base totals — same as checkout page
+    # Live status update
+    _refresh_order_status(order)
+
+    items = order.items.select_related("product", "variant").all()
+
     subtotal = sum(item.total_price for item in items)
-
     shipping = (subtotal * Decimal("0.05")).quantize(Decimal("0.01"))
-    tax = (subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
-
+    tax      = (subtotal * Decimal("0.10")).quantize(Decimal("0.01"))
     total_before_discount = subtotal + shipping + tax
 
-    # If you stored discount_percent in order model
     if order.discount_percent:
         discount_amount = (total_before_discount * order.discount_percent / 100).quantize(Decimal("0.01"))
         total = total_before_discount - discount_amount
@@ -500,101 +819,291 @@ def order_detail(request, order_id):
         "total": total,
     })
 
-def product_detail(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    variants = product.variants.select_related("color", "size")
-    main_images = product.images.filter(is_main=True)
 
-    # 🖼 First image
-    if product.image_mode == "custom" and product.custom_image:
-        first_image_url = product.custom_image.url
-    else:
-        first_image_url = main_images.first().image.url if main_images.exists() else ""
+# ─────────────────────────────────────────────────────────
+# 8. UPDATED TRACK ORDER
+# ─────────────────────────────────────────────────────────
 
-    # ⭐ Reviews
-    reviews = Review.objects.filter(product=product).order_by('-id')
-    rating_stats = reviews.aggregate(
-        avg_rating=Avg('rating'),
-        total_reviews=Count('id')
-    )
-    average_rating = round(rating_stats['avg_rating'] or 0, 1)
-    total_reviews = rating_stats['total_reviews']
+@login_required
+def track_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
 
-    # 🎯 Sizes & Colors
-    sizes = list({v.size for v in variants if v.size})
-    colors = list({v.color for v in variants if v.color})
+    # Refresh time-based status (fallback when no AWB yet)
+    from store.services.order_services import update_order_status
+    update_order_status(order)
 
-    # 🎨 Variant map (color → images + price)
+    # Get fulfillment (AWB + courier info)
+    fulfillment  = order.fulfillments.filter(dealer="Qikink").first()
+    checkpoints  = order.checkpoints.all()   # real courier scans from AfterShip
+    has_real_tracking = fulfillment and fulfillment.tracking_id
+
+    context = {
+        "order":            order,
+        "fulfillment":      fulfillment,
+        "checkpoints":      checkpoints,
+        "has_real_tracking": has_real_tracking,
+
+        # For progress bar fallback
+        "placed":           True,
+        "processing":       order.delivery_progress >= 40,
+        "shipped":          order.delivery_progress >= 60,
+        "out_for_delivery": order.delivery_progress >= 80,
+        "delivered":        order.delivery_progress >= 100,
+    }
+    return render(request, "store/track_order.html", context)
+    
+# ─────────────────────────────────────────────────────────────
+#  HELPER: build the full variant_map for JS
+# ─────────────────────────────────────────────────────────────
+
+def _build_variant_map(variants, first_image_url):
+    """
+    Returns a JSON-serialisable list where every variant exposes
+    ALL selectable attributes so the JS engine can resolve any
+    combination.
+    """
     variant_map_list = []
 
-    for variant in variants:
-        if not variant.color:
-            continue
-
-        color_images = variant.color.images.all().order_by("-is_main")
-        image_urls = [img.image.url for img in color_images]
+    for v in variants:
+        # ── Images ──────────────────────────────────────────
+        if v.color:
+            color_images = v.color.images.all().order_by("-is_main")
+            image_urls   = [img.image.url for img in color_images]
+        else:
+            image_urls = []
 
         if not image_urls:
-            if variant.image:
-                image_urls = [variant.image.url]
+            if v.image:
+                image_urls = [v.image.url]
             elif first_image_url:
                 image_urls = [first_image_url]
 
+        # ── Build entry ─────────────────────────────────────
         variant_map_list.append({
-            "color": variant.color.id,
-            "images": image_urls,
-            "price": float(variant.price),
-            "offer_price": float(variant.offer_price) if variant.offer_price else None,
+            # identity
+            "id":            v.id,
+            # FK attributes (store PK so JS can match selectors)
+            "color":         v.color.id    if v.color  else None,
+            "size":          v.size.id     if v.size   else None,
+            # string attributes (stored as raw values)
+            "dimension":     v.dimension    or None,
+            "weight":        v.weight       or None,
+            "capacity":      v.capacity     or None,
+            "pack_quantity": v.pack_quantity,          # int or None
+            "shoe_size":     v.shoe_size    or None,
+            "gender_fit":    v.gender_fit   or None,
+            "age_group":     v.age_group    or None,
+            # pricing
+            "price":         float(v.price),
+            "offer_price":   float(v.offer_price) if v.offer_price else None,
+            # stock
+            "in_stock":      v.in_stock,
+            # images
+            "images":        image_urls,
         })
 
-    variant_map = json.dumps(variant_map_list)
+    return variant_map_list
 
-    # ❤️ Wishlist
-    wishlist_product_ids = []
-    if request.user.is_authenticated:
-        wishlist_product_ids = list(
-            Wishlist.objects.filter(user=request.user)
-            .values_list('product_id', flat=True)
+
+# ─────────────────────────────────────────────────────────────
+#  HELPER: unique sorted attribute values for selectors
+# ─────────────────────────────────────────────────────────────
+
+def _measurement_map(variants):
+    """
+    Builds {attr: [unique sorted values]} for every secondary attribute.
+    Values are kept as strings for the template selectors.
+    """
+    attrs = [
+        "age_group", "dimension", "capacity",
+        "weight", "pack_quantity", "shoe_size", "gender_fit",
+    ]
+    result = {}
+    for attr in attrs:
+        raw = {getattr(v, attr) for v in variants if getattr(v, attr) is not None}
+        # pack_quantity is int — convert to str for consistent handling
+        result[attr] = sorted(str(x) for x in raw)
+    return result
+
+
+# ─────────────────────────────────────────────────────────────
+#  MAIN VIEW
+# ─────────────────────────────────────────────────────────────
+
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+
+    # ── Guard: non-sellable/non-custom products block the cart ──
+    # (frontend also enforces this, but backend is the truth)
+
+    # ── Queryset ────────────────────────────────────────────────
+    active_accordions = product.accordions.filter(is_active=True)
+    variants = product.variants.select_related("color", "size").prefetch_related(
+        "color__images"
+    )
+    main_images = product.images.filter(is_main=True)
+
+    # ── First image ─────────────────────────────────────────────
+    if product.image_mode == "custom" and product.custom_image:
+        first_image_url = product.custom_image.url
+    else:
+        first_image_url = (
+            main_images.first().image.url if main_images.exists() else ""
         )
 
-    # 🔥 Recommended
-    recommended_products = Product.objects.filter(
-        category=product.category
-    ).exclude(id=product.id)[:4]
+    # ── Reviews ─────────────────────────────────────────────────
+    reviews = Review.objects.filter(product=product).select_related("user").order_by("-id")
+    rating_stats = reviews.aggregate(
+        avg_rating=Avg("rating"),
+        total_reviews=Count("id"),
+    )
+    average_rating = round(rating_stats["avg_rating"] or 0, 1)
+    total_reviews  = rating_stats["total_reviews"]
 
-    # 💰 Savings (BASE VARIANT)
-    base_variant = product.get_base_variant()
-    
+    # ── Sizes & Colors for template loops ───────────────────────
+    sizes = sorted(
+        {v.size for v in variants if v.size},
+        key=lambda s: getattr(s, "sort_order", s.id),
+    )
+    colors = sorted(
+        {v.color for v in variants if v.color},
+        key=lambda c: c.id,
+    )
+
+    # ── Full variant map (all attributes) ───────────────────────
+    variant_map_list = _build_variant_map(variants, first_image_url)
+    variant_map      = json.dumps(variant_map_list)
+
+    # ── Measurement map (unique values per secondary attribute) ──
+    measurement_map = _measurement_map(variants)
+
+    # ── Wishlist ─────────────────────────────────────────────────
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        from .models import Wishlist
+        wishlist_ids = list(
+            Wishlist.objects.filter(user=request.user).values_list("product_id", flat=True)
+        )
+
+    # ── Related products ─────────────────────────────────────────
+    related_products = Product.objects.filter(related_to__product=product)
+    if not related_products.exists():
+        related_products = Product.objects.filter(
+            category=product.category
+        ).exclude(id=product.id)
+    related_products = related_products.filter(is_active=True)[:8]
+
+    # ── Base variant + pricing ───────────────────────────────────
+    base_variant   = product.get_base_variant()
     base_price_data = {
-        "price": float(base_variant.price) if base_variant else None,
+        "price":       float(base_variant.price) if base_variant else None,
         "offer_price": float(base_variant.offer_price)
-        if base_variant and base_variant.offer_price else None,
+                       if base_variant and base_variant.offer_price else None,
     }
-    
+
     you_save = 0
     if base_variant and base_variant.offer_price:
         you_save = base_variant.price - base_variant.offer_price
 
     context = {
-        'product': product,
-        'variants': variants,
-        'sizes': sizes,
-        'colors': colors,
-        'variant_map': variant_map,
-        'images': main_images,
-        'wishlist_product_ids': wishlist_product_ids,
-        'recommended_products': recommended_products,
-        'reviews': reviews,
-        'form': ReviewForm(),
-        'first_image_url': first_image_url,
-        'average_rating': average_rating,
-        'total_reviews': total_reviews,
-        'you_save': you_save,
-        'base_variant': base_variant,                     # ✅ template usage
-        'base_price_data': json.dumps(base_price_data), 
+        "product":           product,
+        "active_accordions": active_accordions,
+        "variants":          variants,
+        "sizes":             sizes,
+        "colors":            colors,
+        # JSON blobs consumed by JS
+        "variant_map":       variant_map,
+        # Template loops
+        "images":            main_images,
+        "measurement_map":   measurement_map,
+        # Auth / personalisation
+        "wishlist_ids":      wishlist_ids,
+        # Related
+        "recommended_products": related_products,
+        # Reviews
+        "reviews":           reviews,
+        "form":              ReviewForm(),
+        "average_rating":    average_rating,
+        "total_reviews":     total_reviews,
+        "avg_rating":        average_rating,   # schema template
+        "review_count":      total_reviews,    # schema template
+        # Pricing helpers
+        "first_image_url":   first_image_url,
+        "you_save":          you_save,
+        "base_variant":      base_variant,
+        "base_price_data":   json.dumps(base_price_data),
     }
 
-    return render(request, 'store/product_detail.html', context)
+    return render(request, "store/product_detail.html", context)
+
+# ─────────────────────────────────────────────────────────────
+#  REVIEW SUBMISSION (AJAX-first)
+# ─────────────────────────────────────────────────────────────
+
+@require_POST
+def submit_review(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    form    = ReviewForm(request.POST)
+
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    if form.is_valid():
+        review          = form.save(commit=False)
+        review.product  = product
+        review.user     = request.user if request.user.is_authenticated else None
+        review.save()
+
+        if is_ajax:
+            # Re-calculate stats
+            stats = Review.objects.filter(product=product).aggregate(
+                avg_rating=Avg("rating"), total=Count("id")
+            )
+            return JsonResponse({
+                "ok":           True,
+                "comment":      review.comment,
+                "rating":       review.rating,
+                "user":         review.user.username if review.user else "Anonymous",
+                "avg_rating":   round(stats["avg_rating"] or 0, 1),
+                "total_reviews": stats["total"],
+            })
+
+    if is_ajax:
+        return JsonResponse({"ok": False, "errors": form.errors}, status=400)
+
+    return redirect("product_detail", product_id=product_id)
+
+
+# ─────────────────────────────────────────────────────────────
+#  CUSTOMIZATION SAVE (for CUSTOM product_type)
+# ─────────────────────────────────────────────────────────────
+
+@require_POST
+def save_customization(request, product_id):
+    """
+    Saves customization data for CUSTOM products.
+    Expects JSON body: { "data": { ... customization fields ... } }
+    """
+    product = get_object_or_404(Product, id=product_id, is_active=True)
+
+    if product.product_type != "CUSTOM":
+        return JsonResponse(
+            {"ok": False, "error": "This product is not customizable."},
+            status=403,
+        )
+
+    try:
+        body = json.loads(request.body)
+        data = body.get("data", {})
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({"ok": False, "error": "Invalid JSON."}, status=400)
+
+    from .models import Customization
+    cust = Customization.objects.create(product=product, data=data)
+
+    # Optionally store customization_id in session for cart:
+    request.session[f"customization_{product_id}"] = cust.id
+
+    return JsonResponse({"ok": True, "customization_id": cust.id})
 
 @method_decorator(cache_page(60*5), name="list")
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -617,33 +1126,26 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["name"]
 
 @login_required
-def add_to_wishlist(request, product_id):
-    """
-    Toggle wishlist status for a given product.
-    If product is already in wishlist, remove it.
-    Otherwise, add it.
-    """
+def toggle_wishlist(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+
+    wishlist_item, created = Wishlist.objects.get_or_create(
+        user=request.user,
+        product=product
+    )
 
     if not created:
-        # Already in wishlist → remove it
         wishlist_item.delete()
-        return JsonResponse({'added': False, 'message': 'Removed from wishlist'})
-    else:
-        # Added to wishlist
-        return JsonResponse({'added': True, 'message': 'Added to wishlist'})
+        return JsonResponse({
+            'added': False,
+            'message': 'Removed from wishlist'
+        })
 
-
-@login_required
-def remove_from_wishlist(request, product_id):
-    """
-    Explicitly remove a product from wishlist (used in wishlist page).
-    """
-    product = get_object_or_404(Product, id=product_id)
-    Wishlist.objects.filter(user=request.user, product=product).delete()
-    return redirect('wishlist')
-
+    return JsonResponse({
+        'added': True,
+        'message': 'Added to wishlist'
+    })
+    
 @login_required
 def wishlist_view(request):
     wishlist_items = (
@@ -718,7 +1220,6 @@ def checkout(request):
     )
     cart = cart_data["cart"]
     items = cart_data["items"]
-
     if not items:
         return redirect("view_cart")
 
@@ -733,12 +1234,9 @@ def checkout(request):
     coupon_code = request.session.get("selected_coupon")
     discount_amount = Decimal("0.00")
     applied_coupon = None
-
     if coupon_code:
         try:
             coupon = Coupon.objects.get(code=coupon_code, is_active=True)
-
-            # Validate subtotal
             if coupon.is_valid(user=request.user, total=subtotal):
                 applied_coupon = coupon
                 discount_amount = (subtotal * coupon.discount_percent / 100).quantize(
@@ -746,7 +1244,6 @@ def checkout(request):
                 )
             else:
                 request.session.pop("selected_coupon", None)
-
         except Coupon.DoesNotExist:
             request.session.pop("selected_coupon", None)
 
@@ -759,36 +1256,48 @@ def checkout(request):
     # 4️⃣ Create Razorpay Order
     # ---------------------------------------------------
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
     razorpay_order = client.order.create({
-        "amount": int(total * 100),  # convert to paise
+        "amount": int(total * 100),
         "currency": "INR",
         "payment_capture": "1",
     })
-
     request.session["razorpay_order_id"] = razorpay_order["id"]
 
     # ---------------------------------------------------
-    # 5️⃣ Render checkout page
+    # 5️⃣ ✅ NEW: Get shipping + billing addresses
+    # ---------------------------------------------------
+    all_addresses     = Address.objects.filter(user=request.user)
+    shipping_addresses = all_addresses.filter(use_as_shipping=True)
+    billing_addresses  = all_addresses.filter(use_as_billing=True)
+    default_shipping, default_billing = _get_defaults(request.user)
+
+    # ---------------------------------------------------
+    # 6️⃣ Render checkout page
     # ---------------------------------------------------
     return render(request, "store/checkout.html", {
         "cart": cart,
         "items": items,
-        "addresses": Address.objects.filter(user=request.user),
+
+        # ✅ NEW: split address context
+        "addresses":           all_addresses,        # legacy — keeps any existing template refs working
+        "shipping_addresses":  shipping_addresses,
+        "billing_addresses":   billing_addresses,
+        "default_shipping":    default_shipping,
+        "default_billing":     default_billing,
 
         # Totals
-        "subtotal": subtotal,
-        "shipping": shipping,
-        "tax": tax,
-        "discount_amount": discount_amount,
+        "subtotal":             subtotal,
+        "shipping":             shipping,
+        "tax":                  tax,
+        "discount_amount":      discount_amount,
         "total_before_discount": total_before_discount,
-        "total": total,
+        "total":                total,
 
         # Coupon info
         "applied_coupon": applied_coupon,
 
         # Razorpay
-        "razorpay_key": settings.RAZORPAY_KEY_ID,
+        "razorpay_key":   settings.RAZORPAY_KEY_ID,
         "razorpay_order": razorpay_order,
     })
 
@@ -824,8 +1333,14 @@ def payment_success(request):
             if not items:
                 return redirect("view_cart")
 
-            address_id = request.session.get("checkout_address_id")
-            shipping_address = Address.objects.filter(id=address_id, user=request.user).first()
+            shipping_id = request.session.get("checkout_shipping_address_id") \
+                          or request.session.get("checkout_address_id")          # legacy fallback
+            billing_id  = request.session.get("checkout_billing_address_id") \
+                          or shipping_id                                          # fallback to shipping
+
+            shipping_address = Address.objects.filter(id=shipping_id, user=request.user).first()
+            billing_address  = Address.objects.filter(id=billing_id,  user=request.user).first() \
+                               or shipping_address   
 
             # 🟢 Create dealer-wise orders
             dealer_orders = {}
@@ -839,8 +1354,8 @@ def payment_success(request):
                         total_price=0,
                         payment_id=data["razorpay_order_id"],
                         shipping_address=shipping_address,
-                        billing_address=shipping_address,
-
+                        billing_address=billing_address,
+                        
                         status="Processing",
                         payment_status="PAID",
 
@@ -1049,68 +1564,221 @@ def contact_thanks(request):
 # ---------------------------
 # Main Search Page
 # ---------------------------
-def search_view(request):
-    query = request.GET.get('query', '').strip()
-    sort = request.GET.get('sort', '')
-    products = []
+def search_page(request):
+    query = request.GET.get("query", "").strip()
 
-    if query:
-        products = Product.objects.filter(
-            Q(name__icontains=query) |
-            Q(description__icontains=query) |
-            Q(category__name__icontains=query)
-        ).distinct()
+    meta_title = f"Search '{query}' | MFY Store" if query else "Search Products | MFY Store"
 
-        # Sorting
-        if sort == 'price_asc':
-            products = products.order_by('price')
-        elif sort == 'price_desc':
-            products = products.order_by('-price')
-        elif sort == 'newest':
-            products = products.order_by('-id')
-
-    return render(request, 'store/search_results.html', {
-        'products': products,
-        'query': query,
-        'sort': sort,
+    return render(request, "store/search_page.html", {
+        "query": query,
+        "meta_title": meta_title
     })
 
+def search_view(request):
+
+    query     = request.GET.get("query", "").strip()
+    sort      = request.GET.get("sort", "newest")
+    min_price = request.GET.get("min_price", "").strip()
+    max_price = request.GET.get("max_price", "").strip()
+    brand_ids = request.GET.getlist("brand")
+
+    products  = []
+    corrected = None
+
+    if query:
+
+        # ✅ Typo correction
+        vocab     = list(Product.objects.values_list("name", flat=True))
+        corrected = correct_query(query, vocab)
+
+        base_qs = Product.objects.filter(
+            smart_search(corrected),
+            is_active=True
+        ).select_related(
+            "category",
+            "category__parent",
+            "brand"
+        ).prefetch_related(
+            "images",
+            "variants",
+            "reviews"
+        ).distinct()
+
+        # ✅ Annotate effective_price (offer_price if set, else price)
+        base_qs = base_qs.annotate(
+            effective_price=Min(
+                Case(
+                    When(
+                        variants__offer_price__isnull=False,
+                        variants__offer_price__gt=0,
+                        then=F('variants__offer_price')
+                    ),
+                    When(
+                        variants__price__gt=0,
+                        then=F('variants__price')
+                    ),
+                    default=None,
+                    output_field=DecimalField()
+                )
+            )
+        )
+
+        # ✅ Sort
+        if sort == "low-high":
+            base_qs = base_qs.order_by(
+                F("effective_price").asc(nulls_last=True)
+            )
+        elif sort == "high-low":
+            base_qs = base_qs.order_by(
+                F("effective_price").desc(nulls_last=True)
+            )
+        elif sort == "rating":
+            base_qs = base_qs.annotate(
+                avg_r=Avg("reviews__rating")
+            ).order_by(
+                F("avg_r").desc(nulls_last=True)
+            )
+        else:
+            base_qs = base_qs.order_by("-created_at")
+
+        # ✅ Price filter
+        if min_price:
+            try:
+                base_qs = base_qs.filter(
+                    effective_price__gte=float(min_price)
+                )
+            except (ValueError, TypeError):
+                pass
+
+        if max_price:
+            try:
+                base_qs = base_qs.filter(
+                    effective_price__lte=float(max_price)
+                )
+            except (ValueError, TypeError):
+                pass
+
+        # ✅ Brand filter
+        if brand_ids:
+            base_qs = base_qs.filter(brand_id__in=brand_ids)
+
+        base_qs  = base_qs.distinct()
+        products = rank_products(list(base_qs), corrected)[:24]
+
+        for product in products:
+            attach_product_display_data(product)
+            avg_rating = product.reviews.aggregate(
+                avg=Avg('rating')
+            )['avg'] or 0
+            product.avg_rating    = round(avg_rating, 1)
+            product.total_reviews = product.reviews.count()
+
+    # ✅ Wishlist
+    wishlist_ids = []
+    if request.user.is_authenticated:
+        wishlist_ids = list(
+            Wishlist.objects.filter(user=request.user)
+            .values_list('product_id', flat=True)
+        )
+
+    # ✅ Brands for filter panel
+    brands = Brand.objects.filter(
+        products__is_active=True
+    ).distinct().order_by("name")
+
+    context = {
+        "products":        products,
+        "query":           query,
+        "corrected_query": corrected,
+        "brands":          brands,
+        "wishlist_ids":    wishlist_ids,
+        "product_count":   len(products),
+        "current_sort":    sort,
+        "use_full_search": False,
+    }
+
+    # ✅ HTMX — return wrapper partial
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "store/partials/_product_wrapper.html",
+            context
+        )
+
+    return render(request, "store/search_results.html", context)
+    
 # ---------------------------
 # AJAX JSON Search Suggestions
 # ---------------------------
+
 def search_suggestions(request):
+
     query = request.GET.get("q", "").strip()
+
+    if not query:
+        return JsonResponse([], safe=False)
+
+    # Build vocabulary for typo correction
+    vocab = list(Product.objects.values_list("name", flat=True))
+    corrected = correct_query(query, vocab)
+
+    products_qs = Product.objects.filter(
+        smart_search(corrected),
+        is_active=True
+    ).select_related(
+        "category",
+        "category__parent",
+        "category__parent__parent",
+        "brand"
+    ).distinct()
+
+    ranked = rank_products(list(products_qs), corrected)[:8]
+
     results = []
 
-    if query:
-        products = Product.objects.filter(
-            Q(name__icontains=query) |
-            Q(category__name__icontains=query)
-        ).distinct()[:6]
-
-        for p in products:
-            highlighted_name = escape(p.name)
-            q_lower = query.lower()
-            name_lower = p.name.lower()
-            start = name_lower.find(q_lower)
-            if start != -1:
-                end = start + len(query)
-                highlighted_name = format_html(
-                    '{}<span class="bg-yellow-200">{}</span>{}',
-                    p.name[:start],
-                    p.name[start:end],
-                    p.name[end:]
-                )
-
-            results.append({
-                "name": p.name,
-                "highlight": highlighted_name,
-                "url": p.get_absolute_url(),
-                "category": p.category.name if p.category else "",
-                "image": p.get_main_image_url(),
-            })
+    for p in ranked:
+        results.append({
+            "name": p.name,
+            "highlight": p.name,
+            "url": reverse("search_results") + f"?query={p.name}",
+            "category": p.category.name if p.category else "",
+            "image": p.get_main_image_url(),
+        })
 
     return JsonResponse(results, safe=False)
+
+def search_ajax(request):
+    query = request.GET.get("q", "").strip()
+
+    if not query:
+        return JsonResponse({"html": ""})
+
+    # reuse your logic
+    vocab = list(Product.objects.values_list("name", flat=True))
+    corrected = correct_query(query, vocab)
+
+    products_qs = Product.objects.filter(
+        smart_search(corrected),
+        is_active=True
+    ).select_related(
+        "category", "brand"
+    ).prefetch_related(
+        "images", "variants", "reviews"
+    ).distinct()[:8]
+
+    ranked_products = rank_products(list(products_qs), corrected)[:24]
+
+    # attach display data (same as search_view)
+    for product in ranked_products:
+        attach_product_display_data(product)
+
+    html = render_to_string(
+        "store/partials/_product_grid.html",
+        {"products": ranked_products},
+        request=request
+    )
+
+    return JsonResponse({"html": html})
 
 class CombinedLoginView(LoginView):
     template_name = "account/login.html"
@@ -1562,33 +2230,51 @@ def cart_view(request):
 
 @require_POST
 def add_to_cart(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product, id=product_id, is_active=True)
 
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+
+    # ── Backend safety: only SELLABLE products can be carted ────
+    if product.product_type != "SELLABLE":
+        if is_ajax:
+            return JsonResponse(
+                {"success": False, "error": "This product cannot be added to cart."},
+                status=403,
+            )
+        from django.contrib import messages
+        messages.error(request, "This product cannot be added to the cart.")
+        return redirect("product_detail", product_id=product_id)
+
+    # ── Variant resolution ───────────────────────────────────────
     variant_id = request.POST.get("variant_id")
 
-    # ✅ AUTO-SELECT VARIANT IF NOT PROVIDED
     if variant_id:
         variant = ProductVariant.objects.filter(
             id=variant_id,
             product=product
         ).first()
     else:
-        # Pick default variant (first / cheapest / in-stock)
+        # Auto-select default variant (cheapest / first)
         variant = product.variants.order_by("price").first()
 
-    # ❌ If product has variants but none exist (safety check)
+    # Safety check: product has variants but none resolved
     if product.variants.exists() and not variant:
-        return JsonResponse(
-            {"success": False, "error": "Variant not available"},
-            status=400
-        )
+        if is_ajax:
+            return JsonResponse(
+                {"success": False, "error": "Variant not available."},
+                status=400,
+            )
+        from django.contrib import messages
+        messages.error(request, "Selected variant is not available.")
+        return redirect("product_detail", product_id=product_id)
 
+    # ── Quantity ─────────────────────────────────────────────────
     try:
-        quantity = int(request.POST.get("quantity", 1))
-        quantity = max(quantity, 1)
+        quantity = max(int(request.POST.get("quantity", 1)), 1)
     except (ValueError, TypeError):
         quantity = 1
 
+    # ── Cart resolution ──────────────────────────────────────────
     session_key = get_or_create_session_key(request)
 
     if request.user.is_authenticated:
@@ -1596,23 +2282,25 @@ def add_to_cart(request, product_id):
     else:
         cart, _ = Cart.objects.get_or_create(
             session_key=session_key,
-            user=None
+            user=None,
         )
 
+    # ── Cart item ────────────────────────────────────────────────
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
-        variant=variant,  # ✅ ALWAYS SET
-        defaults={"quantity": quantity}
+        variant=variant,
+        defaults={"quantity": quantity},
     )
 
     if not created:
         cart_item.quantity += quantity
         cart_item.save()
 
+    # ── Response ─────────────────────────────────────────────────
     subtotal, shipping_total, tax_total, grand_total = calculate_cart_totals(cart)
 
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+    if is_ajax:
         return JsonResponse({
             "success": True,
             "cart_count": cart.items.aggregate(total=Sum("quantity"))["total"] or 0,
@@ -1747,41 +2435,6 @@ def move_to_cart(request, product_id):
 
     return JsonResponse({"success": True})
 
-def fetch_products(request):
-    sort = request.GET.get('sort')
-    category_ids = request.GET.get('category', '').split(',') if request.GET.get('category') else []
-    min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-
-    products = Product.objects.all()
-
-    # Filters
-    if category_ids:
-        products = products.filter(category__id__in=category_ids)
-    if min_price:
-        products = products.filter(price__gte=min_price)
-    if max_price:
-        products = products.filter(price__lte=max_price)
-
-    # Sorting
-    if sort == 'newest':
-        products = products.order_by('-id')
-    elif sort == 'low-high':
-        products = products.order_by('price')
-    elif sort == 'high-low':
-        products = products.order_by('-price')
-    elif sort == 'rating':
-        products = products.order_by('-avg_rating')
-
-    paginator = Paginator(products, 12)
-    page = request.GET.get('page', 1)
-    page_obj = paginator.get_page(page)
-
-    return render(request, 'partials/product_section.html', {
-        'products': page_obj.object_list,
-        'has_next_page': page_obj.has_next(),
-        'next_page': page_obj.next_page_number() if page_obj.has_next() else None,
-    })
 
 def faq_view(request):
     """
@@ -1878,30 +2531,6 @@ def download_receipt(request, payment_id):
 
     return response
 
-def track_order(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-
-    delivery = order.delivery_progress
-
-    context = {
-        "order": order,
-        "placed": delivery >= 5,
-        "processing": delivery >= 40,
-        "shipped": delivery >= 60,
-        "out_for_delivery": delivery >= 85,
-        "delivered": delivery >= 100,
-    }
-
-    return render(request, "store/track_order.html", context)
-
-def request_return(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-    return render(request, "store/return_request.html", {"order": order})
-
-def return_detail(request, return_id):
-    ret = get_object_or_404(ReturnRequest, id=return_id, user=request.user)
-    return render(request, "store/return_detail.html", {"return_obj": ret})
-
 def subscribe_newsletter(request):
     if request.method == "POST":
         email = request.POST.get("email")
@@ -1948,3 +2577,137 @@ def remove_coupon(request):
 
     return JsonResponse({"success": False}, status=400)
 
+@require_POST
+def track_accordion_open(request):
+    acc_id = request.POST.get("accordion_id")
+
+    if not acc_id:
+        return JsonResponse({"status": "error"}, status=400)
+
+    ProductAccordion.objects.filter(id=acc_id).update(
+        open_count=models.F('open_count') + 1
+    )
+
+    return JsonResponse({"status": "ok"})
+
+def buy_again(request):
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+
+        product_id = data.get("product_id")
+        variant_id = data.get("variant_id")
+
+        # add to cart logic here
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False})
+
+def trending_searches(request):
+
+    trends = SearchQuery.objects.order_by("-count")[:8]
+
+    data = [{"query": t.query} for t in trends]
+
+    return JsonResponse(data, safe=False)
+
+def category_suggestions(request):
+
+    query = request.GET.get("q", "").strip()
+
+    if not query:
+        return JsonResponse([], safe=False)
+
+    categories = Category.objects.filter(
+        name__icontains=query
+    )[:5]
+
+    data = []
+
+    for c in categories:
+
+        data.append({
+            "name": c.name,
+            "url": f"/category/{c.slug}/"
+        })
+
+    return JsonResponse(data, safe=False)
+
+def search_history_page(request):
+
+    return render(request, "store/search_history.html")
+
+def brand_detail(request, slug):
+
+    brand = get_object_or_404(Brand, slug=slug)
+
+    products = Product.objects.filter(
+        brand__in=brand.get_descendants(include_self=True),
+        is_active=True
+    ).select_related("brand", "category")
+
+    return render(request, "store/brand_detail.html", {
+        "brand": brand,
+        "products": products
+    })
+
+@csrf_exempt
+def aftership_webhook(request):
+    """
+    AfterShip calls this URL on every courier scan.
+    Setup: aftership.com → Settings → Notifications → Webhook
+    URL:   https://yoursite.com/webhooks/aftership/
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "method not allowed"}, status=405)
+
+    try:
+        body = json.loads(request.body)
+        msg  = body.get("msg", {})
+
+        order_id    = msg.get("order_id")           # your order ID (set when registering)
+        tag         = msg.get("tag")                 # AfterShip standard status
+        checkpoints = msg.get("checkpoints", [])     # per-scan timeline events
+
+        TAG_MAP = {
+            "Pending":        "Processing",
+            "InfoReceived":   "Processing",
+            "InTransit":      "Shipped",
+            "OutForDelivery": "Out for Delivery",
+            "Delivered":      "Delivered",
+            "FailedAttempt":  "Shipped",
+            "Exception":      "Shipped",
+        }
+
+        if order_id:
+            try:
+                order      = Order.objects.get(id=order_id)
+                new_status = TAG_MAP.get(tag)
+
+                if new_status and order.status != new_status:
+                    order.status = new_status
+                    if new_status == "Delivered" and not order.delivered_at:
+                        order.delivered_at = timezone.now()
+                    order.save(update_fields=["status", "delivered_at"])
+
+                # Save each checkpoint for timeline UI
+                from store.models import TrackingCheckpoint
+                for cp in checkpoints:
+                    TrackingCheckpoint.objects.get_or_create(
+                        order           = order,
+                        checkpoint_time = cp.get("checkpoint_time"),
+                        defaults={
+                            "message":  cp.get("message", ""),
+                            "location": cp.get("city") or cp.get("location") or "",
+                            "tag":      cp.get("tag", ""),
+                        }
+                    )
+
+            except Order.DoesNotExist:
+                pass
+
+        return JsonResponse({"success": True})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

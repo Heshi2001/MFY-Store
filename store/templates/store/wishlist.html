@@ -4,7 +4,9 @@
 {% block title %}Your Wishlist 💚 | MFY Store{% endblock %}
 
 {% block content %}
-<main class="pt-[var(--navbar-height,4.5rem)] bg-gradient-to-b from-gray-950 via-black to-gray-900 text-white min-h-screen">
+<main 
+  data-page="wishlist"
+  class="pt-[var(--navbar-height,4.5rem)] bg-gradient-to-b from-gray-950 via-black to-gray-900 text-white min-h-screen">
   <div class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
 
     <!-- Page Header -->
@@ -23,44 +25,10 @@
       <p class="text-gray-400 mt-2">All your saved favorites, ready when you are.</p>
     </div>
     
-<!-- 🧭 Sort & Filter Bar -->
-<div class="w-full flex flex-row justify-between items-center flex-wrap gap-4 mb-10 bg-gray-900/60 border border-gray-800 rounded-2xl px-4 py-3 backdrop-blur-md shadow-lg animate-fade-in">
-
-  <!-- Left: Sort By -->
-  <div class="flex items-center gap-2 text-gray-300 flex-1 min-w-[150px]">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-        d="M3 4h13M3 10h9m-9 6h5m8-6l4 4m0 0l-4 4m4-4H10" />
-    </svg>
-    <label for="sort" class="text-sm font-medium">Sort:</label>
-    <select id="sort"
-      class="bg-gray-800/80 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 hover:ring-emerald-400 transition cursor-pointer">
-      <option value="recent">Recently Added</option>
-      <option value="low">Lowest Price</option>
-      <option value="high">Highest Price</option>
-    </select>
-  </div>
-
-  <!-- Right: Filter By -->
-  <div class="flex items-center gap-2 text-gray-300 justify-end flex-1 min-w-[150px]">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400 animate-pulse-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2H3V4zm0 4h18v2H3V8zm0 4h12v2H3v-2zm0 4h8v2H3v-2z" />
-    </svg>
-    <label for="filter" class="text-sm font-medium">Filter:</label>
-    <select id="filter"
-      class="bg-gray-800/80 text-white border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 hover:ring-emerald-400 transition cursor-pointer">
-      <option value="all">All</option>
-      <option value="in-stock">In Stock</option>
-      <option value="on-sale">On Sale</option>
-    </select>
-  </div>
-
-</div>
 
     {% if wishlist_items %}
     <!-- Wishlist Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div id="wishlist-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
       {% for item in wishlist_items %}
       {% with product=item.product %}
       <div class="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-green-500/10 transition-all duration-300 relative {% if not product.in_stock %}opacity-60{% endif %}">
@@ -114,16 +82,19 @@
             </a>
 
             <!-- Remove -->
-            <form method="POST" action="{% url 'remove_from_wishlist' product.id %}" class="remove-form">
-              {% csrf_token %}
-              <button type="submit"
-                      class="p-2 bg-white/10 hover:bg-red-600/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105"
-                      title="Remove">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </form>
+            <button 
+              type="button"
+              class="wishlist-btn remove-only p-2 bg-white/10 hover:bg-red-600/90 rounded-full backdrop-blur-md shadow-md transition duration-300 hover:scale-105"
+              data-product-id="{{ product.id }}">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-white"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                      d="M6 18L18 6M6 6l12 12" />
+              </svg>
+
+            </button>
           </div>
           {% else %}
           <!-- Out of Stock -->
@@ -283,98 +254,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const toastMsg = document.getElementById("toast-message");
 
   // -----------------------------
-  // 🗑️ Wishlist Item Remove Logic
-  // -----------------------------
-  document.querySelectorAll(".remove-form").forEach(form => {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      const response = await fetch(form.action, {
-        method: "POST",
-        headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
-      });
-
-      if (response.ok) {
-        showToast("💔 Removed from wishlist");
-        form.closest(".group").classList.add("opacity-0", "scale-90");
-        setTimeout(() => form.closest(".group").remove(), 300);
-      } else {
-        showToast("⚠️ Something went wrong", "error");
-      }
-    });
-  });
-
-  // ❤️ Heart animation on remove/add
-  document.querySelectorAll(".heart-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      btn.classList.add("heart-animate");
-      setTimeout(() => btn.classList.remove("heart-animate"), 600);
-    });
-  });
-
-  // -----------------------------
-  // 🌈 Sort & Filter Enhancement
-  // -----------------------------
-  const sortSelect = document.getElementById("sort");
-  const filterSelect = document.getElementById("filter");
-  const grid = document.querySelector(".grid");
-
-  if (sortSelect && filterSelect && grid) {
-    const products = Array.from(grid.children);
-
-    function updateGrid() {
-      let sorted = [...products];
-      const filter = filterSelect.value;
-
-      // 🎯 Apply Filter
-      if (filter === "in-stock") {
-        sorted = sorted.filter(card => !card.classList.contains("opacity-60"));
-      } else if (filter === "on-sale") {
-        sorted = sorted.filter(card => {
-          const price = parseFloat(card.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
-          return price < 500; // Adjust sale threshold if needed
-        });
-      }
-
-      // 🔽 Apply Sort
-      const sort = sortSelect.value;
-      sorted.sort((a, b) => {
-        const priceA = parseFloat(a.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
-        const priceB = parseFloat(b.querySelector(".text-green-400")?.textContent.replace("₹", "")) || 0;
-
-        if (sort === "low") return priceA - priceB;
-        if (sort === "high") return priceB - priceA;
-        return 0;
-      });
-
-      // ✨ Animate & Replace
-      grid.classList.add("opacity-0", "transition", "duration-300");
-      setTimeout(() => {
-        grid.innerHTML = "";
-        sorted.forEach(card => grid.appendChild(card));
-        grid.classList.remove("opacity-0");
-      }, 200);
-    }
-
-    sortSelect.addEventListener("change", updateGrid);
-    filterSelect.addEventListener("change", updateGrid);
-  }
-
-  // -----------------------------
-  // ✅ Toast Notification Utility
+  // ✅ Toast
   // -----------------------------
   function showToast(msg, type = "success") {
     toastMsg.textContent = msg;
     toast.classList.remove("hidden", "translate-y-4", "opacity-0");
     toast.classList.toggle("bg-red-600", type === "error");
     toast.classList.toggle("bg-green-600", type !== "error");
+
     setTimeout(() => {
       toast.classList.add("translate-y-4", "opacity-0");
       setTimeout(() => toast.classList.add("hidden"), 400);
     }, 2000);
   }
 });
-
 </script>
 
 <style>
@@ -403,4 +296,5 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 .animate-float { animation: float 3s ease-in-out infinite; }
 </style>
+
 {% endblock %}

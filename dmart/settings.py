@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django_browser_reload',  
     'theme',
     'pages',
+    'mptt',
     
 ]
 
@@ -104,6 +105,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'store.context_processors.sidebar_categories',
+                'store.context_processors.sidebar_brands',
                 'store.context_processors.global_cart_and_wishlist_counts',
                 'store.context_processors.promo_banner',
             ],
@@ -114,11 +116,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'dmart.wsgi.application'
 
 DATABASES = {
-    'default': dj_database_url.parse(
-        config('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        **dj_database_url.parse(
+            config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        ),
+        'OPTIONS': {
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+            'sslmode': 'require',
+        },
+        'CONN_MAX_AGE': 60,
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -230,6 +242,9 @@ QIKINK_SANDBOX_CLIENT_SECRET = config("QIKINK_SANDBOX_CLIENT_SECRET", default=""
 QIKINK_LIVE_CLIENT_ID = config("QIKINK_LIVE_CLIENT_ID", default="")
 QIKINK_LIVE_CLIENT_SECRET = config("QIKINK_LIVE_CLIENT_SECRET", default="")
 QIKINK_MODE = config("QIKINK_MODE", default="sandbox")
+
+# ── AfterShip ────────────────────────────────────────────
+AFTERSHIP_API_KEY = config("AFTERSHIP_API_KEY", default="")
 
 # DRF / REST framework settings
 REST_FRAMEWORK = {

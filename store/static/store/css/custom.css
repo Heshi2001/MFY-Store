@@ -3,7 +3,7 @@
     :root {
       --navbar-height: 72px;
     }
-
+    
     .navbar,
     header,
     .site-header {
@@ -311,4 +311,86 @@
 
 #authHeader.hidden {
   display: none;
+}
+
+.page-main {
+  padding-top: 72px; /* same as navbar height */
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ===== SIDEBAR SCROLLBAR (GRAY MODERN UI) ===== */
+
+.sidebar-scroll {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #6b7280 rgba(255,255,255,0.05);
+}
+
+/* Chrome, Edge, Safari */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 10px; /* thicker */
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  margin: 6px 0;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #6b7280; /* gray */
+  border-radius: 10px;
+  border: 2px solid transparent; /* spacing effect */
+  background-clip: content-box;
+  transition: all 0.25s ease;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; /* lighter gray on hover */
+}
+
+.sidebar,
+.mobile-menu,
+.drawer {
+  z-index: 1000 !important;
+}
+
+/* 💥 Burst container */
+.heart-burst {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  pointer-events: none;
+}
+
+/* 💥 particles */
+.heart-burst span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #00C897;
+  border-radius: 50%;
+  opacity: 0;
+  animation: burst 0.6s ease-out forwards;
+}
+
+@keyframes burst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.fa-heart {
+  transition: transform 0.2s ease, color 0.2s ease;
 }

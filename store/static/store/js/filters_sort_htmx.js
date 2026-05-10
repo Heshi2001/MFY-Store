@@ -1,125 +1,157 @@
-// ensure buttons that should not submit are explicitly non-submit
-const sortBtn = document.getElementById('sort-toggle');
-const sortDropdown = document.getElementById('sort-dropdown');
-const sortArrow = document.getElementById('sort-arrow');
+window._mfy = window._mfy || {};
 
-// make sure these exist before using them
-const filterBtn = document.getElementById('filter-btn');
-const filterModal = document.getElementById('filter-modal');
-const filterPanel = document.getElementById('filter-panel');
-const closeFilter = document.getElementById('close-filter');
-const applyFilter = document.getElementById('apply-filter');
-const clearFilter = document.getElementById('clear-filter');
-const badge = document.getElementById('filter-badge');
+// =========================
+// SORT DROPDOWN
+// =========================
+function initSortDropdown() {
+  const sortBtn   = document.getElementById('sort-toggle');
+  const dropdown  = document.getElementById('sort-dropdown');
+  const arrow     = document.getElementById('sort-arrow');
+  const sortLabel = document.getElementById('sort-label');
 
-// Safety: ensure button types
-if (sortBtn && !sortBtn.hasAttribute('type')) sortBtn.setAttribute('type', 'button');
-if (filterBtn && !filterBtn.hasAttribute('type')) filterBtn.setAttribute('type', 'button');
-if (applyFilter && !applyFilter.hasAttribute('type')) applyFilter.setAttribute('type', 'button');
-if (clearFilter && !clearFilter.hasAttribute('type')) clearFilter.setAttribute('type', 'button');
+  if (!sortBtn || !dropdown) return;
+  if (sortBtn.dataset.bound === "true") return;
+  sortBtn.dataset.bound = "true";
 
-// --- SORT ---
-if (sortBtn && sortDropdown && sortArrow) {
+  // Toggle open/close
   sortBtn.addEventListener('click', (e) => {
-    e.preventDefault();
     e.stopPropagation();
-    const isOpen = !sortDropdown.classList.contains('hidden');
-    sortDropdown.classList.toggle('hidden');
-    sortArrow.classList.toggle('rotate-180', !isOpen);
+    const isOpen = !dropdown.classList.contains('hidden');
+    dropdown.classList.toggle('hidden', isOpen);
+    arrow?.classList.toggle('rotate-180', !isOpen);
   });
 
-  document.addEventListener('click', (e) => {
-    if (!sortBtn.contains(e.target) && !sortDropdown.contains(e.target)) {
-      sortDropdown.classList.add('hidden');
-      sortArrow.classList.remove('rotate-180');
-    }
+  // Update label + close on option click
+  dropdown.addEventListener('click', (e) => {
+    const option = e.target.closest('.sort-option');
+    if (!option) return;
+    if (sortLabel) sortLabel.textContent = option.dataset.label || 'Sort';
+    dropdown.classList.add('hidden');
+    arrow?.classList.remove('rotate-180');
   });
-}
 
-// --- FILTER MODAL ---
-function openFilter(e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (!filterModal || !filterPanel) return;
-  filterModal.classList.remove('hidden');
-  setTimeout(() => {
-    filterPanel.classList.remove('translate-y-full', 'sm:translate-x-full');
-  }, 10);
-}
-function closeFilterModal(e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (!filterModal || !filterPanel) return;
-  filterPanel.classList.add('translate-y-full', 'sm:translate-x-full');
-  setTimeout(() => filterModal.classList.add('hidden'), 300);
-}
-
-if (filterBtn) filterBtn.addEventListener('click', openFilter);
-if (closeFilter) closeFilter.addEventListener('click', closeFilterModal);
-if (filterModal) {
-  filterModal.addEventListener('click', e => {
-    if (e.target === filterModal) closeFilterModal(e);
-  });
-}
-
-// --- APPLY & CLEAR ---
-if (applyFilter) {
-  applyFilter.addEventListener('click', () => {
-    const cats = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(el => el.value);
-    const min = document.getElementById('min-price').value;
-    const max = document.getElementById('max-price').value;
-
-    badge.textContent = cats.length + (min || max ? 1 : 0);
-    badge.classList.toggle('hidden', badge.textContent === '0');
-
-    const params = new URLSearchParams();
-    if (cats.length) params.append('category', cats.join(','));
-    if (min) params.append('min_price', min);
-    if (max) params.append('max_price', max);
-
-    htmx.ajax('GET', `/fetch-products/?${params.toString()}`, {
-      target: '#product-grid',
-      swap: 'innerHTML'
+  // Close on outside click — bind once globally
+  if (!window._mfy.sortOutsideBound) {
+    window._mfy.sortOutsideBound = true;
+    document.addEventListener('click', () => {
+      document.getElementById('sort-dropdown')?.classList.add('hidden');
+      document.getElementById('sort-arrow')?.classList.remove('rotate-180');
     });
-
-    closeFilterModal();
-  });
-}
-
-if (clearFilter) {
-  clearFilter.addEventListener('click', () => {
-    document.querySelectorAll('input[name="category"]').forEach(el => el.checked = false);
-    const minIn = document.getElementById('min-price');
-    const maxIn = document.getElementById('max-price');
-    if (minIn) minIn.value = '';
-    if (maxIn) maxIn.value = '';
-    if (badge) badge.classList.add('hidden');
-  });
-}
-
-// --- HTMX shimmer handlers ---
-const shimmer = document.getElementById('shimmer-loader');
-const grid = document.getElementById('product-grid');
-const fade = document.getElementById('fade-overlay');
-
-document.body.addEventListener('htmx:beforeRequest', () => {
-  if (grid) grid.classList.add('hidden');
-  if (shimmer) shimmer.classList.remove('hidden');
-  if (fade) {
-    fade.classList.remove('hidden');
-    fade.classList.add('opacity-100');
   }
+}
+
+// =========================
+// FILTER APPLY/CLEAR
+// =========================
+function initFilters() {
+  const applyBtn = document.getElementById('apply-filter');
+  const clearBtn = document.getElementById('clear-filter');
+  const badge    = document.getElementById('filter-badge');
+
+  if (applyBtn && !applyBtn.dataset.bound) {
+    applyBtn.dataset.bound = "true";
+
+    applyBtn.addEventListener('click', () => {
+      const min = document.getElementById('min-price')?.value.trim();
+      const max = document.getElementById('max-price')?.value.trim();
+
+      // ✅ Sync hidden filter form for hx-include
+      document.getElementById('ff-min').value = min || '';
+      document.getElementById('ff-max').value = max || '';
+
+      // ✅ Brand checkboxes → hidden inputs
+      const brandsContainer = document.getElementById('ff-brands');
+      brandsContainer.innerHTML = '';
+      document.querySelectorAll('.brand-checkbox:checked').forEach(cb => {
+        const input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = 'brand';
+        input.value = cb.value;
+        brandsContainer.appendChild(input);
+      });
+
+      // ✅ Build params
+      const params = new URLSearchParams(window.location.search);
+      if (min) params.set('min_price', min); else params.delete('min_price');
+      if (max) params.set('max_price', max); else params.delete('max_price');
+
+      params.delete('brand');
+      document.querySelectorAll('.brand-checkbox:checked').forEach(cb => {
+        params.append('brand', cb.value);
+      });
+
+      // ✅ Badge count
+      let count = 0;
+      if (min) count++;
+      if (max) count++;
+      count += document.querySelectorAll('.brand-checkbox:checked').length;
+
+      if (badge) {
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+      }
+
+      // ✅ Fire HTMX
+      const url = window.location.pathname + '?' + params.toString();
+      htmx.ajax('GET', url, {
+        target: '#product-grid',
+        swap: 'innerHTML',
+        pushUrl: true,
+      });
+    });
+  }
+
+  if (clearBtn && !clearBtn.dataset.bound) {
+    clearBtn.dataset.bound = "true";
+
+    clearBtn.addEventListener('click', () => {
+      document.getElementById('min-price').value = '';
+      document.getElementById('max-price').value = '';
+      document.querySelectorAll('.brand-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('ff-brands').innerHTML = '';
+      document.getElementById('ff-min').value = '';
+      document.getElementById('ff-max').value = '';
+      if (badge) badge.classList.add('hidden');
+    });
+  }
+}
+
+// =========================
+// COUNT UPDATE (OOB)
+// =========================
+function updateCount(countText) {
+  const el = document.getElementById('product-count');
+  if (el) el.textContent = countText;
+}
+
+// =========================
+// HTMX LOADING UX
+// =========================
+document.body.addEventListener('htmx:beforeRequest', (e) => {
+  if (e.detail.target?.id !== 'product-grid') return;
+  document.getElementById('product-grid')?.classList.add('opacity-0');
+  document.getElementById('shimmer-loader')?.classList.remove('hidden');
 });
 
-document.body.addEventListener('htmx:afterSwap', () => {
-  if (shimmer) shimmer.classList.add('hidden');
-  if (grid) {
-    grid.classList.remove('hidden');
-    grid.classList.add('opacity-0');
-    setTimeout(() => {
-      grid.classList.remove('opacity-0');
-      if (fade) {
-        fade.classList.add('opacity-0');
-        setTimeout(() => { if (fade) fade.classList.add('hidden'); }, 500);
-      }
-    }, 50);
-  }
+document.body.addEventListener('htmx:afterSwap', (e) => {
+  if (e.detail.target?.id !== 'product-grid') return;
+  document.getElementById('shimmer-loader')?.classList.add('hidden');
+  document.getElementById('product-grid')?.classList.remove('opacity-0');
+
+  // ✅ Re-init after HTMX swap
+  initSortDropdown();
+  initFilters();
+});
+
+// ✅ Handle OOB count update from _product_wrapper.html
+document.body.addEventListener('htmx:oobAfterSwap', (e) => {
+  // count div auto-swapped by HTMX OOB
+});
+
+// =========================
+// INIT ON LOAD
+// =========================
+document.addEventListener('DOMContentLoaded', () => {
+  initSortDropdown();
+  initFilters();
 });

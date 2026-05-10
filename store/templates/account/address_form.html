@@ -22,6 +22,72 @@
     border-color: rgba(16,185,129,0.8) !important;
   }
   .toast { animation: floatUp .4s ease-out; }
+  /* Toggle cards for use_as_shipping / use_as_billing */
+.mfy-toggle-card {
+  flex: 1;
+  cursor: pointer;
+}
+.mfy-toggle-inner {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .875rem 1rem;
+  border-radius: .875rem;
+  border: 1.5px solid rgba(51,65,85,.7);
+  background: rgba(15,23,42,.5);
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+.mfy-toggle-card input:checked ~ .mfy-toggle-inner {
+  border-color: rgba(16,185,129,.5);
+  background: rgba(16,185,129,.06);
+  box-shadow: 0 0 0 1px rgba(16,185,129,.12);
+}
+.mfy-toggle-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: .625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mfy-toggle-icon--ship {
+  background: rgba(16,185,129,.12);
+  color: #34d399;
+  border: 1px solid rgba(16,185,129,.2);
+}
+.mfy-toggle-icon--bill {
+  background: rgba(99,102,241,.12);
+  color: #818cf8;
+  border: 1px solid rgba(99,102,241,.2);
+}
+.mfy-toggle-check {
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(51,65,85,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  transition: background .2s, border-color .2s, color .2s;
+  flex-shrink: 0;
+}
+.mfy-toggle-card input:checked ~ .mfy-toggle-inner .mfy-toggle-check {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+/* billing checked = indigo */
+#billing-toggle-label input:checked ~ .mfy-toggle-inner {
+  border-color: rgba(99,102,241,.5);
+  background: rgba(99,102,241,.06);
+  box-shadow: 0 0 0 1px rgba(99,102,241,.12);
+}
+#billing-toggle-label input:checked ~ .mfy-toggle-inner .mfy-toggle-check {
+  background: #6366f1;
+  border-color: #6366f1;
+}
 </style>
 {% endblock %}
 
@@ -186,6 +252,65 @@
       </div>
 
     </div>
+    
+  <!-- ── USAGE TOGGLES ─────────────────────────────────── -->
+<div class="mt-6 rounded-xl border border-slate-700/60 p-4"
+     style="background:rgba(15,23,42,.4);">
+  <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
+    Use this address as
+  </p>
+  <div class="flex flex-col sm:flex-row gap-4">
+
+    <!-- Shipping toggle -->
+    <label class="mfy-toggle-card" id="shipping-toggle-label">
+      <input type="checkbox" name="use_as_shipping" id="use_as_shipping"
+             {% if form.instance.use_as_shipping or not form.instance.pk %}checked{% endif %}
+             class="sr-only">
+      <div class="mfy-toggle-inner">
+        <div class="mfy-toggle-icon mfy-toggle-icon--ship">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2L19 8"/>
+          </svg>
+        </div>
+        <div>
+          <div class="font-semibold text-sm text-slate-100">Shipping Address</div>
+          <div class="text-xs text-slate-400 mt-0.5">Used for delivery</div>
+        </div>
+        <div class="mfy-toggle-check ml-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+      </div>
+    </label>
+
+    <!-- Billing toggle -->
+    <label class="mfy-toggle-card" id="billing-toggle-label">
+      <input type="checkbox" name="use_as_billing" id="use_as_billing"
+             {% if form.instance.use_as_billing %}checked{% endif %}
+             class="sr-only">
+      <div class="mfy-toggle-inner">
+        <div class="mfy-toggle-icon mfy-toggle-icon--bill">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="font-semibold text-sm text-slate-100">Billing Address</div>
+          <div class="text-xs text-slate-400 mt-0.5">Used for invoices</div>
+        </div>
+        <div class="mfy-toggle-check ml-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+      </div>
+    </label>
+
+  </div>
+</div>
 
     <!-- BUTTONS -->
     <div class="mt-8 flex flex-col sm:flex-row gap-3">

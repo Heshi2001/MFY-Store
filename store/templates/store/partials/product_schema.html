@@ -1,0 +1,35 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name|escapejs }}",
+  "sku": "{{ product.sku|default:product.id }}",
+  "image": ["{{ product.get_main_image_url }}"],
+  "description": "{{ product.description|striptags|escapejs }}",
+
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "INR",
+    "price": "{{ product.display_price }}",
+    "availability": "{% if product.in_stock %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+  },
+
+  {% if product.reviews.exists %}
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ avg_rating }}",
+    "reviewCount": "{{ review_count }}"
+  },
+  {% endif %}
+
+  "additionalProperty": [
+    {% for acc in active_accordions %}
+    {
+      "@type": "PropertyValue",
+      "name": "{{ acc.schema_key }}",
+      "value": "{{ acc.content|striptags|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>

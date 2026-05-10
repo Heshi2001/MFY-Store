@@ -1,0 +1,40 @@
+<div x-data="searchComponent()" class="relative w-full max-w-md mx-auto">
+
+<form method="GET" action="{% url 'search_results' %}" class="relative">
+
+<!-- INPUT -->
+<input
+id="search-box-desktop"
+name="query"
+type="text"
+autocomplete="off"
+placeholder="Search for products..."
+@input.debounce.250="onInput($event, 'desktop')"
+@focus="onFocus('desktop')"
+class="w-full border border-white/10 rounded-xl py-2 pl-4 pr-10 
+       bg-gray-900 text-gray-200 placeholder-gray-400 
+       focus:outline-none 
+       focus:ring-2 focus:ring-[#00ffae]/40 
+       focus:border-[#00ffae]/40
+       transition duration-200"
+/>
+
+<!-- SEARCH ICON -->
+<button type="submit" 
+        class="absolute right-2 top-2 text-gray-400 hover:text-green-400 transition">
+  <i class="fas fa-search"></i>
+</button>
+
+<!-- DROPDOWN -->
+<div
+id="suggestions-desktop"
+class="hidden absolute z-50 w-full mt-2 
+       bg-gray-800 rounded-xl border border-white/10 
+       shadow-[0_0_8px_rgba(255,255,255,0.05),0_0_12px_rgba(34,197,94,0.15)] 
+       backdrop-blur-md max-h-80 overflow-y-auto 
+       transition-all duration-200"
+></div>
+
+</form>
+
+</div>

@@ -79,26 +79,11 @@
 </div>
 
 <!--Search section-->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
-  <form method="GET" action="{% url 'search_results' %}" class="relative w-full max-w-md mx-auto">
-    <input
-      type="text"
-      name="query"
-      id="search-box"
-      placeholder="Search for products..."
-      autocomplete="off"
-      class="w-full border border-gray-300 rounded-lg py-2 pl-4 pr-10 bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#006A4E] focus:border-[#006A4E] transition"
-    >
-    <button type="submit" class="absolute right-2 top-2 text-gray-400">
-      <i class="fas fa-search"></i>
-    </button>
 
-    <!-- Suggestions Dropdown -->
-    <div
-      id="suggestions"
-      class="hidden absolute z-50 w-full bg-white border border-gray-200 rounded-lg mt-1 shadow-lg max-h-80 overflow-y-auto"
-    ></div>
-  </form>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
+
+{% include "store/partials/search_bar.html" %}
+
 </div>
 
 <!-- Categories Section -->
@@ -147,13 +132,19 @@
     <div id="scroll-featured" class="flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-4">
       {% for product in products %}
       <div class="min-w-[220px] bg-gray-900 rounded-2xl overflow-hidden shadow-md relative flex-shrink-0 transition-transform transform hover:scale-105 hover:shadow-2xl group">
-        <button class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn" data-product-id="{{ product.id }}">
+        <button 
+          type="button"
+          class="wishlist-btn absolute top-2 right-2 bg-black/40 hover:bg-black/70 rounded-full p-2"
+          data-product-id="{{ product.id }}">
+        <span class="heart-wrapper relative flex items-center justify-center">
           {% if product.id in wishlist_ids %}
-            <i class="fa-solid fa-heart text-white"></i>
+            <i class="fa-solid fa-heart text-[#00C897]"></i>
           {% else %}
             <i class="fa-regular fa-heart text-white"></i>
           {% endif %}
-        </button>                                                                                  
+        </span>
+        </button>
+
         <a href="{% url 'product_detail' product.id %}">
           {% if product.get_main_image_url %}
             <img src="{{ product.get_main_image_url }}" class="w-full h-64 object-cover">
@@ -167,7 +158,7 @@
           {{ product.discount_percent|floatformat:0 }}% OFF
         </span>
         {% endif %}                                                                                  
-        <div class="p-3 text-center">
+        <div class="p-3 text-center">      
           <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
           {% if product.offer_price %}
             <p class="mt-2">
@@ -216,13 +207,18 @@
     <div class="product-scroll flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-4">
       {% for product in section.products %}
       <div class="min-w-[220px] bg-gray-900 rounded-2xl overflow-hidden shadow-md relative flex-shrink-0 transition-transform transform hover:scale-105 hover:shadow-2xl group">
-        <button class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn" data-product-id="{{ product.id }}">
+        <button 
+            type="button"
+            class="wishlist-btn absolute top-2 right-2 bg-black/40 hover:bg-black/70 rounded-full p-2"
+            data-product-id="{{ product.id }}">
+        <span class="heart-wrapper relative flex items-center justify-center">
           {% if product.id in wishlist_ids %}
-            <i class="fa-solid fa-heart text-white"></i>
+            <i class="fa-solid fa-heart text-[#00C897]"></i>
           {% else %}
             <i class="fa-regular fa-heart text-white"></i>
           {% endif %}
-        </button>
+        </span>
+       </button>
         <a href="{{ product.get_absolute_url }}">
           {% if product.get_main_image_url %}
             <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-64 object-cover">
@@ -285,7 +281,7 @@
   <h2 class="text-3xl font-bold">Join Our Community</h2>
   <p class="mt-2">Sign up today and get exclusive discounts and updates!</p>
   <a href="{% url 'account_signup' %}" class="mt-4 inline-block bg-white text-[#006A4E] font-semibold px-6 py-2 rounded-lg hover:bg-gray-100">
-    Sign Up
+    Sign Up / Login
   </a>
 </section>
 {% endblock %}

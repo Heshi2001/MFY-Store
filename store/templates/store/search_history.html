@@ -1,0 +1,101 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Search History{% endblock %}
+
+{% block content %}
+
+<section class="pt-28 px-4">
+<div class="max-w-4xl mx-auto px-6 py-10 text-white">
+
+<h1 class="text-2xl font-bold mb-6">Search History</h1>
+
+<div class="bg-gray-900 rounded-lg p-5">
+
+<!-- SEARCH BAR -->
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20">
+<form method="GET" action="{% url 'search_results' %}" id="history-search-form" class="relative">
+
+<input type="text"
+       name="query"
+       id="history-search"
+       placeholder="Search again..."
+       class="w-full mb-4 p-2 pr-10 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-[#006A4E]">
+
+<button type="submit"
+        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-green-400 transition">
+<i class="fas fa-search"></i>
+</button>
+
+</form>
+</div>
+
+<!-- HISTORY LIST -->
+<ul id="history-list" class="space-y-3 mt-5"></ul>
+
+<!-- CLEAR BUTTON -->
+<button id="clear-history"
+class="text-xs font-medium text-red-400 px-3 py-1 rounded
+hover:text-red-500 hover:drop-shadow-[0_0_6px_rgba(239,68,68,0.9)]
+transition duration-200 mt-4">
+Clear History
+</button>
+
+</div>
+</div>
+</section>
+
+<script>
+
+const historyList = document.getElementById("history-list");
+const searchInput = document.getElementById("history-search");
+
+function loadHistory(){
+
+const history = JSON.parse(localStorage.getItem("recentSearches") || "[]");
+
+if(history.length === 0){
+historyList.innerHTML = `
+<li class="text-gray-500 text-sm">No search history</li>
+`;
+return;
+}
+
+historyList.innerHTML = history.map(q => `
+<li class="history-item flex items-center gap-3 cursor-pointer
+hover:bg-gray-800 p-3 rounded transition">
+
+<i class="fas fa-clock text-gray-400"></i>
+
+<span class="flex-1 text-sm">${q}</span>
+
+<i class="fas fa-search text-gray-500 text-xs"></i>
+
+</li>
+`).join("");
+
+}
+
+document.getElementById("clear-history").onclick = () => {
+localStorage.removeItem("recentSearches");
+loadHistory();
+};
+
+document.addEventListener("click",(e)=>{
+
+const item = e.target.closest(".history-item");
+if(!item) return;
+
+const text = item.querySelector("span").innerText;
+
+searchInput.value = text;
+searchInput.focus();
+
+});
+
+loadHistory();
+
+</script>
+
+{% endblock %}

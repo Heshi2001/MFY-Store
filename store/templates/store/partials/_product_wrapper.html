@@ -1,0 +1,16 @@
+<!-- Desktop count OOB -->
+<p id="product-count"
+   hx-swap-oob="true"
+   class="text-sm text-gray-400 hidden md:block">
+  Showing {{ product_count }} items
+</p>
+
+<!-- Mobile count OOB -->
+<p id="product-count-mobile"
+   hx-swap-oob="true"
+   class="text-sm text-gray-400 md:hidden">
+  {{ product_count }} items
+</p>
+
+<!-- Grid content -->
+{% include "store/partials/_product_grid.html" %}

@@ -11,7 +11,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- HTMX (optional for dynamic content) -->
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.12/htmx.min.js"></script>
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,7 +27,7 @@
   {% include 'store/partials/navbar.html' %}
 
   <!-- Main page content -->
-  <main class="{% block main_class %}{% endblock %}">
+  <main class="{% block main_class %}{% endblock %} min-h-screen">
     {% block content %}{% endblock %}
   </main>
 
@@ -41,21 +41,62 @@
 {% block extra_js %}
   <!-- Define template variables first -->
   <script>
-    const ADD_TO_CART_URL = "{% url 'add_to_cart' 0 %}";  // Django renders this
-    const SEARCH_SUGGESTIONS_URL = "{% url 'search_suggestions' %}";
-  </script>
-
+  window.APP_URLS = {
+    addToCart: "{% url 'add_to_cart' 0 %}",
+    toggleWishlist: "{% url 'toggle_wishlist' 0 %}",
+    search: "{% url 'search_ajax' %}",
+    suggestions: "{% url 'search_suggestions' %}"
+  };
+</script>
+  
   <!-- Then include external JS files -->
   <script src="{% static 'store/js/main.js' %}" defer></script>
-  <script src="{% static 'store/js/searchComponent.js' %}" defer></script>
+  <script src="{% static 'store/js/universal_search.js' %}" defer></script>
   <script src="{% static 'store/js/wishlist_cart.js' %}" defer></script>
   <script src="{% static 'store/js/banner_carousel.js' %}" defer></script>
   <script src="{% static 'store/js/scroll_buttons.js' %}" defer></script>
-  <script src="{% static 'store/js/search.js' %}" defer></script>
+  <script src="{% static 'store/js/sidebar.js' %}"defer ></script>
   
   <!-- Alpine.js (optional for interactivity) -->
-  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js" defer></script>   
+  <!-- ✅ FIX: Prevent HTMX from hijacking normal links -->
+  <script>
+  /* ✅ SIDEBAR NAVIGATION — freeze-proof, recursion-safe */
+  (function () {
+  let navigating = false;
 
+  document.addEventListener("click", function (e) {
+
+    if (e.target.closest(".toggle-sub")) return;
+
+    const link = e.target.closest("a[data-navlink]"); // ← only sidebar nav links
+    if (!link) return;
+    if (!link.closest(".sidebar-scroll")) return;
+
+    if (navigating) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+
+    const href = link.href;
+    if (!href || href === "#" || href === window.location.href) return;
+
+    navigating = true;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    window.location.href = href;
+
+  }, true);
+ })();
+ </script>
+
+  <script>
+  document.body.addEventListener('htmx:configRequest', function(event) {
+      event.detail.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
+  });
+  </script>
   <!-- Page-specific scripts -->
   {% endblock %}{% block page_js %}
   

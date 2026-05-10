@@ -1,0 +1,74 @@
+<!-- 🔍 FLOATING SEARCH BUTTON (NEW) -->
+
+<button
+@click="openMobileSheet()"
+class="md:hidden fixed bottom-6 right-6 z-50
+w-14 h-14 rounded-full
+bg-[#00C897] text-black
+flex items-center justify-center
+shadow-lg shadow-[#00C897]/50
+ring-4 ring-[#00C897]/20
+hover:scale-110 hover:shadow-[#00C897]/80
+active:scale-95
+transition duration-300 ease-out
+animate-pulse">
+
+<i class="fas fa-search text-xl"></i> </button>
+
+<!-- 🔥 MOBILE SEARCH OVERLAY -->
+
+<div
+  x-show="mobileSheetOpen"
+  x-transition
+  @click.self="closeMobileSheet()"
+  class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end md:hidden">
+
+  <!-- SHEET -->
+
+  <div class="w-full bg-gray-900 rounded-t-2xl p-4 max-h-[80vh] overflow-hidden">
+
+<!-- INPUT -->
+<form method="GET"
+action="{% url 'search_results' %}"
+@submit.prevent="handleSubmit($event)"
+class="relative">
+
+<input
+id="search-box-mobile"
+name="query"
+type="text"
+autocomplete="off"
+placeholder="Search for products..."
+
+@input.debounce.250="onInput($event,'mobile')"
+@focus="onFocus('mobile')"
+
+class="w-full px-4 py-3 pr-12 rounded-xl
+bg-black border border-white/10
+text-white placeholder-gray-400
+focus:outline-none
+focus:ring-2 focus:ring-[#00ff9f]/40"
+@keydown.enter.prevent
+/>
+
+<button
+type="button"
+@click="submitMobileSearch()"
+class="absolute right-3 top-1/2 -translate-y-1/2
+text-gray-400 hover:text-[#00ff9f] transition">
+
+<i class="fas fa-search text-lg"></i> </button>
+
+</form>
+
+<!-- SUGGESTIONS -->
+<div id="suggestions-mobile"
+  class="hidden mt-3
+  bg-gray-800 rounded-xl border border-white/10
+  max-h-64 overflow-y-auto
+  origin-bottom scale-95 opacity-0
+  transition-all duration-300">
+</div>
+
+  </div>
+</div>

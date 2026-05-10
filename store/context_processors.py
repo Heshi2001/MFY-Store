@@ -1,4 +1,4 @@
-from .models import PromoBanner, Category
+from .models import PromoBanner, Category, Brand
 from django.utils import timezone
 from django.db.models import Q  # <-- import Q
 from django.db.models import Sum
@@ -17,28 +17,48 @@ def promo_banner(request):
     return {"promo_banner_text": banner.message if banner else ""}
 
 def sidebar_categories(request):
-    categories = Category.objects.filter(parent=None)
-    return {'sidebar_categories': categories}
-    
+    return {
+        'sidebar_categories': Category.objects.filter(
+            parent__isnull=True
+        ).prefetch_related('children')  # ← only this, no cache_tree_children
+    }
+
+
+def sidebar_brands(request):
+    return {
+        'sidebar_brands': Brand.objects.filter(
+            parent__isnull=True,
+            is_active=True
+        ).prefetch_related('children').order_by("name")
+    }
+
 def global_cart_and_wishlist_counts(request):
     cart_items_count = 0
     wishlist_ids = []
 
     try:
         if request.user.is_authenticated:
-            # Get cart for logged-in user
             cart_data = Cart.objects.for_user_or_session(user=request.user)
-            wishlist_ids = Wishlist.objects.filter(user=request.user).values_list('product_id', flat=True)
+
+            # ✅ FIX: force evaluation
+            wishlist_ids = list(
+                Wishlist.objects
+                .filter(user=request.user)
+                .values_list('product_id', flat=True)
+            )
+
         else:
-            # Get cart for guest session
             session_key = get_or_create_session_key(request)
             cart_data = Cart.objects.for_user_or_session(session_key=session_key)
 
-        cart_items_count = cart_data["cart"].items.aggregate(total=Sum("quantity"))["total"] or 0
+        cart_items_count = cart_data["cart"].items.aggregate(
+            total=Sum("quantity")
+        )["total"] or 0
+
     except Exception:
-        pass  # avoid breaking if cart isn't initialized yet
+        pass
 
     return {
         'cart_items_count': cart_items_count,
-        'wishlist_ids': wishlist_ids,
+        'wishlist_ids': wishlist_ids,  # now a real list ✅
     }

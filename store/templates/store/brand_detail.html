@@ -1,0 +1,116 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+
+<div class="bg-black min-h-screen text-white px-4 md:px-8 py-6">
+
+    <!-- ========================= -->
+    <!-- 🔥 BREADCRUMB -->
+    <!-- ========================= -->
+    <nav class="text-xs md:text-sm text-gray-400 mb-6 flex flex-wrap items-center gap-1">
+        <a href="/" class="hover:text-green-400 transition">Home</a>
+
+        {% for b in brand.get_breadcrumbs %}
+            <span class="text-gray-600">›</span>
+            <a href="{{ b.get_absolute_url }}"
+               class="hover:text-green-400 transition duration-200">
+                {{ b.name }}
+            </a>
+        {% endfor %}
+    </nav>
+
+    <!-- ========================= -->
+    <!-- 🔥 BRAND HEADER -->
+    <!-- ========================= -->
+    <div class="flex flex-col md:flex-row md:items-center gap-6 mb-8">
+
+        <!-- Logo -->
+        {% if brand.logo %}
+            <img src="{{ brand.logo.url }}"
+                 alt="{{ brand.name }}"
+                 class="w-20 h-20 md:w-24 md:h-24 object-contain rounded-xl border border-gray-800 shadow-lg">
+        {% endif %}
+
+        <!-- Info -->
+        <div>
+            <h1 class="text-2xl md:text-4xl font-bold tracking-wide">
+                {{ brand.name }}
+            </h1>
+
+            {% if brand.description %}
+                <p class="text-gray-400 mt-2 max-w-2xl text-sm md:text-base">
+                    {{ brand.description }}
+                </p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- 🔥 PRODUCT GRID -->
+    <!-- ========================= -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+
+        {% for product in products %}
+        <a href="{{ product.get_absolute_url }}"
+           class="group relative bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden
+                  hover:border-green-500 hover:shadow-[0_0_15px_rgba(34,197,94,0.3)]
+                  transition duration-300">
+
+            <!-- Image -->
+            <div class="relative overflow-hidden">
+                <img src="{{ product.get_main_image_url }}"
+                     alt="{{ product.name }}"
+                     class="w-full h-40 md:h-52 object-cover
+                            group-hover:scale-105 transition duration-500">
+
+                <!-- Neon overlay -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-60"></div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-3 md:p-4">
+
+                <!-- Product Name -->
+                <h3 class="text-sm md:text-base font-semibold line-clamp-2 group-hover:text-green-400 transition">
+                    {{ product.name }}
+                </h3>
+
+                <!-- Brand -->
+                {% if product.brand %}
+                <p class="text-xs text-gray-500 mt-1">
+                    {{ product.brand.name }}
+                </p>
+                {% endif %}
+
+                <!-- Price -->
+                {% with price=product.get_display_price %}
+                {% if price %}
+                <p class="mt-2 text-green-400 font-bold text-sm md:text-base">
+                    ₹{{ price }}
+                </p>
+                {% endif %}
+                {% endwith %}
+
+            </div>
+
+            <!-- Glow border effect -->
+            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100
+                        transition duration-300 pointer-events-none
+                        border border-green-500 blur-[2px]"></div>
+
+        </a>
+        {% empty %}
+        <!-- EMPTY STATE -->
+        <div class="col-span-full text-center py-20">
+            <p class="text-gray-500 text-lg">
+                No products found for this brand
+            </p>
+        </div>
+        {% endfor %}
+
+    </div>
+
+</div>
+
+{% endblock %}

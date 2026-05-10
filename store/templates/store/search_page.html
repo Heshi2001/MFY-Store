@@ -1,0 +1,91 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}
+{{ meta_title|default:"Search | MFY Store" }}
+{% endblock %}
+
+{% block extra_head %}
+<meta name="description" content="Search for the best products at MFY Store. Fast, smart, and personalized search experience.">
+<meta name="robots" content="index, follow">
+{% endblock %}
+
+{% block content %}
+<div x-data="searchComponent()"
+      class="min-h-screen bg-black text-white flex flex-col items-center pt-40 px-4">
+  <!-- 🔍 HEADER -->
+  <div class="w-full max-w-3xl text-center mb-8">
+    <h1 class="text-2xl sm:text-3xl font-semibold tracking-wide">
+      Search Products
+    </h1>
+    <p class="text-gray-400 text-sm mt-2">
+      Find exactly what you're looking for
+    </p>
+  </div>
+
+  <!-- 🔍 SEARCH BOX -->
+  <div class="w-full max-w-2xl relative z-10">
+
+    <form method="GET" action="{% url 'search_results' %}" class="relative">
+
+      <input
+        id="search-box-desktop"
+        name="query"
+        type="text"
+        autocomplete="off"
+        value="{{ query }}"
+        placeholder="Search for products..."
+
+        @input.debounce.250="onInput($event,'desktop')"
+        @focus="onFocus('desktop')"
+
+        class="w-full text-lg px-6 py-4 rounded-2xl
+        bg-gray-900 text-white placeholder-gray-400
+        border border-white/10
+        focus:outline-none
+        focus:ring-2 focus:ring-[#00ff9f]/50
+        focus:border-[#00ff9f]
+        shadow-[0_0_25px_rgba(0,255,159,0.15)]
+        transition-all duration-300"
+      />
+
+      <!-- ICON -->
+      <button type="submit"
+        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-green-400 transition">
+        <i class="fas fa-search text-lg"></i>
+      </button>
+
+    </form>
+
+    <!-- DROPDOWN -->
+    <div id="suggestions-desktop"
+         class="hidden absolute top-full left-0 z-[9999] w-full mt-3
+         bg-gray-900 rounded-2xl border border-white/10
+         shadow-[0_0_25px_rgba(0,255,159,0.1)]
+         backdrop-blur-md max-h-96 overflow-y-auto
+         transition-all duration-300">
+    </div>
+
+  </div>
+
+  <!-- 🔥 EMPTY STATE -->
+  <div id="empty-state" class="w-full max-w-2xl mt-10 text-center">
+
+    {% if not query %}
+    <div class="text-gray-400 text-sm space-y-2">
+      <p>Start typing to explore products</p>
+      <p class="text-xs text-gray-500">
+        Popular searches: Shoes, Hoodies, Watches
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- 🔥 LIVE RESULTS -->
+  <div id="live-results"
+     class="w-full max-w-6xl mt-16 transition-all duration-300 opacity-100">
+  </div>
+
+</div>
+{% endblock %}

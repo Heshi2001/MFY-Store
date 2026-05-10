@@ -1,0 +1,39 @@
+<ul class="space-y-1">
+  {% for item in items %}
+    <li class="group">
+
+      <div class="flex items-center justify-between px-2 py-1 rounded-md hover:bg-gray-800/70 transition">
+
+        <a href="{{ item.get_absolute_url }}"
+           data-navlink="true"
+           class="flex items-center flex-1 relative z-20
+           text-gray-300 group-hover:text-white transition
+           {% if request.path == item.get_absolute_url %}text-green-400 font-semibold{% endif %}">
+          {{ item.name }}
+        </a>
+
+        {% if not item.is_leaf_node %}
+        <button type="button"
+          class="toggle-sub ml-2 flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-700 transition flex-shrink-0 z-10">
+          <svg class="w-3 h-3 text-gray-400 transition-transform duration-300 arrow pointer-events-none"
+               fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- CHILDREN — use prefetched cache, zero extra queries -->
+      {% with children=item.children.all %}
+        {% if children %}
+        <div class="sub-list max-h-0 overflow-hidden ml-4 border-l border-gray-700 pl-3 transition-all duration-300 ease-in-out">
+          {% include "store/partials/tree_component.html" with items=children %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+    </li>
+  {% endfor %}
+</ul>

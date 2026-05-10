@@ -1,29 +1,192 @@
+{% extends "store/base.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Profile</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 rounded-4">
-                <div class="card-body">
-                    <h3 class="mb-3">Edit Profile</h3>
-                    <form method="POST">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary rounded-pill">Save Changes</button>
-                        <a href="{% url 'account_dashboard' %}" class="btn btn-secondary rounded-pill">Cancel</a>
-                    </form>
-                </div>
-            </div>
-        </div>
+{% block title %}Account Settings | MFY Store{% endblock %}
+
+{% block content %}
+
+<section class="min-h-screen bg-black text-gray-200
+               pt-40 sm:pt-44 lg:pt-48 xl:pt-52
+               pb-12 px-4 sm:px-6 lg:px-8">
+
+  <!-- Page Header -->
+  <div class="max-w-5xl mx-auto mb-8">
+    <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-white">
+      Account Settings
+    </h1>
+    <p class="text-sm text-gray-400 mt-1">
+      Manage your profile, security, and preferences
+    </p>
+  </div>
+
+  <!-- Main Card -->
+  <div class="max-w-5xl mx-auto bg-[#0b0b0b] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+
+<!-- Profile Settings -->
+<div class="p-6 sm:p-8 border-b border-gray-800">
+  <h2 class="text-lg font-semibold text-white mb-1">
+    Update Profile Details
+  </h2>
+  <p class="text-sm text-gray-400 mb-8">
+    Change your username and email address associated with your account
+  </p>
+
+<form method="POST" action="{% url 'account_settings' %}" class="space-y-8">
+  {% csrf_token %}
+
+    <!-- Django Form Wrapper -->
+    <div class="space-y-6
+                [&>p]:space-y-2
+                [&>p>label]:block
+                [&>p>label]:text-sm
+                [&>p>label]:font-medium
+                [&>p>label]:text-gray-300
+                [&>p>input]:w-full
+                [&>p>input]:rounded-xl
+                [&>p>input]:bg-black
+                [&>p>input]:border
+                [&>p>input]:border-gray-700
+                [&>p>input]:px-4
+                [&>p>input]:py-3
+                [&>p>input]:text-gray-100
+                [&>p>input]:placeholder-gray-500
+                [&>p>input]:focus:outline-none
+                [&>p>input]:focus:ring-2
+                [&>p>input]:focus:ring-[#00ff7f]
+                [&>p>input]:focus:border-transparent
+                [&>p>span]:block
+                [&>p>span]:text-xs
+                [&>p>span]:text-gray-500
+                [&>p>span]:leading-relaxed">
+
+      {{ form.as_p }}
+
     </div>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-4 pt-6">
+      <button
+        type="submit"
+        class="inline-flex items-center justify-center px-7 py-3 rounded-full
+               bg-[#00ff7f] text-black font-medium
+               hover:shadow-[0_0_22px_rgba(0,255,127,0.45)]
+               transition-all duration-200
+               focus:outline-none focus:ring-2
+               focus:ring-[#00ff7f] focus:ring-offset-2
+               focus:ring-offset-black"
+        aria-label="Save updated profile details"
+      >
+        Save Changes
+      </button>
+
+      <a
+        href="{% url 'account_dashboard' %}"
+        class="inline-flex items-center justify-center px-7 py-3 rounded-full
+               border border-gray-700 text-gray-300
+               hover:border-gray-500 hover:text-white
+               transition-all duration-200"
+        aria-label="Cancel profile changes"
+      >
+        Cancel
+      </a>
+    </div>
+  </form>
 </div>
-</body>
-</html>
+
+    <!-- Account & Security (UI only – safe even if backend not wired) -->
+    <div class="p-6 sm:p-8 border-b border-gray-800">
+      <h2 class="text-lg font-medium text-white mb-1">
+        Account & Security
+      </h2>
+      <p class="text-sm text-gray-400 mb-6">
+        Protect your account and credentials
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="bg-black border border-gray-800 rounded-xl p-5">
+          <h3 class="text-sm font-medium text-white mb-2">Password</h3>
+          <p class="text-sm text-gray-400 mb-4">
+            Change your account password regularly.
+          </p>
+          <a href="{% url 'account_change_password' %}"
+            class="px-4 py-2 rounded-full border border-gray-700 text-gray-300
+                  hover:border-[#00ff7f] hover:text-[#00ff7f] transition"
+            aria-label="Change password">
+            Change Password
+          </a>
+        </div>
+
+        <div class="bg-black border border-gray-800 rounded-xl p-5">
+          <h3 class="text-sm font-medium text-white mb-2">Two-Factor Authentication</h3>
+          <p class="text-sm text-gray-400 mb-4">
+            Add an extra layer of security to your account.
+          </p>
+          <span class="inline-block text-xs px-3 py-1 rounded-full
+                       bg-gray-800 text-gray-400">
+            Not configured
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="p-6 sm:p-8 border-b border-gray-800">
+      <h2 class="text-lg font-medium text-white mb-1">
+        Notifications
+      </h2>
+      <p class="text-sm text-gray-400 mb-6">
+        Choose how you stay informed
+      </p>
+
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-300">Order updates</span>
+          <input type="checkbox" checked
+                 class="w-10 h-5 rounded-full bg-gray-700
+                        accent-[#00ff7f] cursor-pointer"
+                 aria-label="Order notifications">
+        </div>
+
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-300">Promotional emails</span>
+          <input type="checkbox"
+                 class="w-10 h-5 rounded-full bg-gray-700
+                        accent-[#00ff7f] cursor-pointer"
+                 aria-label="Promotional notifications">
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="p-6 sm:p-8 bg-[#070707]">
+      <h2 class="text-lg font-medium text-red-400 mb-1">
+        Danger Zone
+      </h2>
+      <p class="text-sm text-gray-400 mb-6">
+        Irreversible account actions
+      </p>
+
+      <div class="flex flex-wrap gap-4">
+        <button
+          class="px-6 py-2.5 rounded-full border border-red-500 text-red-400
+                 hover:bg-red-500 hover:text-black
+                 transition-all duration-200"
+          aria-label="Delete account"
+        >
+          Delete Account
+        </button>
+
+        <button
+          class="px-6 py-2.5 rounded-full border border-gray-700 text-gray-300
+                 hover:border-red-400 hover:text-red-400
+                 transition-all duration-200"
+          aria-label="Logout from all devices"
+        >
+          Logout from all devices
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -1,141 +1,221 @@
 {% extends "store/base.html" %}
 {% load static %}
 
-{% block title %}Search Results | MFY Store{% endblock %}
+{% block title %}
+  {% if query %}Search "{{ query }}"{% else %}Search{% endif %} | MFY Store
+{% endblock %}
 
 {% block content %}
-<div x-data="searchComponent()" class="pt-[var(--navbar-height,4.5rem)] bg-black min-h-screen text-white">
 
-  <!-- Header / Search Info -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-8 mt-6 mb-4">
-    <h1 class="text-2xl font-semibold text-[#00C897] mb-1">
-      Search results for: <span class="text-white">“{{ query }}”</span>
-    </h1>
-    <p class="text-gray-400 text-sm">Showing {{ products|length }} matching items</p>
+<div x-data="{
+    ...searchComponent(),
+    filterOpen: false,
+    openFilter(){ this.filterOpen = true },
+    closeFilter(){ this.filterOpen = false }
+}" class="pt-[var(--navbar-height,4.5rem)] bg-black min-h-screen text-white">
+
+  <!-- ✅ SEARCH HEADER — only difference from products page -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-2">
+    {% if query %}
+      <h1 class="text-xl font-semibold text-white">
+        Search results for:
+        <span class="text-[#00C897]">"{{ query }}"</span>
+      </h1>
+      {% if corrected_query and corrected_query != query %}
+        <p class="text-sm text-gray-400 mt-1">
+          Showing results for
+          <span class="text-[#00C897]">{{ corrected_query }}</span>
+          instead
+        </p>
+      {% endif %}
+    {% else %}
+      <h1 class="text-xl font-semibold text-gray-400">
+        Enter a search term to find products
+      </h1>
+    {% endif %}
   </div>
 
-  <!-- Sort & Filter (same style as product page) -->
-  <div class="flex justify-between items-center px-4 sm:px-8 py-4 border-b border-gray-800 sticky top-[var(--navbar-height,4.5rem)] bg-black z-30">
-    <div class="flex items-center space-x-3 relative">
-      <!-- SORT -->
-      <button id="sort-toggle"
-        class="flex items-center space-x-2 bg-gray-800 px-4 py-2 rounded-md hover:bg-[#00A07A]/40 transition">
-        <i class="fa-solid fa-arrow-down-short-wide"></i>
-        <span class="text-sm font-medium">Sort</span>
-        <i id="sort-arrow" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
-      </button>
+  <!-- ✅ STICKY BAR — identical to products.html -->
+  <div class="flex justify-between items-center px-4 sm:px-8 py-4
+              border-b border-gray-800 sticky top-[var(--navbar-height)]
+              bg-black z-40">
 
-      <!-- Sort Dropdown -->
-      <div id="sort-dropdown"
-        class="absolute left-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-lg hidden animate-fade-in z-50">
-        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
-          hx-get="{% url 'search_results' %}?query={{ query }}&sort=newest"
-          hx-target="#product-grid" hx-swap="innerHTML">🕒 Newest</button>
-        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
-          hx-get="{% url 'search_results' %}?query={{ query }}&sort=low-high"
-          hx-target="#product-grid" hx-swap="innerHTML">💸 Price: Low → High</button>
-        <button class="w-full text-left px-4 py-2 hover:bg-[#00A07A]/30 text-sm"
-          hx-get="{% url 'search_results' %}?query={{ query }}&sort=high-low"
-          hx-target="#product-grid" hx-swap="innerHTML">💰 Price: High → Low</button>
-      </div>
-    </div>
+    <div class="flex items-center gap-3">
 
-    <!-- Count + Desktop search -->
-    <div class="flex items-center space-x-3">
-      <p class="text-sm text-gray-400 hidden md:block">Showing {{ products|length }} items</p>
-      <form method="GET" action="{% url 'search_results' %}" class="hidden md:flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-md hover:bg-[#00A07A]/30 transition">
-        <input name="query" type="text" value="{{ query }}" placeholder="Search again..."
-          class="bg-transparent focus:outline-none text-sm text-gray-200 placeholder-gray-400 w-48">
-        <button type="submit"><i class="fas fa-search text-gray-300"></i></button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Product Grid -->
-  <div id="product-grid"
-       class="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 transition-opacity duration-300">
-
-    {% for product in products %}
-      <div class="bg-gray-900 rounded-2xl overflow-hidden shadow-md relative hover:shadow-xl transition-transform transform hover:scale-[1.02] group">
-
-        <!-- Wishlist -->
-        <button class="absolute top-2 right-2 text-white bg-black/40 hover:bg-[#00C897]/80 rounded-full p-2 transition-all wishlist-btn" data-product-id="{{ product.id }}">
-          {% if product.id in wishlist_ids %}
-            <i class="fa-solid fa-heart text-white"></i>
-          {% else %}
-            <i class="fa-regular fa-heart text-white"></i>
-          {% endif %}
+      <!-- SORT DROPDOWN -->
+      <div class="relative" id="sort-wrapper">
+        <button id="sort-toggle" type="button"
+          class="flex items-center gap-2 bg-gray-800 hover:bg-gray-700
+                 px-4 py-2 rounded-lg border border-gray-700
+                 hover:border-[#00C897] transition-all duration-200
+                 text-sm font-medium">
+          <i class="fa-solid fa-arrow-up-wide-short text-[#00C897]"></i>
+          <span id="sort-label">
+            {% if current_sort == 'low-high' %}Price: Low → High
+            {% elif current_sort == 'high-low' %}Price: High → Low
+            {% elif current_sort == 'rating' %}Top Rated
+            {% else %}Sort{% endif %}
+          </span>
+          <i id="sort-arrow"
+             class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
         </button>
 
-        <!-- Image -->
-        <a href="{% url 'product_detail' product.id %}">
-          {% if product.get_main_image_url %}
-            <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="w-full h-72 object-cover transition-transform duration-300 group-hover:scale-105">
-          {% else %}
-            <div class="w-full h-72 bg-gray-700 flex items-center justify-center text-gray-400">No Image</div>
-          {% endif %}
-        </a>
+        <!-- DROPDOWN PANEL -->
+        <div id="sort-dropdown"
+             class="absolute left-0 top-[calc(100%+8px)] hidden
+                    bg-gray-900 border border-gray-700 rounded-xl
+                    shadow-2xl shadow-black/50 w-52 z-40 overflow-hidden">
 
-        <!-- Discount -->
-        {% if product.discount_percent %}
-        <span class="absolute top-2 left-2 bg-[#00C897]/90 text-white text-xs font-semibold px-3 py-1 rounded-md shadow-md animate-float">
-          {{ product.discount_percent }}% OFF
-        </span>
-        {% endif %}
+          {% with current=current_sort %}
 
-        <!-- Details -->
-        <div class="p-4 space-y-1">
-          <h3 class="font-semibold text-white truncate">{{ product.name }}</h3>
-
-          {% if product.short_description %}
-            <p class="text-sm text-gray-400 line-clamp-2">{{ product.short_description }}</p>
-          {% endif %}
-
-          {% if product.avg_rating > 0 %}
-            <div class="flex items-center text-gray-400 text-sm space-x-1">
-              <i class="fa fa-star text-yellow-400"></i>
-              <span>{{ product.avg_rating }}</span>
-              <span>•</span>
-              <span>({{ product.total_reviews }})</span>
-            </div>
-          {% else %}
-            <div class="text-gray-500 text-sm">No reviews yet</div>
-          {% endif %}
-
-          <div class="mt-1">
-            {% if product.offer_price %}
-              <p>
-                <span class="text-gray-400 line-through text-sm">₹{{ product.price }}</span>
-                <span class="text-[#00C897] font-bold ml-2 text-lg">₹{{ product.offer_price }}</span>
-              </p>
-            {% else %}
-              <p class="text-white font-bold text-lg">₹{{ product.price }}</p>
+          <button
+            data-sort="newest" data-label="Newest First"
+            hx-get="?sort=newest&query={{ query }}"
+            hx-target="#product-grid"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            hx-include="#filter-form"
+            class="sort-option w-full text-left px-4 py-3 text-sm
+                   hover:bg-gray-800 hover:text-[#00C897] transition
+                   flex items-center justify-between
+                   {% if current == 'newest' or not current %}text-[#00C897] bg-gray-800{% else %}text-gray-300{% endif %}">
+            Newest First
+            {% if current == 'newest' or not current %}
+              <i class="fa-solid fa-check text-xs"></i>
             {% endif %}
-          </div>
+          </button>
 
-          {% if product.stock > 0 %}
-            <p class="text-sm text-[#00C897] font-medium mt-1">In Stock • Ships in 1–2 days</p>  
-          {% else %}
-            <p class="text-sm font-semibold text-red-500 mt-1 animate-pulse">⚠️ Out of Stock</p>
-          {% endif %}
+          <button
+            data-sort="low-high" data-label="Price: Low → High"
+            hx-get="?sort=low-high&query={{ query }}"
+            hx-target="#product-grid"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            hx-include="#filter-form"
+            class="sort-option w-full text-left px-4 py-3 text-sm
+                   hover:bg-gray-800 hover:text-[#00C897] transition
+                   flex items-center justify-between border-t border-gray-800
+                   {% if current == 'low-high' %}text-[#00C897] bg-gray-800{% else %}text-gray-300{% endif %}">
+            Price: Low → High
+            {% if current == 'low-high' %}
+              <i class="fa-solid fa-check text-xs"></i>
+            {% endif %}
+          </button>
+
+          <button
+            data-sort="high-low" data-label="Price: High → Low"
+            hx-get="?sort=high-low&query={{ query }}"
+            hx-target="#product-grid"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            hx-include="#filter-form"
+            class="sort-option w-full text-left px-4 py-3 text-sm
+                   hover:bg-gray-800 hover:text-[#00C897] transition
+                   flex items-center justify-between border-t border-gray-800
+                   {% if current == 'high-low' %}text-[#00C897] bg-gray-800{% else %}text-gray-300{% endif %}">
+            Price: High → Low
+            {% if current == 'high-low' %}
+              <i class="fa-solid fa-check text-xs"></i>
+            {% endif %}
+          </button>
+
+          <button
+            data-sort="rating" data-label="Top Rated"
+            hx-get="?sort=rating&query={{ query }}"
+            hx-target="#product-grid"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            hx-include="#filter-form"
+            class="sort-option w-full text-left px-4 py-3 text-sm
+                   hover:bg-gray-800 hover:text-[#00C897] transition
+                   flex items-center justify-between border-t border-gray-800
+                   {% if current == 'rating' %}text-[#00C897] bg-gray-800{% else %}text-gray-300{% endif %}">
+            Top Rated
+            {% if current == 'rating' %}
+              <i class="fa-solid fa-check text-xs"></i>
+            {% endif %}
+          </button>
+
+          {% endwith %}
         </div>
       </div>
-    {% empty %}
-      <p class="col-span-full text-center text-gray-400 py-12">No products found for “{{ query }}”.</p>
+
+      <!-- FILTER BUTTON WITH BADGE -->
+      <div class="relative">
+        <button type="button" @click="openFilter()"
+          class="flex items-center gap-2 px-4 py-2 bg-gray-900
+                 border border-gray-700 rounded-lg hover:border-[#00C897]
+                 text-sm font-medium transition-all duration-200">
+          <i class="fa-solid fa-sliders text-[#00C897]"></i>
+          Filter
+        </button>
+        <span id="filter-badge"
+              class="hidden absolute -top-1.5 -right-1.5 bg-[#00C897]
+                     text-black text-[10px] font-bold w-4 h-4 rounded-full
+                     flex items-center justify-center">
+          0
+        </span>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Count -->
+    <div class="flex items-center gap-3">
+      <p id="product-count" class="text-sm text-gray-400 hidden md:block">
+        Showing {{ product_count }} items
+      </p>
+      <p id="product-count-mobile" class="text-sm text-gray-400 md:hidden">
+        {{ product_count }} items
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ✅ HIDDEN FILTER FORM — carries query param too -->
+  <form id="filter-form" class="hidden">
+    <input id="ff-min"   name="min_price" type="hidden" value="">
+    <input id="ff-max"   name="max_price" type="hidden" value="">
+    <input name="query"  type="hidden"    value="{{ query }}">
+    <div id="ff-brands"></div>
+  </form>
+
+  <!-- SHIMMER -->
+  <div id="shimmer-loader"
+       class="max-w-7xl mx-auto px-4 sm:px-8 py-8
+              grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 hidden">
+    {% for i in "12345678" %}
+    <div class="animate-pulse bg-gray-800 h-64 rounded-xl"></div>
     {% endfor %}
   </div>
 
-  <!-- Back to Products -->
-  <div class="text-center mt-8 mb-16">
-    <a href="{% url 'products' %}" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-fuchsia-500 hover:opacity-90 rounded-md font-semibold text-white transition-all duration-300 shadow-md hover:shadow-purple-500/30">
-      ← Back to All Products
+  <!-- ✅ PRODUCT GRID — same ID as products page -->
+  <div id="product-grid"
+       class="max-w-7xl mx-auto px-4 sm:px-8 py-8
+              grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6
+              transition-opacity duration-300">
+    {% include "store/partials/_product_grid.html" %}
+  </div>
+
+  <!-- ✅ BACK BUTTON — only extra element -->
+  <div class="text-center py-10">
+    <a href="{% url 'products' %}"
+       class="inline-flex items-center gap-2 px-6 py-2.5
+              bg-gray-800 hover:bg-gray-700 border border-gray-700
+              hover:border-[#00C897] text-white text-sm font-medium
+              rounded-lg transition-all duration-200">
+      <i class="fa-solid fa-arrow-left text-[#00C897]"></i>
+      Back to All Products
     </a>
   </div>
+
+  <!-- ✅ REUSED PARTIALS — identical to products page -->
+  {% include "store/partials/_filters.html" %}
+  {% include "store/partials/_search_product.html" %}
+
 </div>
+
 {% endblock %}
 
-{% block extra_js %}
-  {{ block.super }}
-  <script src="{% static 'store/js/search_suggestions.js' %}"></script>
-  <script src="{% static 'store/js/filters_sort_htmx.js' %}"></script>
+{% block page_js %}
+<script src="{% static 'store/js/filters_sort_htmx.js' %}"></script>
 {% endblock %}

@@ -1,6 +1,10 @@
 {% load static %}
-
-<!-- Sidebar Header -->
+ <!-- MAIN SIDEBAR -->
+<!-- MAIN SIDEBAR -->
+<div hx-boost="false"
+     class="fixed top-0 left-0 h-screen w-80 bg-gray-900 flex flex-col overflow-y-auto sidebar-scroll"
+     @click.stop>  {# ← stops Alpine from re-processing clicks #}
+  <!-- Sidebar Header -->
   <div class="relative flex flex-col items-center justify-center p-4 border-b border-gray-700">
     <div class="flex flex-col items-center justify-center">
       <img src="{% static 'store/images/logo.png' %}" alt="MFY Logo" class="h-20 w-24 block m-0 p-0 animate-fade-in">
@@ -9,19 +13,26 @@
     <button id="close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl transition-transform duration-300 hover:rotate-90">&times;</button>
   </div>
 
-  <!-- Top Navigation Links -->
-  <div class="p-4 space-y-2 border-b border-gray-700 animate-slide-in">
+  <!-- Top Navigation -->
+  <div class="p-4 space-y-2 border-b border-gray-700">
     <a href="{% url 'index' %}" class="block hover:text-green-400">Home</a>
   </div>
 
-  <!-- Sidebar Categories -->
-  <div class="p-5 space-y-2 scrollbar-hide flex-1 animate-slide-in">
-    <h2 class="text-gray-400 text-sm uppercase tracking-wide mb-2">Categories</h2>
-    {% include 'store/partials/category_tree.html' with categories=sidebar_categories %}
+  <!-- BRAND SECTION -->
+  <div class="p-5 border-b border-gray-700">
+    <h2 class="text-gray-400 text-xs uppercase mb-3">Shop by Brand</h2>
+    {% include "store/partials/tree_component.html" with items=sidebar_brands %}
+  </div>
+
+  <!-- CATEGORY SECTION (NO SCROLL HERE) -->
+  <div class="p-5 border-b border-gray-700">
+    <h2 class="text-gray-400 text-xs uppercase mb-3">Shop by Category</h2>
+    {% include "store/partials/tree_component.html" with items=sidebar_categories %}
   </div>
 
   <!-- Bottom Section -->
-  <div class="mt-auto border-t border-gray-700 bg-gray-900 p-4 animate-slide-in">
+  <div class="mt-auto border-t border-gray-700 bg-gray-900 p-4">
+    
     <ul class="flex flex-col divide-y divide-gray-800 rounded-lg overflow-hidden bg-gray-800/40 mb-4">
       <li>
         <a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
@@ -44,12 +55,14 @@
     </ul>
 
     <h3 class="text-gray-400 uppercase text-[11px] font-semibold mb-3 tracking-wider">Your Account</h3>
+
     {% if user.is_authenticated %}
     <div class="flex flex-col gap-2">
       <a href="{% url 'account_dashboard' %}" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition rounded-lg">
         <i class="fa-regular fa-user text-blue-400"></i>
         <span class="text-sm">{{ user.username }}</span>
       </a>
+
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
         <button type="submit" class="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-red-600 hover:text-white transition rounded-lg">
@@ -64,6 +77,7 @@
       <span class="text-sm">Login</span>
     </a>
     {% endif %}
+
   </div>
+
 </div>
-      
