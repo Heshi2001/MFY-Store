@@ -2172,7 +2172,6 @@ def calculate_cart_totals(cart):
 def cart_view(request):
     session_key = get_or_create_session_key(request)
 
-    # --------- MERGE GUEST CART FOR LOGGED IN USERS ----------
     if request.user.is_authenticated:
         merge_guest_cart(request.user, session_key)
         cart_data = Cart.objects.for_user_or_session(user=request.user)
@@ -2181,10 +2180,8 @@ def cart_view(request):
 
     cart_instance = cart_data.get("cart")
 
-    # --------- INITIAL TOTALS (BASE TOTALS BEFORE DISCOUNT) ---------
     subtotal, shipping_total, tax_total, grand_total = calculate_cart_totals(cart_instance)
 
-    # --------- COUPON LOGIC ---------
     coupon_code = request.session.get("selected_coupon")
     applied_coupon = None
     discount_amount = Decimal("0.00")
@@ -2192,8 +2189,6 @@ def cart_view(request):
     if coupon_code:
         try:
             coupon = Coupon.objects.get(code=coupon_code, is_active=True)
-
-            # Validate coupon based on user + subtotal
             if coupon.is_valid(user=request.user, total=subtotal):
                 applied_coupon = coupon
                 percent = Decimal(str(coupon.discount_percent))
@@ -2201,29 +2196,30 @@ def cart_view(request):
         except Coupon.DoesNotExist:
             request.session.pop("selected_coupon", None)
 
-    # Apply discount only if coupon valid
     if applied_coupon:
         grand_total = (subtotal - discount_amount) + shipping_total + tax_total
 
-    # --------- COUPON CLEARING RULE ----------
-    # After first page reload, coupon must disappear
     if request.session.get("coupon_just_applied", False):
-        # Allow 1 page reload to show discount
         request.session["coupon_just_applied"] = False
     else:
-        # If user didn't just apply coupon → remove it
         request.session.pop("selected_coupon", None)
 
-    # --------- RENDER CONTEXT ---------
+    # ✅ FIX: fetch real saved items for logged-in users
+    saved_items = []
+    if request.user.is_authenticated:
+        saved_items = SavedItem.objects.filter(
+            user=request.user
+        ).select_related("product", "variant").order_by("-saved_at")
+
     cart_data.update({
-        "cart_items": cart_data.get("items", []),
-        "subtotal": subtotal,
+        "cart_items":     cart_data.get("items", []),
+        "subtotal":       subtotal,
         "shipping_total": shipping_total,
-        "tax_total": tax_total,
+        "tax_total":      tax_total,
         "discount_amount": discount_amount,
-        "grand_total": grand_total,
+        "grand_total":    grand_total,
         "applied_coupon": applied_coupon,
-        "saved_items": [],
+        "saved_items":    saved_items,  # ✅ real data now
     })
 
     return render(request, "store/cart.html", cart_data)
@@ -2393,11 +2389,20 @@ def remove_from_cart(request, item_id):
 def save_for_later(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     product = cart_item.product
+    variant = cart_item.variant
 
-    # Create or ignore duplicate saved items
-    SavedItem.objects.get_or_create(user=request.user, product=product)
+    if variant:
+        price = float(variant.offer_price or variant.price)
+    else:
+        price = 0.0
 
-    # Remove from cart
+    # ✅ FIX: use update_or_create so variant is always saved correctly
+    SavedItem.objects.update_or_create(
+        user=request.user,
+        product=product,
+        defaults={"variant": variant}  # updates variant if item already existed
+    )
+
     cart_item.delete()
 
     return JsonResponse({
@@ -2406,7 +2411,7 @@ def save_for_later(request, item_id):
             "id": product.id,
             "name": product.name,
             "image": product.get_main_image_url(),
-            "price": float(product.price),
+            "price": price,
         }
     })
 
@@ -2423,7 +2428,7 @@ def move_to_cart(request, product_id):
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=saved_item.product,
-        variant=saved_item.variant,   # ✅ REQUIRED
+        variant=saved_item.variant,
         defaults={"quantity": 1},
     )
 
@@ -2433,8 +2438,16 @@ def move_to_cart(request, product_id):
 
     saved_item.delete()
 
-    return JsonResponse({"success": True})
+    subtotal, shipping_total, tax_total, grand_total = calculate_cart_totals(cart)
 
+    return JsonResponse({
+        "success": True,
+        "cart_count": cart.total_items,
+        "subtotal":       str(subtotal),
+        "shipping_total": str(shipping_total),
+        "tax_total":      str(tax_total),
+        "grand_total":    str(grand_total),
+    })
 
 def faq_view(request):
     """

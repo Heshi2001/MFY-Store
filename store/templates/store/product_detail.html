@@ -777,7 +777,7 @@ section {
         {% else %}
         <div class="bg-white/3 border border-white/8 rounded-2xl p-5 text-center mt-4">
           <p class="text-gray-400 text-sm mb-3">Sign in to leave a review</p>
-          <a href="{% url 'login' %}?next={{ request.path }}"
+          <a href="{% url 'account_login' %}?next={{ request.path }}"
              class="text-emerald-400 text-sm hover:underline">Log in / Sign up →</a>
         </div>
         {% endif %}
